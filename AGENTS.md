@@ -13,4 +13,6 @@ Die Änderungsübersicht richtet sich an Eltern und Lehrkräfte:
 
 Bei Änderungen an `Tagebuch.html` oder Dateien unter `app/` auch die Update-Veröffentlichung gemäß README vorbereiten: `release` und `version` in `app/version.js` erhöhen, `node scripts/prepare-update.cjs` ausführen und `node --test tests/update-core.test.cjs` prüfen. Manifest und Programmdateien gemeinsam veröffentlichen. Familien- und Kinderdaten niemals committen.
 
+Bei Änderungen an der Bedienung auch die eingebaute Elternhilfe und, soweit für Kinder relevant, die Kinderhilfe in `Tagebuch.html` sowie die README aktualisieren. Die Glocken-Historie ersetzt diese Hilfetexte nicht. Anleitungen und Schritte unter „Probleme lösen“ müssen die aktuelle Oberfläche beschreiben.
+
 `app/changelog-data.js` wird aus `CHANGELOG.md` generiert. Bei einer App-Veröffentlichung die Historie mit `node scripts/prepare-update.cjs` aktualisieren und zusammen mit dem Update-Manifest committen. Bestehende Überschriften in `CHANGELOG.md` möglichst stabil halten: Ihre Kennungen bestimmen den gespeicherten Lesestand der Glocke.

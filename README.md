@@ -6,6 +6,8 @@ Ein deutschsprachiges Tagebuch für Kinder mit Lese- und Rechtschreibübungen. D
 
 In der App öffnet die **Glocke oben rechts** dieselbe Historie, auch offline. Die Zahl zeigt ungelesene Einträge; beim Öffnen werden sie als gelesen markiert. Der Lesestand wird für den verwendeten Browser gespeichert, gemeinsam für alle Kinderprofile. Nach dem Löschen der Browserdaten erscheinen die Einträge wieder als neu.
 
+Die Bedienhilfe direkt in der App findet ihr unter **Eltern → Hilfe** sowie über **❓ Hilfe** im Kindertagebuch. Dort sind auch Stimmenauswahl, Shop, Updates und Glocke erklärt.
+
 ## Funktionen
 
 - Tagebucheinträge mit Schreibimpulsen, Bildern und Emojis

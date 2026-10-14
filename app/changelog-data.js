@@ -1,6 +1,19 @@
 // Generated from CHANGELOG.md by scripts/prepare-update.cjs.
 window.TB_CHANGELOG = [
   {
+    "id": "e4f5d2e03522aa5d",
+    "title": "Version 1.2.1: Hilfe in der App ergänzt — 14. Oktober 2026",
+    "lines": [
+      "",
+      "- Die Hilfe im Elternbereich erklärt jetzt die Stimmenauswahl mit Hörprobe, die Einrichtung unter Windows/macOS, das automatische Speichern im Shop, die Symbolauswahl sowie Programmupdates und die Glocke.",
+      "- Unter „Probleme lösen“ findet ihr passende Schritte bei schlecht verständlicher Sprachausgabe, fehlenden Shop-Artikeln und fehlgeschlagenen Updates.",
+      "- Die Kinderhilfe erklärt die Glocke und zeigt, wann ein Erwachsener bei Diktatstimmen oder Updates helfen kann.",
+      "",
+      "**Was müsst ihr tun?** Version 1.2.1 installieren und neu laden. Die Elternhilfe findet ihr unter **Eltern → Hilfe**, die Kinderhilfe über **❓ Hilfe** im Tagebuch. Diese Fassung ergänzt die Hilfetexte; eure Daten und Einstellungen bleiben erhalten.",
+      ""
+    ]
+  },
+  {
     "id": "2e314a4eedd726fe",
     "title": "Version 1.2.0: Stimmen auswählen und Diktate probehören — 14. Oktober 2026",
     "lines": [
