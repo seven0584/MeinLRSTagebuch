@@ -1,0 +1,2 @@
+In diesem Ordner speichert das Tagebuch die Familien-Einstellungen (familie.json).
+Bitte nicht von Hand ändern.

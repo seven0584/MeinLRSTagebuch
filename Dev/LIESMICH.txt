@@ -1,0 +1,27 @@
+TAGEBUCH – so geht's los
+========================
+
+1. Den ganzen Ordner "Tagebuch" an einen festen Platz legen,
+   zum Beispiel in "Dokumente". Liegt er in OneDrive oder Dropbox,
+   ist alles automatisch zusätzlich gesichert.
+
+2. "Tagebuch.html" mit Chrome oder Microsoft Edge öffnen
+   (Rechtsklick > Öffnen mit). Tipp: als Lesezeichen speichern.
+
+3. Beim ersten Start einmal den Ordner "Tagebuch" auswählen und
+   "Bearbeiten zulassen" bestätigen. Wenn der Browser später fragt:
+   "Bei jedem Besuch zulassen" wählen.
+
+4. Auf "Eltern" tippen, eine Eltern-PIN festlegen und die Kinder anlegen.
+
+Ordnerstruktur
+  Tagebuch.html          das Programm (öffnen)
+  app/                   Programmteile, Wörterbuch, Übungstexte
+  config/                Einstellungen der Familie
+  kinder/<Name>/files/   Tagebuch, Bilder und Sicherungen je Kind
+
+Umzug auf einen neuen PC: einfach den ganzen Ordner kopieren und
+dort Schritt 2 und 3 wiederholen.
+
+Quellen: Rechtschreibwörterbuch igerman98 (GPL), Hunspell (LGPL/MPL),
+Übungstexte aus Klexikon/MiniKlexikon (klexikon.zum.de, CC BY-SA 4.0).

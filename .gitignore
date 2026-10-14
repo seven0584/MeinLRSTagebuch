@@ -1,0 +1,24 @@
+# Persönliche Laufzeitdaten; nur die mitgelieferten Hinweise versionieren.
+Dev/config/*
+!Dev/config/LIESMICH.txt
+Dev/kinder/*
+!Dev/kinder/LIESMICH.txt
+
+# Entpackte Anwendung und deren persönliche Daten.
+Release/Tagebuch/
+Tagebuch/
+
+# Aus der Anwendung exportierte Sicherungen und Bilder.
+*.tagebuch
+*.bild
+tagebuch-sicherung*.json
+tagebuch-sicherung*.zip
+
+# Lokale Werkzeuge und Betriebssystemdateien.
+node_modules/
+.env
+.env.*
+!.env.example
+Thumbs.db
+Desktop.ini
+.DS_Store
