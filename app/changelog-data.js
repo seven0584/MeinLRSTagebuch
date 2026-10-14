@@ -1,6 +1,21 @@
 // Generated from CHANGELOG.md by scripts/prepare-update.cjs.
 window.TB_CHANGELOG = [
   {
+    "id": "2e314a4eedd726fe",
+    "title": "Version 1.2.0: Stimmen auswählen und Diktate probehören — 14. Oktober 2026",
+    "lines": [
+      "",
+      "- Im Elternbereich unter **Einstellungen → Stimme und Diktat testen** könnt ihr eine verfügbare deutsche Stimme auswählen und das Tempo einstellen.",
+      "- Mit einem eigenen kurzen Text könnt ihr eine normale und eine langsamere Hörprobe starten oder die Wiedergabe stoppen. So lässt sich die Verständlichkeit auf eurem Gerät vergleichen.",
+      "- Die Auswahl wird gespeichert und gilt für die Diktate, Fragen und das Vorlesen aller Kinder. Fehlt die gewählte Stimme auf einem anderen Gerät, verwendet die App eine verfügbare deutsche Ersatzstimme.",
+      "- Unter Windows führen Links zu den Sprach- und Sprachausgabe-Einstellungen. Wenn der Browser das Öffnen blockiert, hilft die Anleitung daneben. Nach dem Installieren neuer Stimmen könnt ihr die Liste neu laden; manchmal ist ein Browser-Neustart nötig.",
+      "- Auf dem Mac zeigt die App einen Link zu den macOS-Bedienungshilfen und eine Anleitung zur Auswahl zusätzlicher Stimmen. Falls der Link vom Browser blockiert oder von der macOS-Version nicht unterstützt wird, öffnet ihr die Systemeinstellungen über das Apple-Menü.",
+      "",
+      "**Was müsst ihr tun?** Version 1.2.0 installieren, die App neu laden und im Elternbereich verschiedene Stimmen probehören. Die App verwendet die vom Browser angebotenen Stimmen; sie installiert keine neuen Stimmen und kann deren Klangqualität nicht verbessern.",
+      ""
+    ]
+  },
+  {
     "id": "7fabdcd723ef2b95",
     "title": "Version 1.1.1: Shop-Artikel zuverlässig bearbeiten — 14. Oktober 2026",
     "lines": [

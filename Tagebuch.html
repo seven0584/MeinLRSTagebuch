@@ -253,6 +253,31 @@
       </section>
       <section class="psec" data-sec="settings" hidden>
         <h2 class="psec-title">⚙️ Einstellungen</h2>
+      <h3>🔊 Stimme und Diktat testen</h3>
+      <p class="note">Diese Einstellungen gelten für alle Kinder auf diesem Gerät: für Diktate, Fragen und das Vorlesen. Wählt eine gut verständliche deutsche Stimme und hört sie hier probeweise an.</p>
+      <div class="rulegrid">
+        <label class="field">Deutsche Stimme<select id="speechVoice"></select></label>
+        <label class="field">Sprechtempo <output id="speechRateLabel" for="speechRate"></output><input type="range" id="speechRate" min="0.6" max="1.2" step="0.05"></label>
+      </div>
+      <p class="note" id="speechVoiceInfo"></p>
+      <label class="field">Text für die Hörprobe<input type="text" id="speechSample" maxlength="300" value="Heute scheint die Sonne. Ich spiele im Garten."></label>
+      <div class="below">
+        <button type="button" class="btn" id="speechTest">🔊 Hörprobe</button>
+        <button type="button" class="btn-ghost" id="speechTestSlow">🐢 Langsame Hörprobe</button>
+        <button type="button" class="btn-ghost" id="speechStop">Stopp</button>
+        <button type="button" class="btn-ghost" id="speechRefresh">Stimmen neu laden</button>
+      </div>
+      <p class="status" id="speechStatus" role="status"></p>
+      <details class="rules"><summary>Stimmen im Betriebssystem einrichten</summary>
+        <p>Die App kann verfügbare Stimmen auswählen, aber keine neuen Systemstimmen installieren. Unter Windows findet ihr sie in den Einstellungen unter „Zeit und Sprache“. Je nach Windows-Version heißen die Bereiche „Spracherkennung“, „Sprache“ oder „Sprache und Region“.</p>
+        <div class="below" id="speechWindowsLinks" hidden><a href="ms-settings:speech" class="btn-ghost">Windows-Sprachausgabe öffnen</a><a href="ms-settings:regionlanguage" class="btn-ghost">Windows-Sprachen öffnen</a></div>
+        <div id="speechMacHelp" hidden>
+          <p><b>macOS:</b> Öffnet „Systemeinstellungen → Bedienungshilfen → Gesprochene Inhalte“ beziehungsweise „Lesen &amp; Sprechen“ (je nach macOS-Version). Dort könnt ihr unter „Systemstimme“ eine deutsche Stimme auswählen und weitere Stimmen herunterladen.</p>
+          <a href="x-apple.systempreferences:com.apple.Accessibility-Settings.extension" class="btn-ghost">macOS-Bedienungshilfen öffnen</a>
+          <p>Der Link ist für neuere macOS-Versionen gedacht. Wenn er nicht funktioniert oder der Browser ihn blockiert, öffnet die Systemeinstellungen über das Apple-Menü. Kehrt danach zur App zurück, ladet die Stimmen neu oder startet den Browser vollständig neu und testet die Stimme hier. Die Systemstimme und die Stimme einer Webseite können unterschiedlich sein; auswählbar sind hier nur die vom Browser angebotenen Stimmen.</p>
+        </div>
+        <p class="note">Der Browser kann vor dem Öffnen der Systemeinstellungen nachfragen oder den Link blockieren. Unter Windows dann die Einstellungen über das Startmenü öffnen. Nach dem Installieren einer deutschen Stimme den Browser gegebenenfalls vollständig neu starten und hier erneut testen. Nicht jede Systemstimme wird vom Browser angeboten.</p>
+      </details>
       <h3>📁 Speicherort</h3>
       <div class="storecard" id="storeCard"></div>
 

@@ -38,6 +38,14 @@ Die bisherigen Programmdateien werden in `.tagebuch-update-backup/` gesichert. B
 
 Ohne Internet oder bei einem fehlgeschlagenen Update-Check läuft die installierte App weiter. Die Prüfung fragt `updates.json` und bei bestätigter Installation die Programmdateien von `raw.githubusercontent.com/seven0584/MeinLRSTagebuch/main/` ab. Tagebuchtexte oder Einstellungen werden dabei nicht übermittelt. Das Repository muss für diesen Ablauf öffentlich zugänglich sein; der Updater speichert keine GitHub-Zugangsdaten. Die Prüfungen sichern die Übertragung und erkennen beschädigte Dateien; die Quelle der Programmupdates bleibt der vertrauenswürdige Stand dieses Repositories.
 
+## Sprachausgabe einstellen
+
+Im Elternbereich unter **Einstellungen → Stimme und Diktat testen** eine deutsche Stimme und das Sprechtempo auswählen. Mit **Hörprobe** und **Langsame Hörprobe** lässt sich ein eigener kurzer Text testen; **Stopp** beendet die Wiedergabe. Die gespeicherte Auswahl gilt für alle Kinder und für Diktate, Fragen und das Vorlesen. Eine auf einem anderen Gerät fehlende Stimme wird automatisch durch eine verfügbare deutsche Stimme ersetzt.
+
+Auf Windows-Geräten bietet die App Links zu den System-Sprach- und Sprachausgabe-Einstellungen. Der Browser kann eine Bestätigung verlangen oder den Aufruf blockieren; dann den beschriebenen Weg über das Windows-Startmenü nutzen. Nach dem Hinzufügen einer Stimme **Stimmen neu laden** wählen oder den Browser vollständig neu starten. Die App kann ausschließlich Stimmen verwenden, die der Browser bereitstellt. Manche Stimmen benötigen Internet. Die Hörprobe selbst muss auf dem jeweiligen Gerät beurteilt werden.
+
+Auf **macOS** zeigt die App den Weg zu **Systemeinstellungen → Bedienungshilfen → Gesprochene Inhalte / Lesen & Sprechen → Systemstimme**. Ein Link kann die Bedienungshilfen auf neueren macOS-Versionen öffnen. Wenn der Browser den Aufruf blockiert oder die macOS-Version ihn nicht unterstützt, die Systemeinstellungen über das Apple-Menü öffnen. Eine im System installierte Stimme muss nicht im Browser auswählbar sein. Auf dem Mac weiterhin Chrome oder Edge für die Ordnerspeicherung verwenden; Safari unterstützt diesen Speicherablauf nicht.
+
 ## Shop bearbeiten
 
 Im Elternbereich unter **Belohnungen** gilt der Shop für das oben ausgewählte Kind. Namen, Preise und Symbole werden beim Bearbeiten automatisch gespeichert, sobald Name und Preis gültig sind. Die Schaltfläche 😀 neben dem Symbolfeld öffnet eine Emoji-Auswahl. Alternativ ein eigenes Symbol direkt ins Feld eingeben. Änderungen stehen dem Kind beim nächsten Öffnen seines Shops sofort zur Verfügung.
@@ -88,6 +96,8 @@ node --test tests/update-core.test.cjs
 ```
 
 Für die Shop-Korrekturen gibt es zusätzlich einen Browser-Regressionstest. Wenn Python 3, Playwright und Chromium verfügbar sind, `node tests/shop-browser.cjs` ausführen. Der Test startet einen eigenen lokalen Server auf Port 8765 und verwendet ausschließlich Testprofile. Ein abweichender Chromium-Pfad kann über `CHROMIUM_PATH` gesetzt werden.
+
+`node tests/speech-browser.cjs` prüft Stimmenauswahl, Tempo, Hörproben, Stoppen, Speicherung und die Übernahme ins Kinderdiktat mit simulierten Stimmen. Er startet einen lokalen Testserver auf Port 8766. Diese Prüfung bewertet weder den hörbaren Klang noch das Öffnen echter Windows- oder macOS-Einstellungen; beides auf dem jeweiligen Gerät prüfen.
 
 Für die Entwicklung kann ein lokaler HTTP-Server verwendet werden:
 

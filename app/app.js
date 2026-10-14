@@ -1326,6 +1326,7 @@
     $("#cfgSentWords").value = R().cfg.sentenceWords;
     renderNames(); renderErrStats(); renderParentWords(); settleWeeks(); renderRewardParent(); renderPauseParent(); renderPracticeStats(); renderBackup(); renderStore(); renderOverviewCards(); goSection(pSection);
     const c = R().cfg; $("#cfgGameBase").value = c.gameBase; $("#cfgGameTask").value = c.gamePerTask; $("#cfgGameMax").value = c.gameMax; $("#cfgDictLevel").value = c.dictLevel || "auto";
+    renderSpeechSettings();
   }
   let pSection = "overview";
   function goSection(s){
@@ -1575,22 +1576,72 @@
   }
   // ---- speech ----
   let deVoice = null;
-  function pickVoice(){
-    const vs = (window.speechSynthesis && speechSynthesis.getVoices()) || [];
-    deVoice = vs.find(v => /^de(-|_)DE/i.test(v.lang) && /google|microsoft|anna|helena|katja|hedda|petra/i.test(v.name)) || vs.find(v => /^de/i.test(v.lang)) || null;
+  let speechFinish = null, speechPreviewSerial = 0;
+  function speechSettings(){
+    const settings = (family && family.parent.speech) || {};
+    const rate = Number(settings.rate);
+    return { voice: typeof settings.voice === "string" ? settings.voice : "", rate: Number.isFinite(rate) && rate >= 0.6 && rate <= 1.2 ? rate : 0.85 };
   }
-  if(window.speechSynthesis){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+  const voiceId = voice => voice.voiceURI || voice.name + "|" + voice.lang;
+  const germanVoices = () => ((window.speechSynthesis && speechSynthesis.getVoices()) || []).filter(v => /^de(?:[-_]|$)/i.test(v.lang));
+  function pickVoice(){
+    const vs = germanVoices(), selected = speechSettings().voice;
+    deVoice = vs.find(v => voiceId(v) === selected) || vs.find(v => /^de(-|_)DE/i.test(v.lang) && /google|microsoft|anna|helena|katja|hedda|petra/i.test(v.name)) || vs[0] || null;
+  }
+  function renderSpeechSettings(){
+    pickVoice();
+    const select = $("#speechVoice"), settings = speechSettings(), voices = germanVoices();
+    select.replaceChildren();
+    const automatic = document.createElement("option"); automatic.value = ""; automatic.textContent = "Automatisch auswählen"; select.append(automatic);
+    voices.forEach(voice => { const option = document.createElement("option"); option.value = voiceId(voice); option.textContent = voice.name + " (" + voice.lang + ")"; select.append(option); });
+    const missing = settings.voice && !voices.some(v => voiceId(v) === settings.voice);
+    select.value = missing ? "" : settings.voice;
+    select.disabled = !voices.length;
+    $("#speechRate").value = settings.rate;
+    $("#speechRateLabel").textContent = settings.rate.toLocaleString("de-DE", { minimumFractionDigits:2 }) + " ×";
+    $("#speechVoiceInfo").textContent = !window.speechSynthesis ? "Dieser Browser unterstützt keine Sprachausgabe." : !voices.length ? "Noch keine deutsche Stimme verfügbar. Richtet sie im Betriebssystem ein und ladet die Stimmen erneut." :
+      (missing ? "Die gespeicherte Stimme ist auf diesem Gerät nicht verfügbar. Stattdessen wird automatisch eine deutsche Stimme gewählt. " : "") + "Aktuelle Stimme: " + deVoice.name + ". Stimmen und Klang hängen vom Gerät und Browser ab; manche Stimmen benötigen Internet.";
+    $("#speechTest").disabled = $("#speechTestSlow").disabled = !deVoice;
+    $("#speechWindowsLinks").hidden = !/win/i.test((navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || "");
+    $("#speechMacHelp").hidden = !(/Mac/i.test(navigator.platform) && !(navigator.maxTouchPoints > 1));
+  }
+  if(window.speechSynthesis){ pickVoice(); speechSynthesis.addEventListener("voiceschanged", renderSpeechSettings); }
+  function stopSpeech(){
+    if(speechFinish) speechFinish(false);
+    if(window.speechSynthesis) speechSynthesis.cancel();
+  }
   function speak(text, slow){
     return new Promise(res => {
-      if(!window.speechSynthesis){ res(false); return; }
-      speechSynthesis.cancel();
+      pickVoice();
+      if(!window.speechSynthesis || !deVoice){ res(false); return; }
+      stopSpeech();
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = "de-DE"; if(deVoice) u.voice = deVoice;
-      u.rate = slow ? 0.6 : 0.85;
-      u.onend = () => res(true); u.onerror = () => res(false);
-      speechSynthesis.speak(u);
+      u.lang = deVoice.lang; u.voice = deVoice;
+      u.rate = Math.max(0.4, speechSettings().rate * (slow ? 0.6 / 0.85 : 1));
+      const finish = ok => { if(speechFinish !== finish) return; speechFinish = null; res(ok); };
+      speechFinish = finish;
+      u.onend = () => finish(true); u.onerror = () => finish(false);
+      try{ speechSynthesis.speak(u); }catch(e){ finish(false); }
     });
   }
+  function saveSpeechSettings(){
+    family.parent.speech = { voice: $("#speechVoice").value, rate: Number($("#speechRate").value) };
+    save(); renderSpeechSettings(); $("#speechStatus").textContent = "Gespeichert. Die Einstellung gilt auch für die Diktate.";
+  }
+  $("#speechVoice").onchange = saveSpeechSettings;
+  $("#speechRate").oninput = () => { $("#speechRateLabel").textContent = Number($("#speechRate").value).toLocaleString("de-DE", { minimumFractionDigits:2 }) + " ×"; };
+  $("#speechRate").onchange = saveSpeechSettings;
+  $("#speechRefresh").onclick = renderSpeechSettings;
+  async function speechPreview(slow){
+    const serial = ++speechPreviewSerial, text = $("#speechSample").value.trim();
+    if(!text){ $("#speechStatus").textContent = "Bitte einen Text für die Hörprobe eingeben."; return; }
+    $("#speechStatus").textContent = "Hörprobe läuft …";
+    const ok = await speak(text, slow);
+    if(serial === speechPreviewSerial) $("#speechStatus").textContent = ok ? "Hörprobe beendet. Passt die Stimme? Ihr könnt Stimme und Tempo verändern und erneut testen." : "Die Hörprobe konnte nicht abgespielt werden. Bitte Stimme und Lautstärke prüfen und erneut versuchen.";
+  }
+  $("#speechTest").onclick = () => speechPreview(false);
+  $("#speechTestSlow").onclick = () => speechPreview(true);
+  $("#speechStop").onclick = () => { speechPreviewSerial++; stopSpeech(); $("#speechStatus").textContent = "Hörprobe gestoppt."; };
   const canSpeak = () => !!window.speechSynthesis && !!deVoice;
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -2418,6 +2469,7 @@
     }
   });
   load();
+  pickVoice();
   $("#dateLabel").textContent = fmtDate(todayKey());
   if(state.draft) ta.value = state.draft;
   QUESTIONS.forEach(([k]) => { if(state.draftQ[k]) qa[k].value = state.draftQ[k]; });
