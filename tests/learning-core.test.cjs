@@ -49,6 +49,19 @@ test('every offered word has an explicit sentence context and catalog examples r
   }
   assert.match(C.catalog('ss').hint,/Eis, Haus, Gras/);assert.match(C.catalog('gross').hint,/beim Spielen/);assert.match(C.catalog('auslassung').hint,/mehreren Buchstaben/);assert.match(C.catalog('dopp').hint,/Garten/);
 });
+test('old unclarified automatic guesses stop supplying rule hints and recommendations until rechecked',()=>{
+  const c=child(),text='Ich sehe Popel.',m=mark(text,'Popel','Poppel');
+  C.reconcile(c,text,[m]);const wordCase=C.getCase(c,m.caseId);
+  C.defer(c,m.caseId,'disagree',true);wordCase.catalogVersion='2026-10-14.1';
+  assert.equal(C.caseRule(wordCase).id,'other');assert.equal(C.stats(c).groups[0].key,'other');
+  assert.equal(wordCase.category,'dopp');assert.equal(wordCase.expected,'Poppel'); // Preserve the historical observation.
+  const current={i:text.indexOf('Popel'),w:'Popel',fix:null,fine:'unknown'};
+  C.reconcile(c,text,[current]);assert.equal(wordCase.category,'unknown');assert.equal(wordCase.expected,null);
+  assert.equal(wordCase.catalogVersion,C.CATALOG_VERSION);assert.equal(C.caseRule(wordCase).id,'unknown');
+  assert.deepEqual(C.recommendations(c),[]);
+  const confirmed={...wordCase,category:'dopp',catalogVersion:'old',review:'confirmed'};
+  assert.equal(C.caseRule(confirmed).id,'dopp');
+});
 test('wrong attempts followed by correction earn a proportional share; skips earn none',()=>{
   const c=child(),t=C.assign(c,{category:'dopp',type:'words',count:3,coins:10});
   C.attempt(c,t.id,0,'komen');C.taskHint(c,t.id,0);C.attempt(c,t.id,0,t.items[0].word);C.skipTaskWord(c,t.id,1,'unknown');C.skipTaskWord(c,t.id,2,'disagree');

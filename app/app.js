@@ -263,7 +263,6 @@
     return out;
   }
   function diffIndex(a, b){ let i=0; while(i<a.length && i<b.length && a[i]===b[i]) i++; return i; }
-  function where(i, len){ if(i <= 0) return "ganz am Anfang des Wortes"; if(i < len/3) return "am Anfang des Wortes"; if(i < 2*len/3) return "in der Mitte des Wortes"; return "am Ende des Wortes"; }
   function oneEdit(a, b){ // one insertion/deletion/substitution/transposition
     if(Math.abs(a.length-b.length) > 1) return false;
     let i = diffIndex(a,b);
@@ -272,48 +271,6 @@
       return a[i]===b[i+1] && a[i+1]===b[i] && a.slice(i+2)===b.slice(i+2);
     }
     return a.length > b.length ? a.slice(i+1)===b.slice(i) : a.slice(i)===b.slice(i+1);
-  }
-  function classify(w, s){
-    const a = lower(w), b = s ? lower(s) : "";
-    const T = {
-      ss: ["s, ss oder ß", "Hör genau hin: Ist der Vokal davor lang oder kurz? Nach einem langen Vokal oder ei, au, eu schreibt man ß, nach einem kurzen ss."],
-      dbl: ["Doppelkonsonant", "Ein Konsonant oder zwei gleiche? Sprich das Wort deutlich: Nach einem kurzen Vokal kommen oft zwei."],
-      ie: ["ie oder i", "i oder ie? Wird das i lang gesprochen, schreibt man meistens ie."],
-      h: ["Dehnungs-h", "Es geht um ein h, das man nicht hört. Fehlt eins, oder ist eins zu viel? Denk an ein verwandtes Wort."],
-      ae: ["ä oder e", "Gibt es ein verwandtes Wort mit a? Dann schreibt man ä (Wald → Wälder)."],
-      aeu: ["äu oder eu", "Gibt es ein verwandtes Wort mit au? Dann schreibt man äu (Haus → Häuser)."],
-      end: ["b/p, d/t oder g/k", "Verlängere das Wort, dann hörst du den Buchstaben deutlich (Hund → Hunde)."],
-      fv: ["f, v oder w", "Das ist ein Merkwort. Schau dir das Wort genau an und präge es dir ein."],
-      eiie: ["ei oder ie", "Sprich das Wort langsam: Hörst du ei wie in „Eis“ oder ein langes i wie in „Biene“?"],
-      spiegel: ["b oder d, p oder q", "Diese Buchstaben sehen sich ähnlich, sie sind nur gespiegelt. Schau genau, auf welcher Seite der Bauch ist."],
-      form: ["m, n oder u", "Diese Buchstaben sehen sich ähnlich. Zähle die Bögen und sprich den Laut leise mit."],
-      swap: ["Buchstaben vertauscht", "Zwei Buchstaben stehen in der falschen Reihenfolge. Sprich das Wort langsam Laut für Laut."],
-      miss: ["Buchstabe fehlt", "Hier fehlt ein Buchstabe. Sprich das Wort ganz langsam in Silben und schreib jeden Laut mit."],
-      extra: ["Buchstabe zu viel", "Hier ist ein Buchstabe zu viel. Sprich das Wort langsam und vergleiche jeden Laut."],
-      one: ["Buchstabe fehlt, zu viel oder vertauscht", "Sprich das Wort ganz langsam in Silben und schreib jeden Laut mit."],
-      other: ["Schau genau hin", "Sprich das Wort langsam in Silben. Wie schreibt man die einzelnen Teile?"]
-    };
-    const tipKeys={dbl:'dopp',h:'dehnung',end:'hartweich',fv:'fvw',form:'formaehnlich',swap:'umstellung',miss:'auslassung',extra:'zusatz',one:'other'};
-    const pick = k => ({ cat:T[k][0], tip:LC.catalog(tipKeys[k]||k).hint, generic: ["one","other","miss","extra","swap"].includes(k) });
-    const swap = (x, p, q) => x.split(p).join(q);
-    if(!s) return pick("other");
-    if(swap(a,"ß","ss")===swap(b,"ß","ss") || swap(a,"ss","s")===swap(b,"ss","s") || swap(a,"ß","s")===swap(b,"ß","s")) return pick("ss");
-    if(a !== b && (swap(a,"ei","ie")===b || swap(a,"ie","ei")===b)) return pick("eiie");
-    if(swap(a,"äu","eu")===swap(b,"äu","eu")) return pick("aeu");
-    if(swap(a,"ä","e")===swap(b,"ä","e")) return pick("ae");
-    if(swap(a,"ie","i")===swap(b,"ie","i")) return pick("ie");
-    const dedup = x => x.replace(/([bcdfgklmnprstz])\1/g, "$1").replace(/ck/g,"k").replace(/tz/g,"z");
-    if(dedup(a)===dedup(b)) return pick("dbl");
-    const noH = x => x.replace(/([aeiouäöü])h/g, "$1");
-    if(noH(a)===noH(b)) return pick("h");
-    const hard = x => x.replace(/[dt]/g,"t").replace(/[bp]/g,"p").replace(/[gk]/g,"k");
-    if(hard(a)===hard(b)) return pick("end");
-    const fv = x => x.replace(/[fvw]/g,"f").replace(/ph/g,"f");
-    if(fv(a)===fv(b)) return pick("fv");
-    const ops = editOps(a, b);
-    if(ops.length === 1){ const c = opCat(ops[0]); const k = { spiegel:"spiegel", formaehnlich:"form", umstellung:"swap", auslassung:"miss", zusatz:"extra" }[c]; if(k) return pick(k); }
-    if(oneEdit(a,b)) return pick("one");
-    return pick("other");
   }
   // ---------- error categories for the parent overview (no words, only kinds of mistakes) ----------
   function editOps(a, b){ // Damerau-Levenshtein with backtrace
@@ -366,6 +323,7 @@
     "Wörter passen nicht zusammen":"fall", "Verb passt nicht":"verb", "Grammatik":"grammatik", "Wort doppelt?":"doppelwort",
     "Verwechselt?":"verwechselt", "Getrennt oder zusammen":"getrennt" };
   function errCats(e){
+    if(e.cat === "Nicht im Wörterbuch") return ["unknown"];
     if(KIND[e.cat]) return [KIND[e.cat]];
     if(e.cat === "Großschreibung") return ["gross"];
     if(e.cat === "Kleinschreibung") return ["klein"];
@@ -384,6 +342,7 @@
     ["Grammatik und Satzbau", { fall:"Fall/Endungen", verb:"Verbform", grammatik:"Satzbau", doppelwort:"Wort doppelt", verwechselt:"Wort verwechselt" }],
     ["das oder dass", { dassdas:"" }],
     ["Getrennt oder zusammen", { getrennt:"" }],
+    ["Nicht im Wörterbuch – ungeklärt", { unknown:"" }],
     ["Sonstige", { other:"" }]
   ];
 
@@ -431,30 +390,6 @@
       '<div class="focus"><b>' + esc(TRICK[k][0]) + '</b><p>' + esc(TRICK[k][1]) + '</p></div>').join("");
   }
 
-  function lev(a, b){
-    const m = a.length, n = b.length; let prev = Array.from({length:n+1}, (_, j) => j);
-    for(let i=1;i<=m;i++){ const cur=[i]; for(let j=1;j<=n;j++){ cur[j] = Math.min(prev[j]+1, cur[j-1]+1, prev[j-1] + (a[i-1]===b[j-1]?0:1)); } prev = cur; }
-    return prev[n];
-  }
-  function bestSuggestion(w){
-    let cands = [];
-    try{
-      cands = hun.suggest(w);
-      if(!isUpper1(w)) cands = cands.concat(hun.suggest(cap(w)));
-    }catch(e){ return null; }
-    const norm = x => lower(x).replace(/ß/g, "ss");
-    let best = null, bestScore = Infinity; const ranked=[];
-    cands.filter(x => x && !x.includes(" ") && !x.startsWith("-")).forEach((s, idx) => {
-      let score = lev(norm(w), norm(s));
-      if(!classify(w, s).generic) score -= 0.5;
-      ranked.push({word:s,score});
-      score += idx * 0.001;
-      if(score < bestScore){ bestScore = score; best = s; }
-    });
-    const closest=ranked.filter(x=>Math.abs(x.score-(Math.round(bestScore*2)/2))<0.01);
-    if(new Set(closest.map(x=>fineCats(w,x.word).join(','))).size>1)return null;
-    return bestScore <= 2.01 ? best : null;
-  }
   function check(text, skipComma){
     const errs = [];
     const toks = tokens(text);
@@ -469,10 +404,8 @@
           continue;
         }
       }
-      if(isUpper1(w) && !t.start && !t.soft && !POLITE.has(w) && w.length > 1 && correct(lower(w)) && !nounCapable(w) && !allowCapAfter(text, toks, t.k)){
-        errs.push({ i:t.i, w, cat:"Kleinschreibung", tip:"Mitten im Satz schreibt man nur Nomen und Namen groß. Oder fehlt vor diesem Wort ein Punkt?", tip2:"Schau dir den ersten Buchstaben an und das, was davor steht.", fix:lower(w) });
-        continue;
-      }
+      // Do not overrule an accepted spelling merely because our noun-stem list
+      // lacks it. That heuristic falsely marked valid words such as "Rotze".
       let ok = correct(w) || (t.start && correct(lower(w)));
       if(ok){
         if(!isUpper1(w) && !t.start && nounCapable(w) && nounContext(text, toks, t.k))
@@ -483,16 +416,17 @@
         errs.push({ i:t.i, w, cat:"Großschreibung", tip:"Ist das ein Nomen? Mach die Artikelprobe: Passt der, die oder das davor?", tip2:"Schau dir den ersten Buchstaben an.", fix:cap(w) });
         continue;
       }
-      const s = bestSuggestion(w);
-      const c = classify(w, s);
-      if(s && isUpper1(s) && !isUpper1(w) && !t.start) c.tip += " Und denk an die Großschreibung: Ist es ein Nomen?";
-      const tip2 = s ? "Der Fehler steckt " + where(diffIndex(lower(w), lower(s)), w.length) + "." : "Frag Mama oder Papa, ob es dieses Wort so gibt.";
-      errs.push({ i:t.i, w, cat:c.cat, tip:c.tip, tip2, fix:s, name: isUpper1(w) && !t.start });
+      errs.push(unknownWord(t.i,w,isUpper1(w) && !t.start));
     }
     punctuation(text, toks, errs, skipComma);
     // one mark per word: keep the first (spelling before punctuation), sort by position
     const seen = new Set();
     return errs.filter(e => { if(seen.has(e.i)) return false; seen.add(e.i); return true; }).sort((a,b) => a.i - b.i);
+  }
+
+  function unknownWord(i,w,name=false){
+    const rule=LC.catalog('unknown');
+    return {i,w,cat:rule.title,tip:rule.hint,tip2:rule.more,fix:null,name};
   }
 
   // ---------- grammar via LanguageTool (online, optional) ----------
@@ -527,7 +461,7 @@
     if(/AGREEMENT|KONGRUENZ|DE_CASE|PRAEP|PREP|KASUS|DEKLIN|ADJ/.test(id))
       return T("Wörter passen nicht zusammen", "Passen Begleiter, Adjektiv und Nomen zusammen? Achte auf die Endungen (der, dem, den, des).", "Frag: Wer oder was? Wem? Wen? Dann merkst du, welche Form passt.");
     if(cat === "CONFUSED_WORDS" || cat === "SEMANTICS") return T("Verwechselt?", "Es gibt ein ähnliches Wort mit einer anderen Bedeutung. Welches passt hier?");
-    if(cat === "TYPOS"){ const c = classify(w, rep0 || null); return T(c.cat, c.tip, "Sprich das Wort langsam in Silben."); }
+    if(cat === "TYPOS") { const rule=LC.catalog('unknown');return T(rule.title,rule.hint,rule.more); }
     return T("Grammatik", "Lies den Satz langsam laut vor. Klingt etwas komisch? Fehlt ein Wort oder ist eins zu viel?");
   }
   function mergeLT(text, errs, matches){
@@ -548,7 +482,12 @@
       }
       const w = text.slice(a, b).replace(/\s+$/, ""); b = a + w.length;
       if(!w || overlaps(a, b) || (SEG && SEG.text === text && inLabel(SEG.labels, a, b))) continue;
-      if(cat === "TYPOS" && state.names.includes(w)) continue;
+      if(cat === "TYPOS" && (state.names.includes(w) || correct(w))) continue;
+      // A spelling-service suggestion is not a verified target word. Keep it out
+      // of rule hints and learning recommendations until the word is clarified.
+      if(cat === "TYPOS" || (cat === "CASING" && !correct(w) && (isUpper1(w) || !correct(cap(w))))){
+        errs.push(unknownWord(a,w));taken.push([a,b]);continue;
+      }
       const tip = ltTip(m, w);
       errs.push({ i:a, w, cat:tip.cat, tip:tip.tip, tip2:tip.tip2, punct: !["TYPOS","CASING"].includes(cat), fix: ["TYPOS","CASING"].includes(cat) && m.replacements && m.replacements[0] ? m.replacements[0].value : null });
       taken.push([a, b]);
@@ -557,14 +496,6 @@
   }
 
   // ---------- punctuation ----------
-  const POLITE = new Set(["Sie","Ihr","Ihre","Ihren","Ihrem","Ihrer","Ihres","Ihnen"]);
-  function allowCapAfter(text, toks, k){
-    if(k === 0) return true;
-    const p = lower(toks[k-1].w);
-    if(DET.has(p) || /^(etwas|nichts|viel|wenig|alles|allem|beim|zum|vom)$/.test(p)) return true; // "das Schwimmen", "etwas Schönes"
-    if(k >= 2 && DET.has(lower(toks[k-2].w)) && !isUpper1(toks[k-1].w)) return true;           // "das schöne Malen"
-    return false;
-  }
   const SUBORD = new Set(["weil","dass","obwohl","bevor","nachdem","sondern","wenn","ob","falls","sodass"]);
   const NO_COMMA_BEFORE = new Set(["und","oder","so","als","auch","selbst","nur","außer","ohne","statt","anstatt","sowie","immer","erst","besonders","gerade","genau","kurz","lange","gleich","schon","noch","aber"]);
   function punctuation(text, toks, errs, skipComma){
@@ -721,10 +652,12 @@
     if(!goalMet()){ updateCount(); return; }
     if(!hun || checking) return;
     checking = true; checkBtn.disabled = true; allFields().forEach(f => { f.readOnly = true; });
+    resultEl.querySelectorAll('button,input,textarea').forEach(el=>el.disabled=true);
     statusEl.textContent = state.parent.grammar ? "Ich prüfe deinen Text …" : "";
     const checkingChild = state.id, checkingSession=session;
     const matches = await ltCheck(text);
     checking = false; checkBtn.disabled = false; allFields().forEach(f => { f.readOnly = false; });
+    resultEl.querySelectorAll('button,input,textarea').forEach(el=>el.disabled=false);
     if(checkingChild !== state.id || checkingSession !== session || $("#kidView").hidden) { updateCount(); return; }
     compose(); // SEG for this text again (LT is async)
     let errs = check(text, !!matches);
@@ -740,13 +673,13 @@
       if(key && !session.catKeys[key]){ session.catKeys[key] = 1; for(const c of errCats(e)) session.cats[c] = (session.cats[c] || 0) + 1; }
     }
     for(const e of errs){ if(!e.punct && !session.found[lower(e.w)]) session.found[lower(e.w)] = { wrong:e.w, fix:e.fix, cat:e.cat }; }
-    errs.forEach(e=>{ e.fine=errCats(e)[0]; if(!e.punct){const rule=LC.catalog(e.fine);e.tip=rule.hint;e.tip2=rule.more;} });
+    errs.forEach(e=>{ e.fine=errCats(e)[0]; });
     try{ errs=learningTransaction(()=>{rememberDraft();return LC.reconcile(state,text,errs,matches?'online':'dictionary',Date.now(),checkedCorrections(text,errs));}); }
     catch(e){learningUI.message(e.message);return;}
     learningUI.openWords();
     if(session.ignore) errs = errs.filter(e => !session.ignore[e.cat + "|" + e.w]);
     session.current = errs; session.checkedText = text; session.labels = labels; session.active = -1; session.more = false;
-    if(errs.length){ renderResult(); if(innerWidth < 1000) resultEl.scrollIntoView({ behavior:"smooth", block:"start" }); }
+    if(errs.length) renderResult();
     else finish(text);
   }
 
@@ -754,30 +687,60 @@
     const errs=session.current;
     if(session.active<0 || session.active>=errs.length)session.active=0;
     const e=errs[session.active],c=e.caseId?LC.getCase(state,e.caseId):null;
+    const wordOnly=!!c, target=fieldAt(e.i);
+    let editBase=session.checkedText,fieldText=target?.f.value,appliedWord=e.w;
+    const unknown=e.cat==='Nicht im Wörterbuch';
     resultEl.hidden=false;checkBtn.textContent="Nochmal prüfen";
-    resultEl.innerHTML='<h3>Eine Stelle nach der anderen</h3><p>'+errs.length+' Stellen zum Anschauen. Die App kann sich irren.</p>'+
+    resultEl.innerHTML='<h3>Eine Stelle nach der anderen</h3><p>'+errs.length+(errs.length===1?' Stelle':' Stellen')+' zum Anschauen. Die App kann sich irren.</p>'+
       (session.basicOnly?'<p class="note">Offline-Prüfung: Rechtschreibung und einfache Satzzeichen. Keine vollständige Grammatikprüfung.</p>':'')+
-      '<div class="below">'+errs.map((m,i)=>'<button class="btn-ghost err'+(i===session.active?' active':'')+'" data-i="'+i+'" aria-pressed="'+(i===session.active)+'">'+esc(m.w)+'</button>').join('')+'</div>'+
+      '<div class="below">'+errs.map((m,i)=>'<button class="btn-ghost err'+(m.cat==='Nicht im Wörterbuch'?' uncertain':'')+(i===session.active?' active':'')+'" data-i="'+i+'" aria-pressed="'+(i===session.active)+'">'+esc(m.punct?m.cat+' bei „'+m.w+'“':m.w)+'</button>').join('')+'</div>'+
       '<div class="word-editor"><p>'+esc(session.checkedText.slice(Math.max(0,e.i-65),e.i))+'<mark>'+esc(e.w)+'</mark>'+esc(session.checkedText.slice(e.i+e.w.length,e.i+e.w.length+65))+'</p>'+
-      (c?'<label class="field">Deine neue Schreibweise<input id="wordEdit" autocomplete="off" spellcheck="false" value="'+esc(e.w)+'"></label><button class="btn" id="wordApply">Übernehmen und prüfen</button>':'<button class="btn" id="editOriginal">Diese Stelle im Text bearbeiten</button>')+
-      '<div class="below"><button class="btn-ghost" id="wordHint">Tipp</button><button class="btn-ghost" id="moreBtn">Noch ein Tipp</button></div><p id="wordHintText" role="status"></p><button class="btn-ghost" id="hintUnclear">Der Tipp hilft mir noch nicht</button>'+
-      (c?(e.name?'<button class="btn-ghost" id="nameBtn">Das ist ein Name</button>':'')+'<label class="check"><input type="checkbox" id="shareWord">Dieses Wort und den Zusammenhang mit meinen Eltern teilen</label><div class="below"><button class="btn-ghost" id="wordUnknown">Hier weiß ich nicht weiter</button><button class="btn-ghost" id="wordDisagree">Meine Schreibweise stimmt, bitte prüfen</button></div><p class="note">Nur dieses Wort bleibt offen. Dein Text wird nicht automatisch verändert.</p>':'<p>'+esc(e.tip)+'</p><button class="btn-ghost" id="okBtn">Ich finde, das stimmt so</button>')+
+      (unknown?'<p class="note dictionary-unknown"><b>Nicht im Wörterbuch</b><br>'+esc(e.tip)+'</p>':!wordOnly?'<p>'+esc(e.tip)+'</p>':'')+
+      (wordOnly?'<label class="field">Hier das Wort verbessern<input id="wordEdit" autocomplete="off" spellcheck="false" value="'+esc(e.w)+'"></label>':'<label class="field">Hier den Satz oder Abschnitt verbessern<textarea id="wordEdit" rows="4" spellcheck="false">'+esc(fieldText||'')+'</textarea></label><p class="note">Oben siehst du die gemeinte Stelle. Hier kannst du Satzzeichen, Leerzeichen oder mehrere Wörter ändern.</p>')+
+      '<button class="btn" id="wordApply">Übernehmen und prüfen</button><p id="wordEditStatus" role="status"></p>'+
+      '<div class="below"><button class="btn-ghost" id="wordHint">'+(unknown?'Warum diese Markierung?':'Tipp')+'</button><button class="btn-ghost" id="moreBtn">'+(unknown?'Was kann ich tun?':'Noch ein Tipp')+'</button></div><p id="wordHintText" role="status"></p><button class="btn-ghost" id="hintUnclear">'+(unknown?'Die Erklärung hilft mir noch nicht':'Der Tipp hilft mir noch nicht')+'</button>'+
+      (c?(e.name?'<button class="btn-ghost" id="nameBtn">Das ist ein Name</button>':'')+'<label class="check"><input type="checkbox" id="shareWord">Dieses Wort und den Zusammenhang mit meinen Eltern teilen</label><div class="below"><button class="btn-ghost" id="wordUnknown">Hier weiß ich nicht weiter</button><button class="btn-ghost" id="wordDisagree">Meine Schreibweise stimmt, bitte prüfen</button></div><p class="note">Nur dieses Wort bleibt offen. Dein Text wird nicht automatisch verändert.</p>':'<button class="btn-ghost" id="okBtn">Ich finde, das stimmt so</button>')+
       '</div><p class="stale" hidden>Der Text wurde geändert. Bitte erneut prüfen.</p>';
     resultEl.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{session.active=Number(b.dataset.i);renderResult();});
     $('#wordHint').onclick=()=>{if(c){try{learningTransaction(()=>LC.hint(state,c.id,1));}catch(ex){learningUI.message(ex.message);return;}}$('#wordHintText').textContent=e.tip;};
     $('#moreBtn').onclick=()=>{if(c){try{learningTransaction(()=>LC.hint(state,c.id,2));}catch(ex){learningUI.message(ex.message);return;}}$('#wordHintText').textContent=e.tip2;};
     $('#hintUnclear').onclick=()=>{if(c){try{learningTransaction(()=>LC.hintUnclear(state,c.id));}catch(ex){learningUI.message(ex.message);return;}}$('#wordHintText').textContent='Danke für den Hinweis. Du kannst weiterprobieren oder dieses Wort offenlassen.';};
+    $('#wordApply').onclick=()=>{
+      try{
+        if(checking)return;
+        if(compose()!==editBase)throw Error('Der Text wurde geändert. Bitte zuerst erneut prüfen.');
+        if(wordOnly)replaceWord(e.i,appliedWord,$('#wordEdit').value.trim());
+        else{
+          if(!target || target.f.value!==fieldText)throw Error('Der Text wurde geändert. Bitte zuerst erneut prüfen.');
+          target.f.value=$('#wordEdit').value;target.f.dispatchEvent(new Event('input'));
+        }
+        editBase=compose();fieldText=target?.f.value;appliedWord=$('#wordEdit').value.trim();
+        if(!goalMet()){
+          $('#wordEditStatus').textContent='Die Änderung wurde in deinen Text übernommen. '+statusEl.textContent;
+          return;
+        }
+        runCheck();
+      }catch(ex){$('#wordEditStatus').textContent=ex.message;}
+    };
+    $('#wordEdit').onkeydown=ev=>{if(ev.key==='Enter' && (wordOnly||ev.ctrlKey||ev.metaKey)){ev.preventDefault();$('#wordApply').click();}};
     if(c){
-      $('#wordApply').onclick=()=>{try{if(compose()!==session.checkedText)throw Error('Der Text wurde geändert. Bitte zuerst erneut prüfen.');replaceWord(e.i,e.w,$('#wordEdit').value.trim());runCheck();}catch(ex){learningUI.message(ex.message);}};
-      $('#wordEdit').onkeydown=ev=>{if(ev.key==='Enter')$('#wordApply').click();};
       const defer=reason=>{try{if(compose()!==session.checkedText)throw Error('Bitte den geänderten Text zuerst prüfen.');learningTransaction(()=>LC.defer(state,c.id,reason,$('#shareWord').checked));runCheck();}catch(ex){learningUI.message(ex.message);}};
       if($('#nameBtn'))$('#nameBtn').onclick=()=>{try{learningTransaction(()=>{if(!state.names.includes(e.w))state.names.push(e.w);LC.defer(state,c.id,'disagree',$('#shareWord').checked);});renderNames();runCheck();}catch(ex){learningUI.message(ex.message);}};
       $('#wordUnknown').onclick=()=>defer('unknown');$('#wordDisagree').onclick=()=>defer('disagree');
     }else{
-      $('#editOriginal').onclick=()=>{const target=fieldAt(e.i);if(target){target.f.closest('details')?.setAttribute('open','');target.f.focus();target.f.setSelectionRange(target.offset,target.offset+e.w.length);}};
       $('#okBtn').onclick=()=>{session.ignore ||= {};session.ignore[e.cat+'|'+e.w]=1;session.overrides=(session.overrides||0)+1;runCheck();};
     }
-    if(c){$("#wordEdit").focus();$("#wordEdit").select();}
+    const editor=$('#wordEdit');editor.focus({preventScroll:true});
+    if(wordOnly)editor.select();else if(target){
+      let caret=null;
+      if(e.cat==='Satzende')caret=editor.value.trimEnd().length;
+      else if(e.cat==='Komma')caret=editor.value.slice(0,target.offset).trimEnd().length;
+      else if(e.cat==='Satzzeichen')caret=target.offset+e.w.length;
+      else if(e.cat==='Leerzeichen')caret=e.tip.startsWith('Nach')?target.offset:target.offset+e.w.length;
+      // Adding punctuation must not replace the highlighted word.
+      editor.setSelectionRange(caret??target.offset,caret??(target.offset+e.w.length));
+    }
+    editor.scrollIntoView({block:'center',behavior:'instant'});
     updateCount();
   }
 

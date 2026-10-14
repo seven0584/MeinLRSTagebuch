@@ -8,7 +8,7 @@ In der App öffnet die **Glocke oben rechts** dieselbe Historie, auch offline. D
 
 Die Bedienhilfe direkt in der App findet ihr unter **Eltern → Hilfe** sowie über **❓ Hilfe** im Kindertagebuch. Dort sind auch Stimmenauswahl, Shop, Updates und Glocke erklärt.
 
-## Testfassung 1.3.0 auf `dev`
+## Testfassung 1.3.1 auf `dev`
 
 Die neuen Funktionen werden zunächst auf dem separaten Branch **[dev](https://github.com/seven0584/MeinLRSTagebuch/tree/dev)** zum Ausprobieren bereitgestellt. Sie sind noch nicht in `main` übernommen und kein reguläres Release.
 
@@ -103,11 +103,13 @@ Das Wörterbuch und die Übungstexte sind enthalten. Die lokale Rechtschreibprü
 
 Unter **Eltern → Gemeinsam starten** stehen Schreibumfang, Satzlänge, Schreibtage und Coins nebeneinander. Ein Beispieltext zeigt, ob das Ziel erreicht wäre und welche Tagebuch-Coins er bringen würde. Alle bisherigen Einstellungen und die Wochenabrechnung bleiben erhalten. Die Vorschau prüft keine Rechtschreibung.
 
-Kinder schreiben in einem Hauptfeld. Die drei Fragen stehen unter **Freiwillige Schreibideen**; eingetragene Antworten bleiben auch beim Zuklappen erhalten und zählen mit. Nach **Prüfen** können Kinder eine Wortstelle direkt bearbeiten, Hinweise öffnen oder melden, dass ein Tipp noch nicht hilft. **Hier weiß ich nicht weiter** und **Meine Schreibweise stimmt, bitte prüfen** stellen nur dieses einzelne Wort zurück. Die App korrigiert es nicht automatisch. Ein Eintrag mit offenen Wörtern kann abgeschlossen werden, sobald das bestehende Schreibziel und die übrigen Prüfungen erfüllt sind.
+Kinder schreiben in einem Hauptfeld. Die drei Fragen stehen unter **Freiwillige Schreibideen**; eingetragene Antworten bleiben auch beim Zuklappen erhalten und zählen mit. Nach **Prüfen** bleibt jede Korrektur im selben Bereich unter dem Text: Bei einem Wort wird dessen Schreibweise bearbeitet, bei Satzzeichen und Grammatik der betroffene Satz oder Abschnitt. **Übernehmen und prüfen** trägt die Änderung in den ursprünglichen Text ein. Auch eingeklappte Antworten werden dort bearbeitet; ein Wechsel zurück zum oberen Schreibfeld ist nicht nötig. Im Wortfeld prüft die Eingabetaste; im Satzfeld fügt sie eine neue Zeile ein, Strg+Eingabe beziehungsweise Cmd+Eingabe prüft.
+
+**Nicht im Wörterbuch** heißt: Die App kennt diese Schreibweise nicht, sie kann trotzdem richtig sein. Das enthaltene Hunspell-/igerman98-Wörterbuch ist kein Duden. Aus einem bloß ähnlichen Wort wird kein Regeltipp abgeleitet. Unter **Warum diese Markierung?** und **Was kann ich tun?** steht die Erklärung. Bekannte Großschreibungsfälle und Diktate mit vorgegebenem Zielwort behalten ihre Tipps. **Hier weiß ich nicht weiter** und **Meine Schreibweise stimmt, bitte prüfen** stellen nur dieses einzelne Wort zurück. Die App korrigiert es nicht automatisch. Ein Eintrag mit offenen Wörtern kann abgeschlossen werden, sobald das bestehende Schreibziel und die übrigen Prüfungen erfüllt sind.
 
 Unter **Wörter und Rückmeldungen** lassen sich solche Stellen später bearbeiten oder gezielt mit den Eltern teilen. Neue private Wortformen, Kontextausschnitte und daraus entstandene Übungswörter sind in der Elternoberfläche nur nach Freigabe sichtbar. Vorhandene alte Übungswörter bleiben sichtbar. Ein Kontextausschnitt umfasst höchstens 160 Zeichen vor und nach dem Wort innerhalb desselben Satzes. Das ist ein Sichtschutz in der Oberfläche; die bestehenden Grenzen von PINs und Ordnerzugriff gelten weiter.
 
-Die Elternübersicht trennt beobachtete Verbesserungen, offene Wörter und beanstandete Bewertungen. Eine Beanstandung bleibt als Rückfrage erhalten, auch wenn das Kind danach weiterübt. Die Eltern können geteilte Stellen oder Aufgabenantworten bestätigen, als zulässig anerkennen oder ungeklärt lassen. Hinweise sind keine Diagnose. Weniger Markierungen allein belegen keinen Lernfortschritt; die Schreibmenge und die bearbeiteten Aufgaben können sich verändert haben.
+Die Elternübersicht trennt beobachtete Verbesserungen, offene Wörter und beanstandete Bewertungen. Unbekannte Wörter erhalten eine eigene ungeklärte Gruppe und lösen keine Empfehlung für eine bestimmte Fehlerklasse aus. Alte, noch ungeklärte automatische Zuordnungen zeigen bis zur erneuten Prüfung einen neutralen Hinweis; der gespeicherte Verlauf und ausdrückliche Elternentscheidungen bleiben erhalten. Eine Beanstandung bleibt als Rückfrage erhalten, auch wenn das Kind danach weiterübt. Die Eltern können geteilte Stellen oder Aufgabenantworten bestätigen, als zulässig anerkennen oder ungeklärt lassen. Hinweise sind keine Diagnose. Weniger Markierungen allein belegen keinen Lernfortschritt; die Schreibmenge und die bearbeiteten Aufgaben können sich verändert haben.
 
 Unter **Übersicht → Eine freiwillige Aufgabe anbieten** können Eltern ein Wort-Diktat mit 1 bis 5 Wörtern oder einen kurzen Text aus einem kleinen eigenen Materialbestand wählen. Die Vorschau zeigt das Material. Der maximale Coinbetrag lässt sich je Aufgabe zwischen 0 und 10.000 einstellen; der letzte Betrag wird für dieses Kind vorbelegt. Noch nicht begonnene Aufgaben lassen sich ändern. Nach Beginn bleiben Material und Coinvereinbarung fest; Aufgaben können zurückgenommen werden, ohne den erreichten Anteil zu verlieren.
 
@@ -134,7 +136,7 @@ Die neuen Wortverläufe und Kontextausschnitte werden nicht zusätzlich an ntfy 
 
 ## Entwicklung
 
-Die Umsetzung für Version 1.3.0 ist im [Entwicklungsplan](docs/entwicklungsplan-rechtschreibfoerderung.md) beschrieben. Das zugrunde liegende [Konzept](docs/konzept-rechtschreibfoerderung.md) enthält Anforderungen und Akzeptanzkriterien. Der [Prüfbericht](docs/pruefbericht-1.3.0.md) nennt technische Nachweise und offene Prüfungen mit echten Eltern und Kindern.
+Die Umsetzung für Version 1.3.0 ist im [Entwicklungsplan](docs/entwicklungsplan-rechtschreibfoerderung.md) beschrieben. Das zugrunde liegende [Konzept](docs/konzept-rechtschreibfoerderung.md) enthält Anforderungen und Akzeptanzkriterien. Der [ursprüngliche Prüfbericht](docs/pruefbericht-1.3.0.md) nennt technische Nachweise und offene Prüfungen mit echten Eltern und Kindern. Die Korrekturen in 1.3.1 sind im [ergänzenden Prüfbericht](docs/pruefbericht-1.3.1.md) beschrieben.
 
 Die Quellen bestehen aus HTML, CSS und JavaScript. Für den Betrieb gibt es keinen Paketmanager oder Build-Schritt. Die Updater-Tests verwenden den integrierten Test-Runner von Node.js (Version 22 oder neuer):
 
@@ -152,9 +154,10 @@ Die neuen Browserprüfungen laufen mit denselben Voraussetzungen:
 node tests/learning-browser.cjs
 node tests/learning-storage-browser.cjs
 node tests/learning-edge-browser.cjs
+node tests/correction-browser.cjs
 ```
 
-Sie verwenden künstliche Profile und eigene lokale Server auf den Ports 8767–8769. Die Ordnerprüfung simuliert Browser-Dateihandles, verwendet aber die tatsächliche Speicher- und Verschlüsselungslogik. Die Sicherung wird über den echten Download-/Wiederherstellungsablauf geprüft. Das ersetzt keinen Test des Betriebssystemdialogs auf einem Windows-PC oder Mac. Screenshots und temporäre Sicherungen liegen unter `/tmp`, nicht im Repository.
+Sie verwenden künstliche Profile und eigene lokale Server auf den Ports 8767–8770. Die Korrekturprüfung verwendet das tatsächliche mitgelieferte Wörterbuch, prüft unter anderem „Rotze“ und „Popel“ sowie den gemeinsamen Editor für Wort-, Satzzeichen- und Grammatikstellen. Antworten der optionalen Onlineprüfung werden dabei simuliert. Die Ordnerprüfung simuliert Browser-Dateihandles, verwendet aber die tatsächliche Speicher- und Verschlüsselungslogik. Die Sicherung wird über den echten Download-/Wiederherstellungsablauf geprüft. Das ersetzt keinen Test des Betriebssystemdialogs auf einem Windows-PC oder Mac. Screenshots und temporäre Sicherungen liegen unter `/tmp`, nicht im Repository.
 
 Für die Entwicklung kann ein lokaler HTTP-Server verwendet werden:
 

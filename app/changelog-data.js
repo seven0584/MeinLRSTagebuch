@@ -1,6 +1,21 @@
 // Generated from CHANGELOG.md by scripts/prepare-update.cjs.
 window.TB_CHANGELOG = [
   {
+    "id": "2e30ef977905f8aa",
+    "title": "Version 1.3.1: Klarer korrigieren, unbekannte Wörter ehrlich benennen — 14. Oktober 2026",
+    "lines": [
+      "",
+      "- **Korrekturen bleiben an einer Stelle:** Wörter, Satzzeichen und Grammatik werden im selben Korrekturbereich unter dem Text bearbeitet. Für Satzzeichen oder mehrere Wörter erscheint dort der betroffene Satz beziehungsweise Abschnitt. Der bisherige Sprung zurück zum oberen Schreibfeld entfällt. Das funktioniert auch bei eingeklappten freiwilligen Antworten.",
+      "- **„Rotze“ wird nicht mehr fälschlich beanstandet:** Eine zusätzliche Groß-/Kleinschreibungsregel hatte das vom Wörterbuch akzeptierte Wort abgewertet. Diese unsichere Regel wurde entfernt.",
+      "- **„Nicht im Wörterbuch“ bedeutet nicht „falsch“:** Fehlt eine Schreibweise wie „Popel“, sagt die App das ausdrücklich. Sie erfindet dafür keinen Nomen- oder anderen Regeltipp und keinen vermeintlich sicheren Verbesserungsvorschlag. Das Kind kann selbst verbessern oder genau diese Wortstelle zur gemeinsamen Prüfung offenlassen. Die App verwendet Hunspell/igerman98, keinen Duden.",
+      "- **Vorsichtigere Auswertung:** Unbekannte Wörter bleiben ungeklärt und erzeugen keine Empfehlung für eine bestimmte Fehlerklasse. Alte, noch ungeklärte automatische Zuordnungen zeigen bis zur erneuten Prüfung einen neutralen Hinweis. Elternentscheidungen und der gespeicherte Verlauf bleiben erhalten. Bei Diktaten mit vorgegebenem Zielwort und nachvollziehbaren Großschreibungsfällen gibt es weiterhin passende Tipps.",
+      "- **Anleitungen ergänzt:** Beide App-Hilfen und die Testanleitung erklären die gemeinsame Korrekturstelle und die Grenzen des Wörterbuchs.",
+      "",
+      "**Was müsst ihr tun?** Die neue ZIP vom Branch `dev` herunterladen und im Testordner nur `Tagebuch.html` und `app/` ersetzen. `config/`, `kinder/` und die Daten des Test-Browserprofils behalten. Danach neu öffnen und den aktuellen Text erneut prüfen. `main` bleibt unverändert; die automatische Update-Suche verteilt diese Testfassung nicht.",
+      ""
+    ]
+  },
+  {
     "id": "20f5312709e7273b",
     "title": "Version 1.3.0 — 14. Oktober 2026",
     "lines": [

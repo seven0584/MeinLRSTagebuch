@@ -35,7 +35,7 @@ window.TBLearningUI = (function(){
     function assignmentOptions(){return {category:$('#assignCategory').value,type:$('#assignType').value,count:$('#assignCount').value,coins:$('#assignCoins').value};}
     function olderDetails(cases){
       if(!cases.length)return '';
-      const groups=Object.keys(C.CATALOG).map(key=>({key,...C.catalog(key),cases:cases.filter(c=>c.category===key)})).filter(g=>g.cases.length).map(g=>({...g,total:g.cases.length}));
+      const groups=Object.keys(C.CATALOG).map(key=>({key,...C.catalog(key),cases:cases.filter(c=>C.caseRule(c).id===key)})).filter(g=>g.cases.length).map(g=>({...g,total:g.cases.length}));
       return '<details><summary>Ältere offene Stellen ('+cases.length+')</summary>'+details({cases,groups})+'</details>';
     }
     function details(data){
@@ -83,7 +83,7 @@ window.TBLearningUI = (function(){
     function openWords(){
       const cs=C.ensure(state()).cases.filter(c=>c.kind==='diary'&&['deferred','contested','accepted'].includes(c.status));
       $('#openLearning').hidden=!cs.length;
-      $('#openLearning').innerHTML=cs.length?'<details><summary>Wörter und Rückmeldungen ('+cs.length+')</summary><p>Du kannst weiterprobieren oder eine Wortstelle mit deinen Eltern teilen.</p>'+cs.map(c=>'<div class="word-case"><b>'+esc(c.current)+'</b> · '+esc(formats[c.status])+(c.reviewNote?'<p>Hinweis deiner Eltern: '+esc(c.reviewNote)+'</p>':'')+'<p>'+esc(C.catalog(c.category).hint)+'</p><label class="field">Deine neue Schreibweise<input data-retry-word="'+c.id+'" value="'+esc(c.current)+'"></label><div class="below"><button class="btn-ghost" data-retry="'+c.id+'">Dieses Wort prüfen</button><button class="btn-ghost" data-share="'+c.id+'">'+(c.shared?'Teilen beenden':'Wort und Zusammenhang mit Eltern teilen')+'</button></div></div>').join('')+'</details>':'';
+      $('#openLearning').innerHTML=cs.length?'<details><summary>Wörter und Rückmeldungen ('+cs.length+')</summary><p>Du kannst weiterprobieren oder eine Wortstelle mit deinen Eltern teilen.</p>'+cs.map(c=>'<div class="word-case"><b>'+esc(c.current)+'</b> · '+esc(formats[c.status])+(c.reviewNote?'<p>Hinweis deiner Eltern: '+esc(c.reviewNote)+'</p>':'')+'<p>'+esc(c.status==='accepted'?'Diese Schreibweise ist akzeptiert. Du musst sie nicht verbessern.':C.caseRule(c).hint)+'</p><label class="field">Deine neue Schreibweise<input data-retry-word="'+c.id+'" value="'+esc(c.current)+'"></label><div class="below"><button class="btn-ghost" data-retry="'+c.id+'">Dieses Wort prüfen</button><button class="btn-ghost" data-share="'+c.id+'">'+(c.shared?'Teilen beenden':'Wort und Zusammenhang mit Eltern teilen')+'</button></div></div>').join('')+'</details>':'';
       $('#openLearning').querySelectorAll('[data-share]').forEach(b=>b.onclick=()=>{run(()=>{const c=C.getCase(state(),b.dataset.share);c.shared=!c.shared;return true;});openWords();});
       $('#openLearning').querySelectorAll('[data-retry]').forEach(b=>b.onclick=()=>{const c=C.getCase(state(),b.dataset.retry),value=$('#openLearning [data-retry-word="'+c.id+'"]').value;a.revisit(c,value);openWords();});
     }

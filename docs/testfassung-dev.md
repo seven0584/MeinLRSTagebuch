@@ -1,6 +1,6 @@
 # Testfassung herunterladen und ausprobieren
 
-Version 1.3.0 wird zuerst auf `dev` erprobt. Die bisherige Fassung auf `main` bleibt bestehen. Ein reguläres Release ist diese Testfassung noch nicht.
+Version 1.3.1 wird zuerst auf `dev` erprobt. Die bisherige Fassung auf `main` bleibt bestehen. Ein reguläres Release ist diese Testfassung noch nicht.
 
 ## Herunterladen und starten
 
@@ -9,7 +9,7 @@ Version 1.3.0 wird zuerst auf `dev` erprobt. Die bisherige Fassung auf `main` bl
 3. Die ZIP vollständig in einen neuen Ordner entpacken, beispielsweise `Tagebuch-Test`. Nicht über eure bisherige App kopieren. `Tagebuch.html` und der ganze Ordner `app/` müssen zusammenbleiben; nicht direkt aus der ZIP starten.
 4. In Chrome oder Edge über das Profilsymbol ein **zusätzliches Browserprofil** für den Test erstellen. Dafür ist keine Anmeldung oder Synchronisierung nötig. Das Profil dauerhaft behalten, wenn ihr später weiterprüfen wollt. Ein anderer Dateiordner allein trennt die Browserdaten nicht zuverlässig.
 5. Im Testprofil `Tagebuch.html` öffnen. Bei der Ordnerauswahl ausschließlich den neuen Testordner freigeben. Alternativ **nur im Browser speichern** wählen.
-6. Eine Eltern-PIN setzen und zunächst ein erfundenes Testkind anlegen. Die App zeigt Version **1.3.0**; unter der Glocke steht der Hinweis zur Testfassung.
+6. Eine Eltern-PIN setzen und zunächst ein erfundenes Testkind anlegen. Unter der Glocke stehen die Änderungen zu **1.3.1** und der Hinweis zur Testfassung.
 
 Eine Installation oder ein Programmierwerkzeug ist dafür nicht erforderlich. Verwendet am Windows-PC oder Mac einen aktuellen Chrome oder Edge. Auf dem jeweiligen Gerät auch die Diktatstimme anhören; automatische Tests können deren Verständlichkeit nicht beurteilen.
 
@@ -18,7 +18,9 @@ Eine Installation oder ein Programmierwerkzeug ist dafür nicht erforderlich. Ve
 | Schritt | Was sollte passieren? |
 | --- | --- |
 | Als Eltern unter **Gemeinsam starten** ein kleines Ziel einstellen und den Beispieltext ansehen. | Es ist erkennbar, wann das Ziel erreicht wird und wann Tagebuch-Coins verfügbar werden. |
-| Als Kind einen kurzen Text schreiben, etwa „Die Sone scheint auf die Blume.“; vorher das Testziel passend klein einstellen. | Der Text wird geprüft. An der markierten Wortstelle kann das Kind direkt „Sonne“ eingeben oder einen Tipp öffnen. |
+| Als Kind einen kurzen Text schreiben, etwa „Die Sone scheint auf die Blume.“; vorher das Testziel passend klein einstellen. | Die App kennt „Sone“ nicht und sagt ausdrücklich, dass ein Wort trotzdem richtig sein kann. Das Kind kann selbst „Sonne“ eingeben; ein vermeintlich sicherer Regeltipp aus einem bloßen Wörterbuchvorschlag entfällt. |
+| „Ich sehe Rotze und Popel.“ prüfen. | „Rotze“ wird nicht fälschlich wegen Groß-/Kleinschreibung markiert. Bei „Popel“ steht „Nicht im Wörterbuch“, ohne Nomen-Tipp. |
+| Einen Punkt weglassen oder eine markierte Grammatikstelle bearbeiten. | Die Korrektur bleibt im selben Bereich. Dort steht für Satzzeichen und Grammatik der betroffene Satz oder Abschnitt zum Bearbeiten. |
 | Bei einem Wort **Hier weiß ich nicht weiter** wählen. | Nur diese Stelle bleibt offen; der Originaltext wird nicht automatisch ersetzt. Wenn die übrigen Anforderungen erfüllt sind, lässt sich der Eintrag abschließen. |
 | Unter **Wörter und Rückmeldungen** eine Stelle ausdrücklich mit den Eltern teilen. | Die Eltern können die freigegebene Stelle sehen. Private neue Tagebuchstellen bleiben ohne Freigabe verborgen. |
 | In der Elternübersicht ein Wort-Diktat mit zwei Wörtern und höchstens 12 Extra-Coins anbieten. | Beim Kind erscheint unter **Üben → Für dich angeboten** eine freiwillige Aufgabe. |

@@ -4,7 +4,7 @@
   else root.TBLearning = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function(){
   'use strict';
-  const VERSION = 1, CATALOG_VERSION = '2026-10-14.1';
+  const VERSION = 1, CATALOG_VERSION = '2026-10-14.2';
   const id = prefix => prefix + (globalThis.crypto?.randomUUID?.() || Date.now().toString(36) + Math.random().toString(36).slice(2));
   const day = (now = Date.now()) => { const d = new Date(now); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); };
   const words = text => [...String(text || '').matchAll(/[\p{L}]+(?:['’\-][\p{L}]+)*/gu)].map(m => ({w:m[0], i:m.index}));
@@ -26,6 +26,7 @@
     auslassung: ['Buchstaben ergänzen', 'Buchstabenfolge', 'Sprich das Wort langsam und untersuche seine Teile. Manche Laute schreibt man mit mehreren Buchstaben, zum Beispiel sch.', 'Vergleiche Silbe für Silbe. Bei ie oder einem stummen h hilft auch die Schreibweise der Wortfamilie.', ['Blume','Schule','Garten','Fenster','Wolke']],
     zusatz: ['Zusätzliche Buchstaben prüfen', 'Buchstabenfolge', 'Vergleiche die Buchstaben mit der gemeinten Schreibweise. Nicht jeder geschriebene Buchstabe ist einzeln hörbar: sch, ie und stummes h.', 'Prüfe das Wort in kleinen Teilen. Ein fehlender Laut ist kein sicherer Grund, einen Buchstaben zu streichen.', ['Garten','Fenster','Wolke','Blume','Schule']],
     umstellung: ['Reihenfolge prüfen', 'Buchstabenfolge', 'Sprich das Wort langsam. Vergleiche die Reihenfolge der Wortteile mit den Buchstaben.', 'Gehe die Buchstaben nacheinander durch. Ein Tippfehler ist ebenfalls möglich.', ['Hund','Blume','Garten','Schule','Wolke']],
+    unknown: ['Nicht im Wörterbuch', 'Noch unklar', 'Mein Wörterbuch kennt diese Schreibweise nicht. Das Wort kann trotzdem richtig sein. Deshalb habe ich dafür keinen sicheren Rechtschreibtipp.', 'Du kannst selbst verbessern oder „Meine Schreibweise stimmt, bitte prüfen“ wählen. Dann bleibt nur dieses Wort zum gemeinsamen Anschauen offen.', []],
     other: ['Gemeinsam prüfen', 'Noch unklar', 'Die App ist sich bei diesem Wort nicht sicher. Du kannst die Stelle zum gemeinsamen Anschauen offenlassen.', 'Ein Name, ein anderes gemeintes Wort oder eine zulässige Schreibweise kann die Prüfung verwirren.', []]
   };
   const TEXTS = {
@@ -52,6 +53,12 @@
     return {level:next,days:[0,1,3,7,14,30][next],mastered:!!correct&&prior===5};
   }
   function catalog(key){ const x = CATALOG[key] || CATALOG.other; return {id:CATALOG[key]?key:'other', title:x[0], area:x[1], hint:x[2], more:x[3], pool:x[4], version:CATALOG_VERSION}; }
+  function caseRule(c){
+    // Old automatic guesses remain in the history, but must not keep supplying
+    // a rule hint or recommendation while the word is still unclarified.
+    const outdated=c.kind==='diary' && c.catalogVersion!==CATALOG_VERSION && ['active','deferred','contested'].includes(c.status) && !['confirmed','accepted'].includes(c.review);
+    return catalog(outdated?'other':c.category);
+  }
   function ensure(child){
     if(child.learning?.schema > VERSION) throw Error('Diese Lerndaten stammen aus einer neueren App-Version. Bitte die App aktualisieren; die Daten wurden nicht überschrieben.');
     if(!child.learning) child.learning = {schema:VERSION, since:Date.now(), cases:[], tasks:[], defaultCoins:20, draft:null};
@@ -95,12 +102,12 @@
       if(t.w!==c.current){event(c,'attempt',{value:t.w},now);c.current=t.w;}
       if(match){
         if(!same || c.status==='resolved'){c.status='active';c.review='unreviewed';}
-        c.context=context;c.expected=match.fix||null;c.category=catalog(match.fine).id;
+        c.context=context;c.expected=match.fix||null;c.category=catalog(match.fine).id;c.catalogVersion=CATALOG_VERSION;
         match.caseId=c.id;taken.add(match);
       }else if(changed && sameContext && corrections.some(x=>x.caseId===c.id && x.word===t.w)){
         const correction=corrections.find(x=>x.caseId===c.id && x.word===t.w);
         event(c,'reference_checked',{previous:c.expected,value:t.w},now);
-        c.expected=t.w;c.category=catalog(correction.category).id;c.status='resolved';c.review='unreviewed';
+        c.expected=t.w;c.category=catalog(correction.category).id;c.catalogVersion=CATALOG_VERSION;c.status='resolved';c.review='unreviewed';
         event(c,'resolved',{afterHint:c.events.some(e=>e.type==='hint')},now);
       }else if(t.w===c.expected && c.status!=='resolved'){
         c.status='resolved';event(c,'resolved',{afterHint:c.events.some(e=>e.type==='hint')},now);
@@ -133,7 +140,7 @@
   function finishDraft(child, entryId){const l=ensure(child),summary=draftSummary(child);for(const c of l.cases.filter(c=>c.draftId===l.draft?.id))c.entryId=entryId;l.draft=null;return summary;}
   function stats(child, now=Date.now()){
     const l=ensure(child),cut=now-30*86400000,cs=l.cases.filter(c=>c.createdAt>=cut),groups={};
-    for(const c of cs){const key=catalog(c.category).id;(groups[key] ||= []).push(c);}
+    for(const c of cs){const key=caseRule(c).id;(groups[key] ||= []).push(c);}
     const entries=(child.entries||[]).filter(e=>e.date>=day(now-29*86400000)&&e.date<=day(now));
     return {writing:{entries:entries.length,words:entries.reduce((sum,e)=>sum+(e.words??words([e.text,...Object.values(e.answers||{})].join(' ')).length),0)},since:l.since,summary:summarize(cs),cases:cs,groups:Object.entries(groups).map(([key,cases])=>({key,...catalog(key),...summarize(cases),cases})), olderOpen:l.cases.filter(c=>c.createdAt<cut&&(c.pendingReview||['deferred','contested'].includes(c.status))),legacy:(child.entries||[]).filter(e=>!e.learningSummary).length};
   }
@@ -215,5 +222,5 @@
     if(c.taskId){const t=getTask(child,c.taskId),it=t.items[c.itemIndex];it.accepted=result==='accepted'&&it.attempts.some(a=>/\p{L}/u.test(a.value));if(['complete','partial','withdrawn'].includes(t.status))settleTask(child,t.id,t.status==='withdrawn');}
     return c;
   }
-  return {VERSION,CATALOG_VERSION,CATALOG,TEXTS,catalog,nextReview,ensure,words,alignment,reconcile,getCase,defer,hint,hintUnclear,draftSummary,finishDraft,stats,recommendations,materials,assign,editTask,getTask,attempt,taskHint,taskHintUnclear,skipTaskWord,submitText,payable,settleTask,review,day};
+  return {VERSION,CATALOG_VERSION,CATALOG,TEXTS,catalog,caseRule,nextReview,ensure,words,alignment,reconcile,getCase,defer,hint,hintUnclear,draftSummary,finishDraft,stats,recommendations,materials,assign,editTask,getTask,attempt,taskHint,taskHintUnclear,skipTaskWord,submitText,payable,settleTask,review,day};
 });
