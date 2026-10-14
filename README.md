@@ -38,6 +38,12 @@ Die bisherigen Programmdateien werden in `.tagebuch-update-backup/` gesichert. B
 
 Ohne Internet oder bei einem fehlgeschlagenen Update-Check läuft die installierte App weiter. Die Prüfung fragt `updates.json` und bei bestätigter Installation die Programmdateien von `raw.githubusercontent.com/seven0584/MeinLRSTagebuch/main/` ab. Tagebuchtexte oder Einstellungen werden dabei nicht übermittelt. Das Repository muss für diesen Ablauf öffentlich zugänglich sein; der Updater speichert keine GitHub-Zugangsdaten. Die Prüfungen sichern die Übertragung und erkennen beschädigte Dateien; die Quelle der Programmupdates bleibt der vertrauenswürdige Stand dieses Repositories.
 
+## Shop bearbeiten
+
+Im Elternbereich unter **Belohnungen** gilt der Shop für das oben ausgewählte Kind. Namen, Preise und Symbole werden beim Bearbeiten automatisch gespeichert, sobald Name und Preis gültig sind. Die Schaltfläche 😀 neben dem Symbolfeld öffnet eine Emoji-Auswahl. Alternativ ein eigenes Symbol direkt ins Feld eingeben. Änderungen stehen dem Kind beim nächsten Öffnen seines Shops sofort zur Verfügung.
+
+Bei leeren Namen oder Preisen unter 1 Coin bleibt der letzte gültige Stand erhalten; die App zeigt einen Hinweis. **Löschen** entfernt einen Artikel ausdrücklich. Der Preis wird in ganzen Coins gespeichert.
+
 ## Dateien und Speicherung
 
 ```text
@@ -80,6 +86,8 @@ Die Quellen bestehen aus HTML, CSS und JavaScript. Für den Betrieb gibt es kein
 ```bash
 node --test tests/update-core.test.cjs
 ```
+
+Für die Shop-Korrekturen gibt es zusätzlich einen Browser-Regressionstest. Wenn Python 3, Playwright und Chromium verfügbar sind, `node tests/shop-browser.cjs` ausführen. Der Test startet einen eigenen lokalen Server auf Port 8765 und verwendet ausschließlich Testprofile. Ein abweichender Chromium-Pfad kann über `CHROMIUM_PATH` gesetzt werden.
 
 Für die Entwicklung kann ein lokaler HTTP-Server verwendet werden:
 

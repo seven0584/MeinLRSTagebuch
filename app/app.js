@@ -1098,24 +1098,60 @@
     $("#parentCoinInfo").textContent = "Kontostand: " + fmtC(balance()) + " Coins" + (reserved() ? " (davon " + fmtC(reserved()) + " reserviert)" : "") + ". Diese Woche gesammelt, noch nicht gutgeschrieben: " + fmtC(weekPending().sum) + ".";
     document.querySelectorAll("[data-ok]").forEach(b => b.onclick = () => decide(b.dataset.ok, true));
     document.querySelectorAll("[data-no]").forEach(b => b.onclick = () => decide(b.dataset.no, false));
-    $("#itemEditor").innerHTML = r.items.map(it => '<div class="itemrow" data-row="' + esc(it.id) + '"><input class="ic" value="' + esc(it.icon || "") + '" aria-label="Symbol" maxlength="4"><input class="nm" value="' + esc(it.name) + '" aria-label="Name"><input class="num pr" type="number" min="1" value="' + it.price + '" aria-label="Preis in Coins"> Coins <button type="button" class="btn-ghost" data-del="' + esc(it.id) + '">Löschen</button></div>').join("") +
+    $("#itemEditor").innerHTML = '<p class="note">Der Shop gilt für das oben ausgewählte Kind. Name, Preis und Symbol werden beim Bearbeiten automatisch gespeichert.</p>' + r.items.map(it => '<div class="itemrow" data-row="' + esc(it.id) + '"><input class="ic" value="' + esc(it.icon || "") + '" aria-label="Symbol" maxlength="64"><button type="button" class="btn-ghost" data-pick-icon="' + esc(it.id) + '" aria-label="Symbol auswählen">😀</button><input class="nm" value="' + esc(it.name) + '" aria-label="Name"><input class="num pr" type="number" min="1" value="' + it.price + '" aria-label="Preis in Coins"> Coins <button type="button" class="btn-ghost" data-del="' + esc(it.id) + '">Löschen</button></div>').join("") +
       '<div class="below"><button type="button" class="btn" id="saveItems">Shop speichern</button><span class="status" id="itemMsg" role="status"></span></div>';
+    $("#itemEditor").querySelectorAll("[data-row]").forEach(row => {
+      const update = () => {
+        const item = r.items.find(x => x.id === row.dataset.row);
+        if(!item) return;
+        const name = row.querySelector(".nm").value.trim(), price = Number(row.querySelector(".pr").value);
+        if(!name || !Number.isFinite(price) || price < 1){
+          $("#itemMsg").textContent = "Bitte einen Namen und einen Preis ab 1 Coin eingeben. Der letzte gültige Stand bleibt gespeichert.";
+          return;
+        }
+        Object.assign(item, { name, icon: row.querySelector(".ic").value.trim() || "🎁", price: Math.floor(price) });
+        save(); $("#itemMsg").textContent = "Automatisch gespeichert.";
+      };
+      row.querySelectorAll("input").forEach(input => input.oninput = update);
+      row.querySelector("[data-pick-icon]").onclick = () => pickShopIcon(row.querySelector(".ic"));
+    });
     document.querySelectorAll("[data-del]").forEach(b => b.onclick = () => { r.items = r.items.filter(x => x.id !== b.dataset.del); save(); renderRewardParent(); });
     $("#saveItems").onclick = () => {
-      r.items = [...document.querySelectorAll("[data-row]")].map(row => ({ id: row.dataset.row, icon: row.querySelector(".ic").value.trim() || "🎁", name: row.querySelector(".nm").value.trim(), price: Math.max(1, Math.floor(Number(row.querySelector(".pr").value) || 1)) })).filter(x => x.name);
+      const rows = [...$("#itemEditor").querySelectorAll("[data-row]")];
+      if(rows.some(row => !row.querySelector(".nm").value.trim() || !Number.isFinite(Number(row.querySelector(".pr").value)) || Number(row.querySelector(".pr").value) < 1)){
+        $("#itemMsg").textContent = "Bitte allen Artikeln einen Namen und einen Preis ab 1 Coin geben."; return;
+      }
+      r.items = rows.map(row => ({ id: row.dataset.row, icon: row.querySelector(".ic").value.trim() || "🎁", name: row.querySelector(".nm").value.trim(), price: Math.floor(Number(row.querySelector(".pr").value)) }));
       save(); $("#itemMsg").textContent = "Gespeichert.";
     };
     const c = r.cfg;
     $("#cfgSent").value = c.perSentence; $("#cfgWord").value = c.perWord; $("#cfgComma").value = c.comma; $("#cfgDays").value = c.days; $("#cfgFirst").checked = !!c.firstOnly;
     $("#ledgerList").innerHTML = r.ledger.slice().reverse().slice(0, 40).map(l => '<li><span class="st ' + l.type + '">' + ({ credit:"Gutschrift", spend:"Einkauf", forfeit:"verfallen", adjust:"Korrektur" }[l.type] || l.type) + '</span><b>' + (l.amount > 0 ? "+" : "") + fmtC(l.amount) + '</b><span>' + esc(l.note || "") + '</span><span class="when">' + new Date(l.at).toLocaleDateString("de-DE") + '</span></li>').join("") || '<li class="empty">Noch keine Buchungen.</li>';
   }
+  function pickShopIcon(input){
+    const dialog = $("#shopIconDialog"), choices = $("#shopIconChoices");
+    choices.replaceChildren();
+    for(const [category, symbols] of Object.entries(EMOJI)){
+      const heading = document.createElement("h3"); heading.textContent = category; choices.append(heading);
+      const grid = document.createElement("div"); grid.className = "shop-symbols";
+      for(const symbol of symbols.split(" ")){
+        const button = document.createElement("button"); button.type = "button"; button.textContent = symbol;
+        button.setAttribute("aria-label", "Symbol " + symbol + " wählen");
+        button.onclick = () => { input.value = symbol; input.dispatchEvent(new Event("input", { bubbles:true })); dialog.close(); };
+        grid.append(button);
+      }
+      choices.append(grid);
+    }
+    dialog.showModal();
+  }
+  $("#shopIconClose").onclick = () => $("#shopIconDialog").close();
   function decide(id, ok){
     const r = R(), o = r.orders.find(x => x.id === id); if(!o || o.status !== "open") return;
     o.status = ok ? "done" : "rejected"; o.decidedAt = Date.now();
     if(ok) r.ledger.push({ id:"l" + Date.now(), at:Date.now(), type:"spend", amount:-o.total, note:o.qty + " × " + o.name });
     save(); renderRewardParent(); renderOverviewCards();
   }
-  $("#addItem").onclick = () => { R().items.push({ id:"i" + Date.now(), icon:"🎁", name:"Neuer Artikel", price:50 }); save(); renderRewardParent(); };
+  $("#addItem").onclick = () => { R().items.push({ id:"i" + crypto.randomUUID(), icon:"🎁", name:"Neuer Artikel", price:50 }); save(); renderRewardParent(); };
   $("#saveCfg").onclick = () => {
     const c = R().cfg, num = (id, min, max) => Math.min(max, Math.max(min, Math.floor(Number($(id).value) || 0)));
     c.perSentence = num("#cfgSent", 0, 1000); c.perWord = num("#cfgWord", 0, 100); c.comma = num("#cfgComma", 0, 100); c.days = num("#cfgDays", 1, 7); c.firstOnly = $("#cfgFirst").checked;

@@ -15,6 +15,9 @@
 .newsentry p{margin:.5rem 0}
 .newsentry ul{padding-left:1.4rem}
 .newsnew{display:inline-block;margin-left:.5rem;padding:.1rem .5rem;border-radius:1rem;background:var(--greensoft);color:var(--green);font-size:.8rem}
+.shop-symbols{display:grid;grid-template-columns:repeat(auto-fill,minmax(2.8rem,1fr));gap:.4rem;margin-bottom:1rem}
+.shop-symbols button{min-height:2.8rem;background:var(--card);border:1px solid var(--border);border-radius:8px;font-size:1.5rem;cursor:pointer}
+.shop-symbols button:focus-visible{outline:3px solid var(--ink)}
 @media print{.newsbar,.newsdialog{display:none!important}}
 :root{
   --bg:#E9EEF5; --paper:#FCFCF7; --line:#CCD9EC; --margin:#EDB1B1;
@@ -264,7 +267,7 @@ header.bar{justify-content:flex-start;align-items:center}
 .rulegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:.6rem}
 .itemrow{display:flex;gap:.4rem;align-items:center;margin:.35rem 0;flex-wrap:wrap}
 .itemrow input{font:inherit;padding:.35rem .5rem;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text)}
-.itemrow .ic{width:3.2rem;text-align:center}.itemrow .nm{flex:1;min-width:12rem}
+.itemrow .ic{width:4rem;text-align:center}.itemrow .nm{flex:1;min-width:12rem}
 .coinwin{margin-top:.6rem;background:#fff8dc;border-radius:8px;padding:.6rem .9rem;color:#6b4e00}
 @media (prefers-color-scheme: dark){ .coinwin{background:#3b3212;color:#ffe58a} .st.open{background:#4a3c10;color:#ffe58a} }
 /* emoji popover + drawing modal (they float, so the page does not grow) */

@@ -1,6 +1,21 @@
 // Generated from CHANGELOG.md by scripts/prepare-update.cjs.
 window.TB_CHANGELOG = [
   {
+    "id": "7fabdcd723ef2b95",
+    "title": "Version 1.1.1: Shop-Artikel zuverlässig bearbeiten — 14. Oktober 2026",
+    "lines": [
+      "",
+      "- Namen, Preise und Symbole im Eltern-Shop werden nun während der Bearbeitung automatisch gespeichert. Gültige Änderungen sind nach dem Wechsel zum Kind sofort im Shop sichtbar, auch ohne zusätzlichen Klick auf „Shop speichern“.",
+      "- Beim Hinzufügen oder Löschen eines weiteren Artikels bleiben bereits gespeicherte Änderungen an anderen Artikeln erhalten.",
+      "- Neben dem Symbolfeld öffnet die Schaltfläche 😀 eine Auswahl mit Emojis. Ihr könnt ein Symbol anklicken oder weiterhin direkt in das Feld eingeben. Auch längere Emojis werden unterstützt.",
+      "- Bei einem leeren Namen oder einem ungültigen Preis zeigt die App einen Hinweis und behält den letzten gültigen Stand. Ein Artikel wird nicht mehr durch einen versehentlich leeren Namen beim Speichern entfernt.",
+      "- Ein Hinweis erklärt, dass der Shop für das im Elternbereich ausgewählte Kind eingestellt wird. Die Shops anderer Kinder werden nicht verändert.",
+      "",
+      "**Was müsst ihr tun?** Version 1.1.1 installieren und die App neu laden. Bereits gespeicherte Artikel bleiben erhalten. Eingaben, die mit einer älteren Version verloren gegangen sind, müsst ihr erneut eintragen.",
+      ""
+    ]
+  },
+  {
     "id": "33f9942f89a27768",
     "title": "Version 1.1.0: Die Neuerungen direkt in der App lesen — 14. Oktober 2026",
     "lines": [
