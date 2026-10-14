@@ -8,6 +8,20 @@
 
 </head>
 <body>
+<section id="startupProblem" class="warn" hidden role="alert">
+  <h2>Das Tagebuch braucht Hilfe beim Start</h2>
+  <p><b>Für Kinder:</b> Bitte hol einen Erwachsenen. Lösche nichts. Dein Tagebuch muss erst wieder richtig geöffnet werden.</p>
+  <p id="startupReason">Ein Programmteil konnte nicht geladen werden.</p>
+  <p><b>Für Eltern:</b> Öffnet die App einmal neu. Bleibt der Hinweis, ladet die vollständige aktuelle Version von <a href="https://github.com/seven0584/MeinLRSTagebuch/releases/latest" target="_blank" rel="noopener">GitHub – neueste Veröffentlichung</a> herunter. Entpackt alle Programmdateien zusammen. Ersetzt nur <code>Tagebuch.html</code> und <code>app</code>; behaltet <code>config</code> und <code>kinder</code>. Löscht keine Browserdaten. Verwendet denselben Browser und Speicherort wie bisher.</p>
+  <p>Wenn die App wieder startet: im Elternbereich unter „Einstellungen → Speicherort“ den bisherigen Ordner verbinden. Eine Sicherung nur gezielt über „Sicherung wiederherstellen“ einspielen. Bleibt das Problem, nennt bei einer Fehlermeldung die App-Version und den Hinweis hier, ohne private Tagebuchtexte zu veröffentlichen.</p>
+</section>
+<noscript><p>Bitte JavaScript im Browser erlauben und die App neu öffnen. Kinder: Holt dafür einen Erwachsenen.</p></noscript>
+<script>
+  // Independent of app files: also works when an update left a program file missing.
+  window.TBStarted=false;
+  setTimeout(function(){if(!window.TBStarted)document.getElementById('startupProblem').hidden=false;},8000);
+</script>
+<p id="learningMessage" class="warn" tabindex="-1" role="alert" hidden></p>
 <div class="newsbar">
   <button type="button" id="newsBell" class="newsbell" aria-label="Änderungsübersicht öffnen" aria-haspopup="dialog" aria-controls="newsDialog">
     <span aria-hidden="true">🔔</span><span id="newsBadge" class="newsbadge" aria-hidden="true" hidden></span>
@@ -51,10 +65,10 @@
       <h1>Eltern</h1>
     </header>
     <div id="pinBox"></div>
-    <div id="pinBox"></div>
     <div id="parentArea" hidden>
     <div class="pwrap">
       <nav class="pmenu" aria-label="Elternbereich">
+        <button type="button" class="pm" data-go="setup">🌱 <span>Gemeinsam starten</span></button>
         <button type="button" class="pm active" data-go="overview">📊 <span>Übersicht</span></button>
         <button type="button" class="pm" data-go="spelling">🔤 <span>Rechtschreibung</span></button>
         <button type="button" class="pm" data-go="rewards">🪙 <span>Belohnungen</span><em class="pbadge" id="orderBadge" hidden></em></button>
@@ -65,12 +79,32 @@
       </nav>
       <div class="pmain">
         <div class="childbar"><label for="childSel">Kind:</label><select id="childSel"></select><button type="button" class="btn-ghost" id="addKidTop">＋ Kind anlegen</button></div>
+      <section class="psec" data-sec="setup" hidden>
+        <h2>Gemeinsam starten</h2>
+        <p id="setupIntro">Legt unter „Einstellungen“ zuerst ein Kind an. Wählt es oben aus. Vereinbart eine kleine, machbare Schreibaufgabe und probiert die Vorschau aus. Bestehende Einstellungen werden hier zusammen angezeigt.</p>
+        <div class="rulegrid">
+          <label class="field">Wörter insgesamt pro Tag<input id="setupWords" type="number" min="5" max="400" required></label>
+          <label class="field">Sätze pro Tag<input id="setupSentences" type="number" min="1" max="30" required></label>
+          <label class="field">Ein Satz zählt ab … Wörtern<input id="setupLength" type="number" min="1" max="30" required></label>
+          <label class="field">Schreibtage pro Woche<input id="setupDays" type="number" min="1" max="7" required></label>
+          <label class="field">Coins je zählendem Satz<input id="setupSentenceCoins" type="number" min="0" max="1000" required></label>
+          <label class="field">Coins je zusätzlichem Wort im Satz<input id="setupWordCoins" type="number" min="0" max="100" required></label>
+          <label class="field">Bonus je Satz mit Komma<input id="setupCommaCoins" type="number" min="0" max="100" required></label>
+        </div>
+        <label class="field">Probiert einen Beispieltext aus (wird nicht gespeichert)<textarea id="setupSample" rows="3">Heute spiele ich mit meinem Freund im Garten. Das macht uns beiden viel Spaß.</textarea></label>
+        <p id="setupPreview" class="learning-preview" aria-live="polite"></p>
+        <button type="button" class="btn" id="setupSave">Für dieses Kind speichern</button><p id="setupStatus" role="status"></p>
+        <p>Weitere Einstellungen zu Joker, Pausen, Spielzeit und Shop stehen unter „Belohnungen“. Unter „Einstellungen → Stimme und Diktat testen“ könnt ihr vor der ersten Übung eine Hörprobe machen.</p>
+      </section>
       <section class="psec" data-sec="overview" hidden>
         <h2 class="psec-title">📊 Übersicht</h2>
+      <div id="learningParent"></div>
+      <details><summary>Weitere Zahlen: Schreibtage, Coins, Shop und Speicherort</summary>
       <div class="pcards" id="pcards"></div>
       <h3>Übersicht der letzten 14 Tage</h3>
       <p class="note">Hier steht nur, wann und wie viel geschrieben wurde, nie der Text selbst.</p>
       <div class="tablewrap"><table class="stats" id="stats"></table></div>
+      </details>
 
       </section>
       <section class="psec" data-sec="spelling" hidden>
@@ -179,7 +213,7 @@
           <li>Beim ersten Start den Ordner „Tagebuch“ wählen und „Bearbeiten zulassen“ bestätigen. Fragt der Browser später erneut: „Bei jedem Besuch zulassen“.</li>
           <li>Auf „Eltern“ tippen, eine Eltern-PIN festlegen und unter ⚙️ Einstellungen die Kinder anlegen.</li>
           <li>Unter 🔔 Benachrichtigungen die Handy-App ntfy einrichten (QR-Code scannen).</li>
-          <li>Unter ✏️ Tagesauftrag und 🔤 Rechtschreibung festlegen, wie viel geschrieben werden soll und was als Satz zählt.</li></ol>
+          <li>Unter 🌱 <b>Gemeinsam starten</b> Schreibziel, Satzlänge, Schreibtage und Coins zusammen einstellen. Mit einem Beispieltext seht ihr, ob das Ziel erreicht wäre und wann die Coins verfügbar werden.</li></ol>
         </details>
         <details><summary>💾 Speichern, Sicherung, neuer PC</summary>
           <p>Bei gewählter Ordnerspeicherung wird alles automatisch im Tagebuch-Ordner gespeichert: Einstellungen in <code>config</code>, jedes Kind in <code>kinder/&lt;Name&gt;/files</code> mit Bildern und den Tagesständen der letzten 14 Tage. Die Kinderdaten sind verschlüsselt. Der Schlüssel liegt in der Familienkonfiguration; wer den gesamten Ordner lesen kann, kann daher auch die Daten entschlüsseln.</p>
@@ -192,13 +226,19 @@
           <p>Die PIN des Kindes kennt ihr nicht. Hat es sie vergessen, setzt ihr sie unter Einstellungen zurück. Das Kind legt dann eine neue fest und sieht einen Hinweis, dass ihr sie zurückgesetzt habt. Eure Eltern-PIN ändert ihr dort ebenfalls.</p>
         </details>
         <details><summary>✏️ Schreiben und Prüfen</summary>
-          <p>Das Kind schreibt frei oder beantwortet die drei Fragen. Alles zählt zusammen für den Tagesauftrag. Erst wenn genug geschrieben ist, lässt sich prüfen.</p>
+          <p>Das Kind schreibt frei oder klappt „Freiwillige Schreibideen“ auf und beantwortet eine der drei Fragen. Alles zählt zusammen für den Tagesauftrag. Erst wenn genug geschrieben ist, lässt sich prüfen.</p>
           <p><b>Ohne Internet</b> prüft das Tagebuch Rechtschreibung (Wörterbuch igerman98), Groß- und Kleinschreibung bei Begleitern und am Satzanfang sowie einfache Satzzeichen. <b>Mit Internet</b> kommt LanguageTool für Grammatik, das/dass und Kommas dazu.</p>
-          <p>Markiert wird nur die Stelle, nie die Lösung. Das Kind bekommt einen Tipp und auf Wunsch einen zweiten mit einem Trick. Hält es eine Markierung bei Satzzeichen, Grammatik oder Groß- und Kleinschreibung für falsch, kann es „🤔 Ich finde, das stimmt so“ wählen. Wie oft das passiert, seht ihr unter 🔤 Rechtschreibung. Unbekannte Namen markiert es mit „Das ist ein Name“. Die Liste dieser Wörter seht ihr ebenfalls dort.</p>
+          <p>Das Kind kann eine markierte Wortstelle direkt bearbeiten: neue Schreibweise eingeben und „Übernehmen und prüfen“ wählen. „Tipp“ und „Noch ein Tipp“ zeigen Hilfen. Hilft der Tipp nicht, kann das Kind das zurückmelden. „Hier weiß ich nicht weiter“ und „Meine Schreibweise stimmt, bitte prüfen“ lassen nur dieses Wort offen. Der Text bleibt so stehen; es gibt keine automatische Korrektur. Ein Eintrag kann mit offenen Wörtern abgeschlossen werden, wenn das bisherige Schreibziel und die übrigen Prüfungen erfüllt sind. Satzzeichen und mehrteilige Grammatikhinweise werden weiterhin im Originaltext bearbeitet. Unbekannte Namen lassen sich weiterhin als Name merken, getrennt je Kind.</p>
         </details>
         <details><summary>🔤 Fehlerstatistik und Übungen</summary>
-          <p>Unter 🔤 Rechtschreibung seht ihr die Fehlerarten der letzten 30 Tage, ohne Texte, und die Übungswörter in richtiger Schreibweise für ein Mini-Diktat.</p>
+          <p>Die <b>Übersicht</b> zeigt „Das klappt schon“, „Hier ist noch Hilfe gefragt“ und „Das könnt ihr ausprobieren“. Unter den Details werden verbesserte, ungelöste, beanstandete und ungeklärte Wortstellen getrennt gezeigt. Ein geöffneter Tipp beweist noch kein Verständnis. Ältere Zusammenfassungen stehen weiterhin unter Rechtschreibung und werden nicht nachträglich zu Wortverläufen umgerechnet.</p>
           <p>Unter „🎯 Üben“ gibt es zwei freiwillige Zusatzaufgaben: das <b>Wort-Diktat</b> (10 Wörter, vorgelesen, passend zu den häufigsten Fehlern, Wiederholung nach 1, 3, 7, 14 und 30 Tagen) und das <b>Kurz-Diktat</b> (kurze Texte aus dem Kinderlexikon Klexikon). Dafür braucht der Browser eine deutsche Vorlesestimme.</p>
+        </details>
+        <details><summary>🎯 Eine freiwillige Aufgabe mit Extra-Coins anbieten</summary>
+          <p>Unter <b>Übersicht → Eine freiwillige Aufgabe anbieten</b> wählt ihr das Thema, Wort-Diktat oder kurzen Text und die maximale Belohnung (auch 0 Coins). Beim Wort-Diktat sind 1 bis 5 Wörter möglich. Die Vorschau zeigt das Material vor dem Anbieten. Noch nicht begonnene Aufgaben lassen sich ändern. Nach Beginn bleibt die Vereinbarung bestehen; Zurücknehmen behält den schon erreichten Anteil.</p>
+          <p>Das Kind findet die Aufgabe unter <b>Üben → Für dich angeboten</b>. Die Aufgabe ist freiwillig, kann pausiert werden und blockiert das Tagebuch nie. Im Kurz-Diktat zählen die Wortschreibweisen, nicht die Satzzeichen. In angebotenen Aufgaben seht ihr die Antworten; beim privaten Tagebuch nur ausdrücklich geteilte Wortstellen und deren Zusammenhang.</p>
+          <p>Beispiel: 4 von 5 Wörtern bearbeitet, bis zu 20 Coins vereinbart → 16 Coins. Ein nach einem Tipp verbessertes Wort zählt. Ein nur offengelassenes Wort zählt noch nicht. Ganze Coins werden abgerundet. Ausgezahlt wird beim Aufgabenabschluss; später gibt es nur den noch fehlenden Anteil, nie doppelt. Leere Eingaben verdienen keine Coins. Eine zulässige eigene Antwort könnt ihr nach Prüfung anerkennen; geschlossene Aufgaben werden dann gegebenenfalls ergänzt.</p>
+          <p>Die automatischen Vorschläge beruhen auf mindestens drei verschiedenen zuordenbaren Wörtern an mindestens zwei Tagen innerhalb von 30 Tagen. Beanstandete, ungeklärte und akzeptierte App-Fehler liefern keinen solchen Vorschlag. Diese Grenze ist eine vorsichtige Produktregel, kein wissenschaftlicher Test. Bei wenig Daten könnt ihr eine kurze Übung selbst wählen.</p>
         </details>
         <details><summary>🔊 Stimme, Tempo und Hörprobe</summary>
           <p>Unter <b>Einstellungen → Stimme und Diktat testen</b> wählt ihr eine deutsche Stimme und das Sprechtempo. Die Auswahl wird automatisch gespeichert und gilt für Diktate, Fragen und das Vorlesen aller Kinder.</p>
@@ -211,7 +251,7 @@
           <p><b>Shop:</b> Ihr legt Artikel und Preise für das oben ausgewählte Kind fest. Gültige Änderungen an Name, Preis und Symbol werden automatisch gespeichert und sind beim nächsten Öffnen des Kinder-Shops sichtbar. Bei einem leeren Namen oder einem Preis unter 1 Coin bleibt der letzte gültige Stand erhalten; die App zeigt einen Hinweis. Die Schaltfläche 😀 neben dem Symbolfeld öffnet eine Emoji-Auswahl; eigene Symbole lassen sich auch direkt eingeben.</p>
           <p>Das Kind wünscht sich etwas, die Coins werden reserviert. Erst wenn ihr bestätigt, werden sie abgezogen. Zum Entfernen eines Artikels ausdrücklich <b>Löschen</b> wählen; ein leerer Name löscht ihn nicht.</p>
           <p><b>Joker:</b> Jeden Monat gibt es neue, das Kind kann sie sparen und für einen Tag seiner Wahl einsetzen, auch im Voraus. <b>Pausentage</b> (Urlaub, krank) tragt ihr selbst ein.</p>
-          <p><b>Spielzeit:</b> Nach dem Tagebucheintrag sind die Spiele freigeschaltet. Jede Zusatzaufgabe bringt Extra-Minuten. Die Zeit läuft nur, solange ein Spiel offen ist.</p>
+          <p><b>Spielzeit:</b> Nach dem Tagebucheintrag sind die Spiele freigeschaltet. Die bisherigen freien Diktate bringen Extra-Minuten. Neu angebotene Elternaufgaben haben ihre gesonderte Coinvereinbarung. Die Zeit läuft nur, solange ein Spiel offen ist.</p>
         </details>
         <details><summary>🔔 Benachrichtigungen</summary>
           <p>Die kostenlose App ntfy zeigt euch fertige Einträge, Einkaufswünsche, Joker, den Wochenbericht und auf Wunsch das Lesen an. Der Tagebuchtext wird nie verschickt. Kommt nichts an: den Link <code>https://ntfy.sh/&lt;Kanal&gt;</code> im Handy-Browser öffnen. Steht die Nachricht dort, liegt es an der App (Kanalname, Benachrichtigungen erlauben, Akku-Sparmodus).</p>
@@ -223,28 +263,28 @@
           <p>Die <b>Glocke oben rechts</b> öffnet die gesamte Änderungsübersicht, auch offline. Die Zahl zeigt noch ungelesene Einträge in diesem Browser. Beim Öffnen werden sie als gelesen markiert; dieser Lesestand gilt gemeinsam für alle Kinderprofile. Nach dem Löschen der Browserdaten erscheinen die Einträge wieder als neu.</p>
         </details>
         <details><summary>🔒 Was ihr seht und was nicht</summary>
-          <p>Im Elternbereich seht ihr Zahlen und Fehlerarten, aber keine Texte. Das Kind sieht seine Einträge nur mit seiner PIN. Ehrlich gesagt ist das ein Sichtschutz und kein Tresor: Wer am PC sitzt und die PIN zurücksetzt, käme an die Einträge. Das Kind würde das aber bemerken.</p>
+          <p>Im Elternbereich seht ihr Zahlen und vorläufige Fehlerarten. Neue private Tagebuchstellen und daraus entstandene Übungswörter werden nur gezeigt, wenn das Kind Wort und Zusammenhang freigibt. Die bisherigen alten Übungswörter bleiben sichtbar. Antworten auf von euch angebotene Aufgaben sind für euch sichtbar. Die neuen Wortverläufe werden nicht an ntfy geschickt. Das Kind sieht seine Einträge nur mit seiner PIN. Ehrlich gesagt ist das ein Sichtschutz und kein Tresor: Wer am PC sitzt und die PIN zurücksetzt, käme an die Einträge. Das Kind würde das aber bemerken.</p>
         </details>
         <details class="lrs"><summary>🧩 LRS: Wie das Tagebuch unterstützt</summary>
           <p>Das Tagebuch stellt <b>keine Diagnose</b>. Es hilft beim täglichen Üben und zeigt euch Muster, die ihr mit der Schule besprechen könnt.</p>
           <h4>Grundlage</h4>
           <p>Fehler werden nach den Rechtschreibstrategien eingeordnet, die auch in der Schule und in Fördermaterialien verwendet werden:</p>
           <table class="lrstab"><thead><tr><th>Strategie</th><th>Worum es geht</th><th>Was das Tagebuch erkennt</th></tr></thead><tbody>
-            <tr><td>Alphabetisch (lautgetreu)</td><td>Jeden Laut hören und als Buchstaben schreiben</td><td>Ausgelassene Buchstaben, zusätzliche Buchstaben, vertauschte Reihenfolge („Hnud“), Verwechslung formähnlicher Buchstaben (b/d, p/q, m/n/u), ei/ie vertauscht</td></tr>
+            <tr><td>Alphabetisch (lautgetreu)</td><td>Laute und Buchstabenfolgen verbinden; ein Laut kann mehrere Buchstaben haben</td><td>Ausgelassene Buchstaben, zusätzliche Buchstaben, vertauschte Reihenfolge („Hnud“), Verwechslung formähnlicher Buchstaben (b/d, p/q, m/n/u), ei/ie vertauscht</td></tr>
             <tr><td>Orthografisch</td><td>Rechtschreibregeln und Merkwörter</td><td>ie, Dehnungs-h, doppelte Konsonanten (auch ck und tz), s/ss/ß, f/v/w</td></tr>
             <tr><td>Morphematisch</td><td>Verwandte Wörter und Wortstämme nutzen</td><td>ä/e und äu/eu (Ableiten), b/p, d/t, g/k am Wortende (Verlängern)</td></tr>
             <tr><td>Wortübergreifend</td><td>Satz und Zusammenhang beachten</td><td>Groß- und Kleinschreibung, das/dass, getrennt/zusammen, Kommas, Satzende, mit Internet auch Fall und Verbformen</td></tr>
           </tbody></table>
           <h4>So wird geübt</h4>
-          <ul><li><b>Selbst korrigieren statt abschreiben:</b> Markiert wird nur die Stelle, der Tipp nennt eine Strategie (z. B. Verlängern, Ableiten, Silben schwingen, Artikelprobe), nicht die Lösung.</li>
+          <ul><li><b>Selbst bearbeiten:</b> Das Kind schreibt seine Verbesserung selbst. Hinweise nennen eine Strategie und Beispiele. Nach einem eigenen Versuch zeigt eine angebotene Übung auch die Vergleichsschreibweise. Eine automatische Übernahme gibt es nicht.</li>
           <li><b>Gezielte Tricks</b> für jedes Muster, z. B. „Das kleine b hat den Bauch rechts, das kleine d links“ oder „Zähl die Bögen: m hat zwei, n hat einen“.</li>
-          <li><b>Fehler-Detektive:</b> Das Kind sieht seine häufigsten Fehlerarten mit Trick und eigenen Beispielwörtern, und ob sie seltener werden.</li>
+          <li><b>Fehler-Detektive:</b> Das Kind sieht seine häufigsten Fehlerarten mit Trick und eigenen Beispielwörtern, mit der Zahl der Markierungen. Weniger Markierungen allein beweisen keinen Lernfortschritt.</li>
           <li><b>Wort-Diktat mit Wiederholung in wachsenden Abständen:</b> falsch geschriebene Wörter kommen nach 1, 3, 7, 14 und 30 Tagen wieder, bis sie sitzen. Nach einem Fehler wird das Wort einmal richtig abgeschrieben.</li>
           <li><b>Kurz-Diktate</b> werden nach den Schwächen des Kindes ausgewählt und hören und schreiben verbinden.</li>
           <li><b>Vorlesen</b> von Fragen und eigenen Einträgen sowie <b>größere Schrift und mehr Abstand</b> (Knopf „Aa“) erleichtern das Lesen.</li>
           <li><b>Kleine, tägliche Schritte</b> mit positiver Rückmeldung statt langer Übungseinheiten.</li></ul>
           <h4>Was ihr seht</h4>
-          <p>Unter 🔤 Rechtschreibung zählt das Tagebuch die Fehlerarten. Häufen sich die typischen Muster (mindestens 5 in 30 Tagen und mindestens ein Fünftel aller Rechtschreibfehler), erscheint ein Hinweis.</p>
+          <p>Die neue Übersicht trennt offene Wörter und Rückfragen an die App von beobachteten Verbesserungen. Eine Beanstandung bleibt zur Elternprüfung sichtbar, auch wenn das Kind danach weiterübt. Aus Buchstabenverwechslungen, vielen offenen Wörtern oder einzelnen Fehlversuchen lässt sich weder LRS noch fehlender Wille ableiten. Bei mehrdeutigen Wörterbuchvorschlägen bleibt die Klasse unklar.</p>
           <h4>Grenzen</h4>
           <ul><li>Die Einordnung ist eine Schätzung: Das Tagebuch vergleicht das falsche Wort mit dem wahrscheinlich gemeinten.</li>
           <li>Wörter, die es gibt, aber an der Stelle falsch sind, findet es ohne Internet nur teilweise.</li>
@@ -254,6 +294,8 @@
           <p>Sprecht zuerst mit der Lehrkraft. Eine Diagnose stellen Fachleute, zum Beispiel der schulpsychologische Dienst oder eine Praxis für Kinder- und Jugendpsychiatrie bzw. -psychotherapie. Schulen können Fördermaßnahmen und einen Nachteilsausgleich gewähren. Die Regeln dafür unterscheiden sich je nach Bundesland.</p>
         </details>
         <details><summary>🛠️ Probleme lösen</summary>
+          <p><b>Nach einem Update startet die App nicht:</b> Der Starthinweis nennt die Schritte für Eltern; Kinder sollen einen Erwachsenen holen. Zuerst neu öffnen. Falls nötig die vollständigen Programmdateien <code>Tagebuch.html</code> und <code>app</code> aus der neuesten Veröffentlichung ersetzen. <code>config</code> und <code>kinder</code> sowie die Browserdaten behalten. Danach unter Einstellungen → Speicherort den bisherigen Ordner verbinden. Unbekannte neuere Datenformate werden nicht überschrieben; dafür zuerst die passende aktuelle App laden.</p>
+          <p><b>Speichern fehlgeschlagen:</b> Nicht schließen oder Browserdaten löschen. Noch sichtbaren Text kopieren, freien Speicher und Browser-Einstellungen prüfen. Bei einem Ordnerfehler den bisherigen Ordner erneut freigeben. Ein fehlgeschlagener neuer Lernschritt oder eine Coinbuchung wird nicht als gespeichert bestätigt.</p>
           <ul><li><b>„Zugriff erlauben“ erscheint immer wieder:</b> beim Erlauben „Bei jedem Besuch zulassen“ wählen.</li>
           <li><b>Grammatikprüfung geht nicht:</b> unter Einstellungen „Verbindung testen“. In der Vorschau von Claude funktioniert sie nicht, nur in der heruntergeladenen Datei.</li>
           <li><b>Vorlesen fehlt oder ist schwer verständlich:</b> unter Einstellungen → Stimme und Diktat testen eine deutsche Stimme wählen, das Tempo anpassen und probehören. Fehlen Stimmen, die dortige Windows-/macOS-Anleitung verwenden und anschließend Stimmen neu laden oder den Browser neu starten.</li>
@@ -350,7 +392,7 @@
   <div id="kidView" hidden>
   <header>
     <div class="titlewrap"><button type="button" class="home" data-home aria-label="Zur Startseite">← Start</button><h1 id="kidTitle">Mein Tagebuch</h1><button type="button" class="home" id="kidPinChange">🔑 Meine PIN</button><button type="button" class="home" id="kidHelpBtn">❓ Hilfe</button></div>
-    <button type="button" class="coinbadge" id="coinBadge" title="Meine Tagebuch-Coins">🪙 <span id="coinNum">0</span></button>
+    <button type="button" class="coinbadge" id="coinBadge" title="Meine Tagebuch-Coins">🪙 <span id="coinNum">0</span> verfügbar <small>Diese Woche: <span id="weekCoinNum">0</span> gesammelt</small></button>
     <div class="streak" aria-live="polite">
       <div><div class="streak-num" id="streakNum">0</div><div class="streak-label" id="streakLabel">Tage am Stück</div></div>
       <div class="week" id="week"></div>
@@ -374,12 +416,12 @@
       <textarea id="ta" class="lined" spellcheck="false" autocorrect="off" autocomplete="off" autocapitalize="off" data-gramm="false"
         aria-label="Dein Tagebucheintrag für heute" placeholder="Liebes Tagebuch, heute …"></textarea>
     </div>
-    <div class="questions">
+    <details class="questions" id="optionalQuestions"><summary>Freiwillige Schreibideen</summary>
       <label class="q"><span>⭐ Das Beste heute:</span><textarea class="lined qa" data-q="best" rows="3" spellcheck="false" autocorrect="off" autocomplete="off" autocapitalize="off" data-gramm="false"></textarea></label>
       <label class="q"><span>💡 Das habe ich heute gelernt:</span><textarea class="lined qa" data-q="learned" rows="3" spellcheck="false" autocorrect="off" autocomplete="off" autocapitalize="off" data-gramm="false"></textarea></label>
       <label class="q"><span>🚀 Was ich morgen schaffen möchte:</span><textarea class="lined qa" data-q="tomorrow" rows="3" spellcheck="false" autocorrect="off" autocomplete="off" autocapitalize="off" data-gramm="false"></textarea></label>
       <p class="note qnote">Du kannst frei schreiben, diese Fragen beantworten oder beides. Alles zählt zusammen.</p>
-    </div>
+    </details>
     <div class="toolrow">
       <button type="button" class="tool" id="emojiBtn" aria-expanded="false">😀 Emojis</button>
       <button type="button" class="tool" id="drawBtn" aria-expanded="false">🎨 Malen</button>
@@ -414,11 +456,12 @@
   <div id="result" class="result" hidden></div>
   </div>
   <div id="doneArea" hidden></div>
+  <section id="openLearning" class="panel"></section>
   <div id="warn" class="warn" hidden></div>
 
   <section class="panel" aria-labelledby="patHead">
     <h2 id="patHead">🎯 Meine Fehler-Detektive</h2>
-    <p class="note">Hier siehst du, welche Fehler dir manchmal passieren und mit welchem Trick du sie knackst. Je seltener ein Fehler wird, desto besser bist du geworden.</p>
+    <p class="note">Hier siehst du, welche Fehler dir manchmal passieren und mit welchem Trick du sie knackst. Die App kann sich auch irren. Die Anzahl allein zeigt nicht, wie gut du schreiben kannst.</p>
     <div id="patterns"></div>
   </section>
 
@@ -433,6 +476,9 @@
 
   <div id="practiceView" hidden>
     <h2>🎯 Zusatzaufgaben</h2>
+    <div id="assignedTasks"></div>
+    <section id="assignmentBox" class="panel" hidden></section>
+    <h3>Weitere freie Übungen</h3>
     <div id="practiceBox"></div>
   </div>
   <div id="gameView" hidden>
@@ -487,34 +533,34 @@
     <div class="modalhead"><b>❓ So funktioniert dein Tagebuch</b><button type="button" class="btn" id="kidHelpClose">Alles klar ✓</button></div>
     <div class="help">
     <details open><summary>✏️ Schreiben</summary>
-      <p>Schreib in dein Heft, was du heute erlebt hast, oder beantworte die Fragen rechts. Oben siehst du, wie viele Wörter und Sätze noch fehlen.</p>
+      <p>Schreib in dein Heft, was du heute erlebt hast, oder klappe „Freiwillige Schreibideen“ auf. Die Fragen musst du nicht beantworten. Oben siehst du, wie viele Wörter und Sätze noch fehlen.</p>
       <p>💡 <b>Frage</b> gibt dir eine Idee, wenn dir nichts einfällt. 😀 <b>Emojis</b> und 🎨 <b>Malen</b> machen deinen Eintrag bunt. <b>Aa</b> macht die Schrift größer.</p>
     </details>
     <details><summary>🔍 Prüfen und verbessern</summary>
-      <p>Drück auf <b>Prüfen</b>. Rot markiert sind Stellen, die noch nicht stimmen. Tippe darauf: Du bekommst einen Tipp, aber nicht die Lösung. So lernst du am meisten!</p>
-      <p>Verbessere die Stelle in deinem Text und drück nochmal auf Prüfen. Ist ein Wort ein Name, wähle „Das ist ein Name“. Bist du dir sicher, dass ein Satzzeichen oder ein großer Buchstabe richtig ist, wähle „🤔 Ich finde, das stimmt so“.</p>
+      <p>Drück auf <b>Prüfen</b>. Wähle eine markierte Stelle. Schreib direkt dort deine Verbesserung und drück „Übernehmen und prüfen“. Mit „Tipp“ oder „Noch ein Tipp“ bekommst du Hilfe. Die App kann sich auch irren!</p>
+      <p>Du kommst bei einem Wort nicht weiter? „Hier weiß ich nicht weiter“ lässt nur dieses Wort offen. Hältst du deine Schreibweise für richtig, wähle „Meine Schreibweise stimmt, bitte prüfen“. Dein Text bleibt erhalten. Unter „Wörter und Rückmeldungen“ kannst du später weiterprobieren oder genau diese Stelle mit deinen Eltern teilen. Teile nur, was sie sehen dürfen. Namen kannst du weiterhin mit „Das ist ein Name“ merken. Satzzeichen bearbeitest du im Originaltext.</p>
     </details>
     <details><summary>📖 Lesen</summary>
       <p>Hier blätterst du durch dein Tagebuch, Tag für Tag oder alles am Stück. 🔊 liest dir vor. Mit „Von – bis“ kannst du dein Tagebuch als Buch drucken.</p>
     </details>
     <details><summary>🎯 Üben</summary>
-      <p>Freiwillige Aufgaben: Beim <b>Wort-Diktat</b> hörst du 10 Wörter und schreibst sie. Beim <b>Kurz-Diktat</b> schreibst du einen kleinen Text aus dem Kinderlexikon. Jede Aufgabe bringt dir Extra-Spielzeit.</p>
+      <p>Unter <b>Für dich angeboten</b> siehst du freiwillige Aufgaben deiner Eltern und wie viele Extra-Coins möglich sind. Du kannst eine Pause machen und später weiterüben. Bearbeitete Wörter bringen ihren Anteil, auch wenn du zuerst einen Tipp brauchst. Offene Wörter bleiben zum Anschauen übrig. Für dieselbe Aufgabe gibt es die Coins nur einmal. Deine Eltern sehen deine Antworten in diesen Aufgaben.</p><p>Weitere freie Aufgaben: Beim <b>Wort-Diktat</b> hörst du 10 Wörter und schreibst sie. Beim <b>Kurz-Diktat</b> schreibst du einen kleinen Text aus dem Kinderlexikon. Diese freien Aufgaben bringen dir Extra-Spielzeit.</p>
       <p>Verstehst du die Stimme schlecht? Bitte einen Erwachsenen, unter <b>Einstellungen → Stimme und Diktat testen</b> eine andere Stimme oder ein anderes Tempo auszuprobieren. Im Diktat kannst du die Wörter und Abschnitte wiederholen oder langsamer anhören.</p>
     </details>
     <details><summary>🎮 Spiel</summary>
       <p>Wenn du deinen Eintrag für heute geschrieben hast, sind die Spiele freigeschaltet. Die Zeit läuft nur, solange ein Spiel offen ist.</p>
     </details>
     <details><summary>🪙 Shop, Coins und Joker</summary>
-      <p>Für ganze Sätze, viele Wörter und richtige Kommas sammelst du Coins. Schreibst du genug Tage in der Woche, kommen sie am Sonntag auf dein Konto. Im Shop wünschst du dir etwas, Mama oder Papa bestätigen es.</p>
+      <p>Oben siehst du getrennt, was du <b>diese Woche gesammelt</b> hast und was <b>verfügbar</b> ist. Reservierte Wünsche sind schon vom verfügbaren Betrag abgezogen. Für ganze Sätze, viele Wörter und richtige Kommas sammelst du Tagebuch-Coins. Schreibst du genug Tage in der Woche, kommen sie am Sonntag auf dein Konto. Im Shop wünschst du dir etwas, Mama oder Papa bestätigen es.</p>
       <p>Artikel und Symbole stellen die Erwachsenen für dich ein. Haben sie etwas geändert, öffne deinen Shop erneut. Du kannst nur einlösen, was du mit deinen verfügbaren Coins bezahlen kannst.</p>
       <p>🃏 Mit einem <b>Joker</b> zählt ein Tag als geschafft. Du bekommst jeden Monat neue und kannst sie sparen. Du darfst ihn auch schon vorher einplanen.</p>
     </details>
     <details><summary>🔔 Was ist neu?</summary>
       <p>Die Glocke oben rechts zeigt dir, was sich am Tagebuch geändert hat. Eine Zahl daneben bedeutet, dass es neue Einträge in der Übersicht gibt. Öffnest du sie, verschwindet die Zahl. Du kannst die Übersicht jederzeit wieder lesen, auch ohne Internet.</p>
-      <p>Wenn die App ein Programmupdate anbietet, lass einen Erwachsenen die Installation übernehmen. Deine Einträge und Bilder bleiben dabei erhalten.</p>
+      <p>Wenn die App ein Programmupdate anbietet, lass einen Erwachsenen die Installation übernehmen. Wenn danach etwas nicht klappt, hol bitte einen Erwachsenen und lösche nichts. Der Starthinweis erklärt ihm, was zu tun ist.</p>
     </details>
     <details><summary>🔐 Deine PIN und dein Geheimnis</summary>
-      <p>Nur du kennst deine PIN. Mama und Papa sehen in ihrem Bereich nicht, was du schreibst, nur wie viel. Hast du die PIN vergessen, können sie sie zurücksetzen. Dann siehst du einen Hinweis und legst eine neue fest.</p>
+      <p>Nur du kennst deine PIN. Dein Tagebuch bleibt in deinem Bereich. Mama und Papa sehen Zahlen, bisherige Übungswörter und die Wortstellen, die du ausdrücklich teilst. Deine Antworten in ihren angebotenen Diktaten können sie sehen. Hast du die PIN vergessen, können sie sie zurücksetzen. Dann siehst du einen Hinweis und legst eine neue fest.</p>
     </details>
     </div>
    </div>
@@ -536,6 +582,9 @@
 <script src="app/news.js"></script>
 <script src="app/update-core.js"></script>
 <script src="app/updater.js"></script>
+<script src="app/compatibility.js"></script>
+<script src="app/learning-core.js"></script>
+<script src="app/learning-ui.js"></script>
 <script src="app/app.js"></script>
 </body>
 </html>

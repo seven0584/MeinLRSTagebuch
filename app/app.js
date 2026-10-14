@@ -1,4 +1,13 @@
 (function(){
+  if(!window.TBCompatibility || !window.TBLearning || !window.TBLearningUI || !document.querySelector('#learningParent')){
+    const box=document.getElementById('startupProblem') || document.body.insertBefore(document.createElement('section'),document.body.firstChild);
+    box.id='startupProblem';box.hidden=false;box.setAttribute('role','alert');box.className='warn';
+    box.innerHTML='<h2>Das Tagebuch braucht Hilfe beim Start</h2><p><b>Für Kinder:</b> Bitte hol einen Erwachsenen und lösche nichts.</p><p><b>Für Eltern:</b> Die Programmdateien passen nicht zusammen oder fehlen. Bitte die vollständige aktuelle App von <a href="https://github.com/seven0584/MeinLRSTagebuch/releases/latest">GitHub – neueste Veröffentlichung</a> herunterladen. Nur Tagebuch.html und app ersetzen. Die Ordner config und kinder sowie Browserdaten behalten. Danach im selben Browser neu öffnen und den bisherigen Speicherort verbinden.</p>';
+    return;
+  }
+  if(!window.TBCompatibility.canStart()) return;
+  const LC = window.TBLearning;
+  let learningUI = null;
   const $ = s => document.querySelector(s);
   const ta = $("#ta"), checkBtn = $("#checkBtn"), statusEl = $("#status");
   const resultEl = $("#result"), doneEl = $("#doneArea"), warnEl = $("#warn");
@@ -26,6 +35,7 @@
   // ---------- storage ----------
   function load(){
     let raw = null; try{ raw = JSON.parse(localStorage.getItem(KEY) || "null"); }catch(e){}
+    window.TBCompatibility.validate(raw);
     if(raw && raw.v === 2 && raw.data){ family = raw; }
     else {
       // older single-child format: turn it into the first child (only if there is something to keep)
@@ -46,15 +56,82 @@
   function useChild(id){
     const c = id && family && family.data[id];
     state = c || freshChild("");
+    LC.ensure(state);
     state.parent = family ? family.parent : state.parent;   // shared, never stored inside a child
     if(c) family.active = id;
   }
   function withChild(id, fn){ const prev = state, act = family.active; useChild(id); try{ return fn(); } finally { state = prev; family.active = act; } }
   function save(){
-    if(!family) return;
+    if(!family) return false;
     family.savedAt = Date.now();
-    try{ localStorage.setItem(KEY, JSON.stringify(family, function(k, v){ return k === "parent" && this !== family ? undefined : v; })); }catch(e){}
+    try{ localStorage.setItem(KEY, JSON.stringify(family, function(k, v){ return k === "parent" && this !== family ? undefined : v; })); }
+    catch(e){
+      const box = $("#learningMessage"); box.hidden = false;box.dataset.storageError="true";
+      box.textContent = "Speichern ist fehlgeschlagen. Bitte nichts schließen oder Browserdaten löschen. Eltern: Prüft freien Speicherplatz und die Browser-Einstellungen. Noch sichtbaren Text zuerst kopieren. Die letzte gespeicherte Fassung bleibt erhalten; neue Änderungen sind noch nicht gesichert.";
+      return false;
+    }
+    const notice=$("#learningMessage");if(notice.dataset.storageError){notice.hidden=true;delete notice.dataset.storageError;}
     if(typeof scheduleAutoSave === "function") scheduleAutoSave();
+    return true;
+  }
+
+  function learningTransaction(fn){
+    const savedAt=family.savedAt, owner = state, before = JSON.stringify(owner, (k,v) => k === "parent" ? undefined : v);
+    try{ const result = fn(); if(!save()) throw Error("Die Änderung wurde nicht gespeichert. Bitte zuerst das Speicherproblem beheben. Neue Aufgaben-Coins wurden nicht gutgeschrieben."); return result; }
+    catch(e){ family.savedAt=savedAt;const parent = owner.parent; Object.keys(owner).forEach(k=>delete owner[k]); Object.assign(owner, JSON.parse(before), {parent}); throw e; }
+  }
+  function checkedCorrections(text,marks){
+    const l=LC.ensure(state);if(!l.draft)return [];
+    const ts=LC.words(text),map=new Map(LC.alignment((l.draft.tokens||[]).map(t=>t.w),ts.map(t=>t.w)));
+    return l.cases.filter(c=>c.draftId===l.draft.id && c.status!=='changed').flatMap(c=>{
+      const t=ts[map.get(c.tokenIndex)];
+      if(!t || t.w===c.current || marks.some(m=>m.i===t.i) || !oneEdit(lower(c.original),lower(t.w)) || !correct(t.w))return [];
+      return [{caseId:c.id,word:t.w,category:fineCats(c.original,t.w)[0]}];
+    });
+  }
+  function rememberDraft(){ state.draft = ta.value; state.draftQ ||= {}; QUESTIONS.forEach(([k])=>state.draftQ[k]=qa[k].value); }
+  function fieldAt(position){
+    const values = fieldValues(); compose(values);
+    const fields = [ta, ...QUESTIONS.map(([k])=>qa[k])].filter(f=>f.value.trim());
+    const index = SEG.parts.findIndex(([a,b])=>position>=a && position<b);
+    if(index<0) return null;
+    const f=fields[index];return {f,offset:position-SEG.parts[index][0]+f.value.indexOf(f.value.trim())};
+  }
+  function replaceWord(position, old, value){
+    if(!/^[\p{L}]+(?:['’\-][\p{L}]+)*$/u.test(value)) throw Error("Bitte nur die neue Schreibweise dieses Wortes eingeben.");
+    const target=fieldAt(position);
+    if(!target || target.f.value.slice(target.offset,target.offset+old.length)!==old) throw Error("Dein Text wurde inzwischen geändert. Bitte erneut prüfen.");
+    target.f.value=target.f.value.slice(0,target.offset)+value+target.f.value.slice(target.offset+old.length);
+    target.f.dispatchEvent(new Event("input"));
+  }
+  function revisitWord(c,value){
+    try{
+      value=value.trim();
+      if(!/^[\p{L}]+(?:['’\-][\p{L}]+)*$/u.test(value)) throw Error("Bitte nur dieses Wort eingeben.");
+      if(!c.entryId){ replaceWord(c.position,c.current,value); runCheck(); return; }
+      if(!hun) throw Error("Bitte warten, bis das Wörterbuch geladen ist.");
+      const e=state.entries.find(e=>e.id===c.entryId);if(!e) throw Error("Der zugehörige Eintrag ist nicht mehr vorhanden.");
+      const v={free:e.text,...e.answers},text=compose(v,ALL_Q),part=SEG.parts.findIndex(([a,b])=>c.position>=a&&c.position<b);
+      const fields=['free',...ALL_Q.map(([k])=>k)].filter(k=>v[k]);
+      if(part<0 || text.slice(c.position,c.position+c.current.length)!==c.current) throw Error("Die Stelle hat sich geändert. Bitte gemeinsam im Eintrag anschauen.");
+      const offset=c.position-SEG.parts[part][0],key=fields[part],next=text.slice(0,c.position)+value+text.slice(c.position+c.current.length);
+      const marks=check(next,true).filter(m=>!m.punct);marks.forEach(m=>m.fine=errCats(m)[0]);
+      learningTransaction(()=>{
+        const l=LC.ensure(state),draft=l.draft;
+        // Reconcile only this entry's cases; keep the current unfinished diary draft intact.
+        const draftId=c.draftId;
+        l.draft={id:draftId,text,tokens:LC.words(text)};
+        const beforeIds=new Set(l.cases.map(x=>x.id));LC.reconcile(state,next,marks,'dictionary',Date.now(),checkedCorrections(next,marks));
+        l.cases.filter(x=>x.draftId===draftId&&!beforeIds.has(x.id)).forEach(x=>x.entryId=e.id);
+        e.learningSummary=LC.draftSummary(state);l.draft=draft;
+        // c.current can change during reconciliation: use the original text span length.
+        const oldLength=text.length-next.length+value.length;
+        v[key]=(key==='free'?e.text:e.answers[key]).slice(0,offset)+value+(key==='free'?e.text:e.answers[key]).slice(offset+oldLength);
+        if(key==='free')e.text=v[key];else e.answers[key]=v[key];
+      });
+      compose();renderEntries();renderWords();learningUI.openWords();
+      learningUI.message(c.status==='resolved'?"Dieses Wort ist verbessert. Die bisherigen Tagebuch-Coins bleiben gleich.":"Deine Änderung ist gespeichert. Die App kann die Klärung nicht sicher bestätigen.");
+    }catch(e){compose();learningUI.message(e.message);}
   }
 
   // ---------- dictionary ----------
@@ -66,12 +143,12 @@
       const dic = factory.mountBuffer(b64("dicData"), "de.dic");
       hun = factory.create(aff, dic);
       buildNouns();
-      state.names.forEach(n => hun.addWord(n));
+      // Names are checked per profile below; do not change the shared dictionary.
       spellReady = true;
       updateCount();
     }catch(e){
       statusEl.textContent = "";
-      showWarn("Das Wörterbuch konnte nicht geladen werden. Bitte öffne die Datei in einem aktuellen Browser (Chrome, Edge, Firefox oder Safari).");
+      window.TBCompatibility.problem("Das Wörterbuch konnte nicht geladen werden. Öffnet die vollständige App erneut in einem aktuellen Browser. Ohne Wörterbuch kann das Tagebuch noch nicht geprüft werden.");
     }
   }
 
@@ -216,7 +293,8 @@
       one: ["Buchstabe fehlt, zu viel oder vertauscht", "Sprich das Wort ganz langsam in Silben und schreib jeden Laut mit."],
       other: ["Schau genau hin", "Sprich das Wort langsam in Silben. Wie schreibt man die einzelnen Teile?"]
     };
-    const pick = k => ({ cat:T[k][0], tip:T[k][1], generic: ["one","other","miss","extra","swap"].includes(k) });
+    const tipKeys={dbl:'dopp',h:'dehnung',end:'hartweich',fv:'fvw',form:'formaehnlich',swap:'umstellung',miss:'auslassung',extra:'zusatz',one:'other'};
+    const pick = k => ({ cat:T[k][0], tip:LC.catalog(tipKeys[k]||k).hint, generic: ["one","other","miss","extra","swap"].includes(k) });
     const swap = (x, p, q) => x.split(p).join(q);
     if(!s) return pick("other");
     if(swap(a,"ß","ss")===swap(b,"ß","ss") || swap(a,"ss","s")===swap(b,"ss","s") || swap(a,"ß","s")===swap(b,"ß","s")) return pick("ss");
@@ -301,7 +379,7 @@
     ["ä/e und äu/eu", { ae:"ä/e", aeu:"äu/eu" }],
     ["Harte und weiche Laute (b/p, d/t, g/k)", { hartweich:"" }],
     ["f, v oder w", { fvw:"" }],
-    ["Typische LRS-Muster", { spiegel:"b/d oder p/q", formaehnlich:"m/n/u", eiie:"ei/ie vertauscht", umstellung:"Buchstaben vertauscht", auslassung:"Buchstabe ausgelassen", zusatz:"Buchstabe zu viel" }],
+    ["Buchstaben und Reihenfolge", { spiegel:"b/d oder p/q", formaehnlich:"m/n/u", eiie:"ei/ie vertauscht", umstellung:"Buchstaben vertauscht", auslassung:"Buchstabe ausgelassen", zusatz:"Buchstabe zu viel" }],
     ["Zeichensetzung", { komma:"Komma", satzende:"Satzende", leer:"Leerzeichen", satzz:"Satzzeichen" }],
     ["Grammatik und Satzbau", { fall:"Fall/Endungen", verb:"Verbform", grammatik:"Satzbau", doppelwort:"Wort doppelt", verwechselt:"Wort verwechselt" }],
     ["das oder dass", { dassdas:"" }],
@@ -336,6 +414,7 @@
     verb:["Verbformen","Ich gehe, du gehst, er geht, wir gehen: Das Verb passt sich der Person an."],
     getrennt:["Getrennt oder zusammen","Probier, ob man ein Wort dazwischen schieben kann. Wenn ja, schreibt man getrennt."]
   };
+  for(const key of Object.keys(LC.CATALOG)){ const rule=LC.catalog(key); TRICK[key]=[rule.title,rule.hint]; }
   function focusCounts(){
     const since = new Date(); since.setDate(since.getDate() - 29); const from = keyOf(since), tot = {};
     state.entries.filter(e => e.date >= from && e.errCats).forEach(e => Object.entries(e.errCats).forEach(([k, n]) => { tot[k] = (tot[k] || 0) + n; }));
@@ -364,13 +443,16 @@
       if(!isUpper1(w)) cands = cands.concat(hun.suggest(cap(w)));
     }catch(e){ return null; }
     const norm = x => lower(x).replace(/ß/g, "ss");
-    let best = null, bestScore = Infinity;
+    let best = null, bestScore = Infinity; const ranked=[];
     cands.filter(x => x && !x.includes(" ") && !x.startsWith("-")).forEach((s, idx) => {
       let score = lev(norm(w), norm(s));
       if(!classify(w, s).generic) score -= 0.5;
+      ranked.push({word:s,score});
       score += idx * 0.001;
       if(score < bestScore){ bestScore = score; best = s; }
     });
+    const closest=ranked.filter(x=>Math.abs(x.score-(Math.round(bestScore*2)/2))<0.01);
+    if(new Set(closest.map(x=>fineCats(w,x.word).join(','))).size>1)return null;
     return bestScore <= 2.01 ? best : null;
   }
   function check(text, skipComma){
@@ -379,7 +461,7 @@
     toks.forEach((t, k) => { t.k = k; });
     for(const t of toks){
       const w = t.w;
-      if(t.label) continue;
+      if(t.label || state.names.includes(w)) continue;
       if(w.length > 1 && w === w.toLocaleUpperCase("de-DE")) continue; // ABKÜRZUNG
       if(t.start && !t.soft && !isUpper1(w)){
         if(correct(cap(w)) || correct(w)){
@@ -468,7 +550,7 @@
       if(!w || overlaps(a, b) || (SEG && SEG.text === text && inLabel(SEG.labels, a, b))) continue;
       if(cat === "TYPOS" && state.names.includes(w)) continue;
       const tip = ltTip(m, w);
-      errs.push({ i:a, w, cat:tip.cat, tip:tip.tip, tip2:tip.tip2, punct: cat !== "TYPOS", fix: cat === "TYPOS" && m.replacements && m.replacements[0] ? m.replacements[0].value : null });
+      errs.push({ i:a, w, cat:tip.cat, tip:tip.tip, tip2:tip.tip2, punct: !["TYPOS","CASING"].includes(cat), fix: ["TYPOS","CASING"].includes(cat) && m.replacements && m.replacements[0] ? m.replacements[0].value : null });
       taken.push([a, b]);
     }
     return errs.sort((x, y) => x.i - y.i);
@@ -565,8 +647,7 @@
     if(!cats.length){ box.innerHTML = '<p class="empty">Gerade gibt es nichts zu üben. Weiter so! 🌟</p>'; return; }
     const shown = showAllPatterns ? cats : cats.slice(0, 3);
     box.innerHTML = '<div class="pats">' + shown.map(c => {
-      const trend = c.prev && c.n < c.prev ? '<p class="trend good">📉 Seltener als im Monat davor. Super!</p>'
-        : (c.n >= 3 ? '<p class="trend">Das passiert dir gerade öfter. Mit dem Trick schaffst du das!</p>' : '');
+      const trend = c.n ? '<p class="trend">'+c.n+' Markierungen in 30 Tagen. Die Anzahl hängt auch davon ab, wie viel du schreibst.</p>' : '';
       const chips = c.words.slice(0, 3).map(([key, w]) => '<span class="chip">' + esc(w.richtig) + '<button type="button" data-done="' + esc(key) + '" aria-label="' + esc(w.richtig) + ' kann ich">✓</button></span>').join("");
       const more = c.words.length > 3 ? '<span class="chipmore">+' + (c.words.length - 3) + ' weitere</span>' : '';
       const dots = c.n ? '<span class="dots" title="' + c.n + '-mal in den letzten 30 Tagen">' + "●".repeat(Math.min(c.n, 8)) + (c.n > 8 ? "+" : "") + '</span>' : '';
@@ -585,17 +666,17 @@
       const li = document.createElement("li"); li.className = "word name";
       li.innerHTML = "<b>"+esc(n)+"</b>";
       const b = document.createElement("button"); b.textContent = "Entfernen";
-      b.onclick = () => { state.names.splice(idx,1); try{ hun && hun.removeWord(n); }catch(e){} save(); renderNames(); };
+      b.onclick = () => { state.names.splice(idx,1); save(); renderNames(); };
       li.appendChild(b); ul.appendChild(li);
     });
   }
   function renderEntries(){
     const ul = $("#entries"); ul.innerHTML = "";
-    if(!state.entries.length){ ul.innerHTML = '<li class="empty">Dein erster Tagebucheintrag erscheint hier, sobald alles richtig ist.</li>'; return; }
+    if(!state.entries.length){ ul.innerHTML = '<li class="empty">Dein erster Tagebucheintrag erscheint hier, sobald du den Eintrag abschließt.</li>'; return; }
     $("#readAll").hidden = false;
     for(const e of state.entries.slice(0,3)){
       const li = document.createElement("li"); li.className = "entry";
-      const badge = !e.firstErrors ? '<span class="badge clean">auf Anhieb fehlerfrei</span>'
+      const badge = e.learningSummary ? '<span class="badge fixed">'+e.learningSummary.resolved+' Wortstellen verbessert · '+(e.learningSummary.deferred+e.learningSummary.contested)+' offen</span>' : !e.firstErrors ? '<span class="badge clean">auf Anhieb fehlerfrei</span>'
         : '<span class="badge fixed">'+e.firstErrors+' Fehler selbst verbessert</span>';
       li.innerHTML = '<div class="entry-top"><span>'+esc(fmtDate(e.date))+'</span>'+badge+(e.pic ? '<span>🎨 mit Bild</span>' : '')+'</div><p>'+entryHtml(e)+'</p>';
       ul.appendChild(li);
@@ -641,8 +722,10 @@
     if(!hun || checking) return;
     checking = true; checkBtn.disabled = true; allFields().forEach(f => { f.readOnly = true; });
     statusEl.textContent = state.parent.grammar ? "Ich prüfe deinen Text …" : "";
+    const checkingChild = state.id, checkingSession=session;
     const matches = await ltCheck(text);
     checking = false; checkBtn.disabled = false; allFields().forEach(f => { f.readOnly = false; });
+    if(checkingChild !== state.id || checkingSession !== session || $("#kidView").hidden) { updateCount(); return; }
     compose(); // SEG for this text again (LT is async)
     let errs = check(text, !!matches);
     if(matches) errs = mergeLT(text, errs, matches);
@@ -657,20 +740,10 @@
       if(key && !session.catKeys[key]){ session.catKeys[key] = 1; for(const c of errCats(e)) session.cats[c] = (session.cats[c] || 0) + 1; }
     }
     for(const e of errs){ if(!e.punct && !session.found[lower(e.w)]) session.found[lower(e.w)] = { wrong:e.w, fix:e.fix, cat:e.cat }; }
-    const tot = focusCounts();
-    // never let an example in a tip give away the answer (e.g. "Hund → Hunde" when "Hund" is the word he needs)
-    const reveals = (txt, fix) => !!fix && !!txt && lower(txt).split(/[^\p{L}]+/u).includes(lower(fix));
-    const unreveal = (txt, fix) => {
-      if(!reveals(txt, fix)) return txt;
-      const cut = txt.replace(/\s*\([^)]*\)/g, "").replace(/:\s*[^.:]*→[^.]*\./g, ".").replace(/\s*\.\./g, ".");
-      return reveals(cut, fix) ? "" : cut;
-    };
-    errs.forEach(e => {
-      e.fine = errCats(e)[0]; e.trick = TRICK[e.fine] ? TRICK[e.fine][1] : ""; e.often = (tot[e.fine] || 0) >= 3;
-      e.tip = unreveal(e.tip, e.fix) || "Sprich das Wort ganz langsam in Silben. Hör genau auf jeden Laut.";
-      e.trick = unreveal(e.trick, e.fix);
-      if(e.trick && lower(e.trick).slice(0, 18) === lower(e.tip).slice(0, 18)) e.trick = ""; // nearly the same as the first tip
-    });
+    errs.forEach(e=>{ e.fine=errCats(e)[0]; if(!e.punct){const rule=LC.catalog(e.fine);e.tip=rule.hint;e.tip2=rule.more;} });
+    try{ errs=learningTransaction(()=>{rememberDraft();return LC.reconcile(state,text,errs,matches?'online':'dictionary',Date.now(),checkedCorrections(text,errs));}); }
+    catch(e){learningUI.message(e.message);return;}
+    learningUI.openWords();
     if(session.ignore) errs = errs.filter(e => !session.ignore[e.cat + "|" + e.w]);
     session.current = errs; session.checkedText = text; session.labels = labels; session.active = -1; session.more = false;
     if(errs.length){ renderResult(); if(innerWidth < 1000) resultEl.scrollIntoView({ behavior:"smooth", block:"start" }); }
@@ -678,87 +751,67 @@
   }
 
   function renderResult(){
-    const errs = session.current, text = session.checkedText;
-    let html = "", pos = 0;
-    errs.forEach((e, idx) => {
-      html += escSeg(text, pos, e.i, session.labels);
-      html += '<button type="button" class="err'+(idx===session.active?" active":"")+'" data-i="'+idx+'">'+esc(e.w)+'</button>';
-      pos = e.i + e.w.length;
-    });
-    html += escSeg(text, pos, text.length, session.labels);
-    const n = errs.length;
-    const msg = (session.checks === 1 || session.basicOnly ? "" : "Schon besser! ") + (n === 1 ? "Eine Stelle ist noch falsch." : n + " Stellen sind noch falsch.");
-    let hint = "";
-    if(session.active >= 0){
-      const e = errs[session.active];
-      hint = '<div class="hint"><p class="cat">'+esc(e.cat)+'</p><p>'+esc(e.tip)+'</p>' +
-        (session.more ? '<p>'+esc(e.tip2)+'</p>' + (e.trick && e.trick !== e.tip ? '<p class="trick">💡 '+esc(e.trick)+'</p>' : '') : '') +
-        (e.often ? '<p class="often">🎯 Darauf achtest du gerade besonders. Gut, dass du es selbst verbesserst!</p>' : '') +
-        '<div class="row">' + (session.more ? '' : '<button type="button" class="btn-ghost" id="moreBtn">Noch ein Tipp</button>') +
-        (e.name ? '<button type="button" class="btn-ghost" id="nameBtn">Das ist ein Name</button>' : '') +
-        ((e.punct || /Großschreibung|Kleinschreibung/.test(e.cat)) ? '<button type="button" class="btn-ghost" id="okBtn">🤔 Ich finde, das stimmt so</button>' : '') + '</div></div>';
+    const errs=session.current;
+    if(session.active<0 || session.active>=errs.length)session.active=0;
+    const e=errs[session.active],c=e.caseId?LC.getCase(state,e.caseId):null;
+    resultEl.hidden=false;checkBtn.textContent="Nochmal prüfen";
+    resultEl.innerHTML='<h3>Eine Stelle nach der anderen</h3><p>'+errs.length+' Stellen zum Anschauen. Die App kann sich irren.</p>'+
+      (session.basicOnly?'<p class="note">Offline-Prüfung: Rechtschreibung und einfache Satzzeichen. Keine vollständige Grammatikprüfung.</p>':'')+
+      '<div class="below">'+errs.map((m,i)=>'<button class="btn-ghost err'+(i===session.active?' active':'')+'" data-i="'+i+'" aria-pressed="'+(i===session.active)+'">'+esc(m.w)+'</button>').join('')+'</div>'+
+      '<div class="word-editor"><p>'+esc(session.checkedText.slice(Math.max(0,e.i-65),e.i))+'<mark>'+esc(e.w)+'</mark>'+esc(session.checkedText.slice(e.i+e.w.length,e.i+e.w.length+65))+'</p>'+
+      (c?'<label class="field">Deine neue Schreibweise<input id="wordEdit" autocomplete="off" spellcheck="false" value="'+esc(e.w)+'"></label><button class="btn" id="wordApply">Übernehmen und prüfen</button>':'<button class="btn" id="editOriginal">Diese Stelle im Text bearbeiten</button>')+
+      '<div class="below"><button class="btn-ghost" id="wordHint">Tipp</button><button class="btn-ghost" id="moreBtn">Noch ein Tipp</button></div><p id="wordHintText" role="status"></p><button class="btn-ghost" id="hintUnclear">Der Tipp hilft mir noch nicht</button>'+
+      (c?(e.name?'<button class="btn-ghost" id="nameBtn">Das ist ein Name</button>':'')+'<label class="check"><input type="checkbox" id="shareWord">Dieses Wort und den Zusammenhang mit meinen Eltern teilen</label><div class="below"><button class="btn-ghost" id="wordUnknown">Hier weiß ich nicht weiter</button><button class="btn-ghost" id="wordDisagree">Meine Schreibweise stimmt, bitte prüfen</button></div><p class="note">Nur dieses Wort bleibt offen. Dein Text wird nicht automatisch verändert.</p>':'<p>'+esc(e.tip)+'</p><button class="btn-ghost" id="okBtn">Ich finde, das stimmt so</button>')+
+      '</div><p class="stale" hidden>Der Text wurde geändert. Bitte erneut prüfen.</p>';
+    resultEl.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{session.active=Number(b.dataset.i);renderResult();});
+    $('#wordHint').onclick=()=>{if(c){try{learningTransaction(()=>LC.hint(state,c.id,1));}catch(ex){learningUI.message(ex.message);return;}}$('#wordHintText').textContent=e.tip;};
+    $('#moreBtn').onclick=()=>{if(c){try{learningTransaction(()=>LC.hint(state,c.id,2));}catch(ex){learningUI.message(ex.message);return;}}$('#wordHintText').textContent=e.tip2;};
+    $('#hintUnclear').onclick=()=>{if(c){try{learningTransaction(()=>LC.hintUnclear(state,c.id));}catch(ex){learningUI.message(ex.message);return;}}$('#wordHintText').textContent='Danke für den Hinweis. Du kannst weiterprobieren oder dieses Wort offenlassen.';};
+    if(c){
+      $('#wordApply').onclick=()=>{try{if(compose()!==session.checkedText)throw Error('Der Text wurde geändert. Bitte zuerst erneut prüfen.');replaceWord(e.i,e.w,$('#wordEdit').value.trim());runCheck();}catch(ex){learningUI.message(ex.message);}};
+      $('#wordEdit').onkeydown=ev=>{if(ev.key==='Enter')$('#wordApply').click();};
+      const defer=reason=>{try{if(compose()!==session.checkedText)throw Error('Bitte den geänderten Text zuerst prüfen.');learningTransaction(()=>LC.defer(state,c.id,reason,$('#shareWord').checked));runCheck();}catch(ex){learningUI.message(ex.message);}};
+      if($('#nameBtn'))$('#nameBtn').onclick=()=>{try{learningTransaction(()=>{if(!state.names.includes(e.w))state.names.push(e.w);LC.defer(state,c.id,'disagree',$('#shareWord').checked);});renderNames();runCheck();}catch(ex){learningUI.message(ex.message);}};
+      $('#wordUnknown').onclick=()=>defer('unknown');$('#wordDisagree').onclick=()=>defer('disagree');
+    }else{
+      $('#editOriginal').onclick=()=>{const target=fieldAt(e.i);if(target){target.f.closest('details')?.setAttribute('open','');target.f.focus();target.f.setSelectionRange(target.offset,target.offset+e.w.length);}};
+      $('#okBtn').onclick=()=>{session.ignore ||= {};session.ignore[e.cat+'|'+e.w]=1;session.overrides=(session.overrides||0)+1;runCheck();};
     }
-    resultEl.innerHTML = '<p class="result-msg">'+msg+'</p>' +
-      (session.basicOnly ? '<p class="note">Gerade ohne Internet: Ich prüfe nur Rechtschreibung und einfache Satzzeichen, keine Grammatik.</p>' : '') +
-      '<p class="note">Tippe auf eine rot markierte Stelle für einen Tipp. Verbessere es dann in deinem Text und drück nochmal auf Prüfen.</p>' +
-      '<div class="sheet checked"><div class="lined">'+html+'</div></div>' + hint +
-      '<p class="stale" hidden>Du hast etwas verändert. Drück auf Prüfen, um es zu testen.</p>';
-    resultEl.hidden = false;
-    checkBtn.textContent = "Nochmal prüfen";
-    resultEl.querySelectorAll(".err").forEach(b => b.onclick = () => {
-      const i = Number(b.dataset.i);
-      session.active = session.active === i ? -1 : i; session.more = false; renderResult();
-      const nb = resultEl.querySelector('.err[data-i="'+i+'"]'); if(nb) nb.focus();
-      const hb = resultEl.querySelector(".hint"); if(hb && innerWidth >= 1000) hb.scrollIntoView({ block:"nearest" });
-    });
-    const more = $("#moreBtn"); if(more) more.onclick = () => { session.more = true; renderResult(); };
-    const okBtn = $("#okBtn");
-    if(okBtn) okBtn.onclick = () => {
-      const e = errs[session.active];
-      session.ignore = session.ignore || {}; session.ignore[e.cat + "|" + e.w] = 1; session.overrides = (session.overrides || 0) + 1;
-      for(const c of errCats(e)) if(session.cats[c]) session.cats[c] = Math.max(0, session.cats[c] - 1);   // not counted as a mistake any more
-      session.current = errs.filter(x => x !== e); session.active = -1; session.more = false;
-      if(session.current.length) renderResult(); else finish(session.checkedText);
-    };
-    const nameBtn = $("#nameBtn");
-    if(nameBtn) nameBtn.onclick = () => {
-      const w = errs[session.active].w;
-      if(!state.names.includes(w)){ state.names.push(w); hun.addWord(w); save(); renderNames(); }
-      delete session.found[lower(w)];
-      runCheck();
-    };
+    if(c){$("#wordEdit").focus();$("#wordEdit").select();}
     updateCount();
   }
 
   function finish(text){
     const date = todayKey();
-    const finalWords = new Set(tokens(text).map(t => lower(t.w)));
-    const fixed = Object.values(session.found).filter(f => f.fix && finalWords.has(lower(f.fix)));
+    const before=JSON.stringify(state,(k,v)=>k==='parent'?undefined:v);
+    const fixed=LC.ensure(state).cases.filter(c=>c.draftId===state.learning.draft?.id && c.status==='resolved' && c.expected===c.current).map(c=>({fix:c.current,wrong:c.original,cat:LC.catalog(c.category).title,fine:c.category,caseId:c.id}));
     const v = fieldValues(), content = contentText(v);
     const wc = tokens(content).length, scount = countSentences(content);
     const answers = {}; QUESTIONS.forEach(([k]) => { if(v[k]) answers[k] = v[k]; });
     const id = "e" + Date.now(), hasPic = padDirty;
     let picUrl = null;
-    if(hasPic){ picUrl = pad.toDataURL("image/jpeg", 0.85); idb.set(id, picUrl); idb.del("draft:" + state.id); blankPad(); padDirty = false; undoStack = []; }
+    if(hasPic) picUrl = pad.toDataURL("image/jpeg", 0.85);
     const earned = coinsFor(v);
     const already = R().cfg.firstOnly && state.entries.some(e => e.date === date);   // only the first entry of the day earns coins
     const coins = already ? 0 : earned.coins;
-    state.entries.unshift({ id, date, text: v.free, answers, firstErrors: Math.max(0, session.firstCount - (session.overrides || 0)), words: wc, sentences: scount, pic: hasPic, errCats: session.cats, coins, coinDetail: earned, overrides: session.overrides || 0 });
+    const learningSummary=LC.finishDraft(state,id);
+    state.entries.unshift({ learningSummary, id, date, text: v.free, answers, firstErrors: Math.max(0, session.firstCount - (session.overrides || 0)), words: wc, sentences: scount, pic: hasPic, errCats: session.cats, coins, coinDetail: earned, overrides: session.overrides || 0 });
     if(state.entries.length > 5000) state.entries.length = 5000;
     for(const f of fixed){
       const k = lower(f.fix), prev = state.words[k];
-      state.words[k] = { richtig:f.fix, kategorie:f.cat, fine: errCats({ cat:f.cat, w:f.wrong, fix:f.fix })[0], count:(prev ? prev.count : 0) + 1, last:date };
+      state.words[k] = { richtig:f.fix, kategorie:f.cat, caseId:f.caseId, fine:f.fine, count:(prev ? prev.count : 0) + 1, last:date };
     }
-    state.draft = ""; state.draftQ = {}; save();
+    state.draft = ""; state.draftQ = {};
+    if(!save()){ const parent=state.parent;Object.keys(state).forEach(k=>delete state[k]);Object.assign(state,JSON.parse(before),{parent});learningUI.message("Dein Eintrag konnte noch nicht gespeichert werden. Bitte den sichtbaren Text kopieren und einen Erwachsenen wegen des Speicherproblems holen.");return; }
+    if(hasPic){idb.set(id,picUrl);idb.del("draft:"+state.id);blankPad();padDirty=false;undoStack=[];}
     renderStreak();
     const streakN = streakOf() || 1;
     notify("✏️ Tagebuch geschrieben: " + wc + " Wörter, " + scount + " Sätze. " +
-      (session.firstCount === 0 ? "Auf Anhieb fehlerfrei!" : session.firstCount + (session.firstCount === 1 ? " Fehler" : " Fehler") + " selbst verbessert.") +
+      (learningSummary.resolved + " Wortstellen verbessert, " + (learningSummary.deferred+learningSummary.contested) + " noch offen.") +
       " Serie: " + streakN + (streakN === 1 ? " Tag." : " Tage.") + (hasPic ? " 🎨 Mit Bild." : ""));
-    const first = session.firstCount;
-    const headline = first === 0 ? "Fehlerfrei beim ersten Versuch!" : "Geschafft! Alles richtig.";
-    const sub = first === 0 ? "Stark. Dein Tagebucheintrag für heute ist gespeichert."
-      : (first === 1 ? "Du hast einen Fehler selbst gefunden und verbessert." : "Du hast " + first + " Fehler selbst gefunden und verbessert.");
+    const open=learningSummary.deferred+learningSummary.contested;
+    const headline=open?"Gespeichert – einige Wörter bleiben offen":"Dein Eintrag ist gespeichert!";
+    const sub=learningSummary.resolved+' markierte Wortstellen verbessert. '+open+' Wörter zum späteren Anschauen. Die automatische Prüfung kann nicht alle Fehler erkennen.';
     resultEl.hidden = true; resultEl.innerHTML = "";
     $("#writeArea").hidden = true;
     settleWeeks(); weeklyReport();
@@ -769,7 +822,7 @@
     doneEl.innerHTML = '<div class="done-box"><strong>'+headline+'</strong><p>'+sub+'</p><div class="sheet checked"><div class="lined">'+entryHtml(state.entries[0])+'</div></div>'+(picUrl ? '<img class="pic" alt="Dein Bild" src="'+picUrl+'">' : '')+coinMsg+'<div class="below"><button class="btn-ghost" id="againBtn">Noch etwas ins Tagebuch schreiben</button></div></div>';
     doneEl.hidden = false;
     $("#againBtn").onclick = reset;
-    renderStreak(); renderWords(); renderEntries();
+    renderStreak(); renderWords(); renderEntries(); learningUI.child();
   }
   function reset(){
     session = newSession(); allFields().forEach(f => { f.value = ""; }); doneEl.hidden = true; doneEl.innerHTML = "";
@@ -1054,7 +1107,7 @@
     return { ws, sum: state.entries.filter(e => e.date >= ws && e.coins).reduce((s, e) => s + e.coins, 0),
       days: new Set(weekDays(ws).filter(d => coveredDays().has(d))) };
   }
-  function renderCoinBadge(){ $("#coinNum").textContent = fmtC(balance()); }
+  function renderCoinBadge(){ $("#coinNum").textContent = fmtC(balance()-reserved()); $("#weekCoinNum").textContent=fmtC(weekPending().sum); $('#coinBadge').title='Verfügbar nach offenen Wünschen. Die Wochen-Coins werden nach den vereinbarten Wochenregeln gutgeschrieben.'; }
   function renderShop(){
     const r = R(), bal = balance(), res = reserved(), avail = bal - res;
     $("#shopBalance").textContent = fmtC(bal);
@@ -1126,7 +1179,7 @@
     };
     const c = r.cfg;
     $("#cfgSent").value = c.perSentence; $("#cfgWord").value = c.perWord; $("#cfgComma").value = c.comma; $("#cfgDays").value = c.days; $("#cfgFirst").checked = !!c.firstOnly;
-    $("#ledgerList").innerHTML = r.ledger.slice().reverse().slice(0, 40).map(l => '<li><span class="st ' + l.type + '">' + ({ credit:"Gutschrift", spend:"Einkauf", forfeit:"verfallen", adjust:"Korrektur" }[l.type] || l.type) + '</span><b>' + (l.amount > 0 ? "+" : "") + fmtC(l.amount) + '</b><span>' + esc(l.note || "") + '</span><span class="when">' + new Date(l.at).toLocaleDateString("de-DE") + '</span></li>').join("") || '<li class="empty">Noch keine Buchungen.</li>';
+    $("#ledgerList").innerHTML = r.ledger.slice().reverse().slice(0, 40).map(l => '<li><span class="st ' + l.type + '">' + ({ credit:"Gutschrift", spend:"Einkauf", forfeit:"verfallen", adjust:"Korrektur", task:"Zusatzaufgabe" }[l.type] || l.type) + '</span><b>' + (l.amount > 0 ? "+" : "") + fmtC(l.amount) + '</b><span>' + esc(l.note || "") + '</span><span class="when">' + new Date(l.at).toLocaleDateString("de-DE") + '</span></li>').join("") || '<li class="empty">Noch keine Buchungen.</li>';
   }
   function pickShopIcon(input){
     const dialog = $("#shopIconDialog"), choices = $("#shopIconChoices");
@@ -1315,10 +1368,10 @@
       const d = new Date(); d.setDate(d.getDate()-i); const k = keyOf(d);
       const es = state.entries.filter(e => e.date === k);
       const words = es.reduce((n,e) => n + (e.words || tokens(e.text).length), 0);
-      const fixed = es.reduce((n,e) => n + (e.firstErrors || 0), 0);
+      const fixed = es.reduce((n,e) => n + (e.learningSummary?.resolved || 0), 0);
       const label = d.toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"numeric"});
       rows.push(es.length
-        ? '<tr><td>'+esc(label)+'</td><td>✓ '+es.length+(es.length===1?' Eintrag':' Einträge')+'</td><td>'+words+' Wörter</td><td>'+fixed+' Fehler verbessert</td>'+readCell(k)+'</tr>'
+        ? '<tr><td>'+esc(label)+'</td><td>✓ '+es.length+(es.length===1?' Eintrag':' Einträge')+'</td><td>'+words+' Wörter</td><td>'+fixed+' Wortstellen verbessert (neue Daten)</td>'+readCell(k)+'</tr>'
         : '<tr><td>'+esc(label)+'</td><td class="no" colspan="3">nichts geschrieben</td>'+readCell(k)+'</tr>');
     }
     $("#stats").innerHTML = '<thead><tr><th>Tag</th><th>Geschrieben</th><th>Umfang</th><th>Rechtschreibung</th><th>Gelesen</th></tr></thead><tbody>'+rows.join("")+'</tbody>';
@@ -1326,7 +1379,7 @@
     $("#cfgSentWords").value = R().cfg.sentenceWords;
     renderNames(); renderErrStats(); renderParentWords(); settleWeeks(); renderRewardParent(); renderPauseParent(); renderPracticeStats(); renderBackup(); renderStore(); renderOverviewCards(); goSection(pSection);
     const c = R().cfg; $("#cfgGameBase").value = c.gameBase; $("#cfgGameTask").value = c.gamePerTask; $("#cfgGameMax").value = c.gameMax; $("#cfgDictLevel").value = c.dictLevel || "auto";
-    renderSpeechSettings();
+    renderSpeechSettings(); learningUI?.parent();
   }
   let pSection = "overview";
   function goSection(s){
@@ -1381,10 +1434,10 @@
   $("#cfgDictLevel").onchange = () => { R().cfg.dictLevel = $("#cfgDictLevel").value; save(); };
   function renderErrStats(){
     const since = new Date(); since.setDate(since.getDate() - 29); const from = keyOf(since);
-    const es = state.entries.filter(e => e.date >= from && e.errCats);
+    const es = state.entries.filter(e => e.date >= from && e.errCats && !e.learningSummary);
     const tot = {}; es.forEach(e => Object.entries(e.errCats).forEach(([k, n]) => { tot[k] = (tot[k] || 0) + n; }));
     const box = $("#errStats");
-    if(!es.length){ box.innerHTML = '<p class="empty">Noch keine Daten. Die Auswertung beginnt mit den nächsten Einträgen.</p>'; return; }
+    if(!es.length){ box.innerHTML = '<p class="empty">Keine älteren Zusammenfassungen in diesem Zeitraum. Neue Wortverläufe findet ihr unter Übersicht.</p>'; return; }
     const ovr = state.entries.filter(e => e.date >= from).reduce((s, e) => s + (e.overrides || 0), 0);
     const groups = CAT_GROUPS.map(([name, subs]) => {
       const parts = Object.entries(subs).map(([k, label]) => [label, tot[k] || 0]).filter(([, n]) => n);
@@ -1395,15 +1448,11 @@
     let html = '<p class="note">' + es.length + (es.length === 1 ? ' Eintrag' : ' Einträge') + ' ausgewertet.' + (ovr ? ' 🤔 ' + ovr + '-mal hat ' + esc(childName()) + ' eine Markierung als richtig erklärt.' : '') + '</p>' + groups.map(g =>
       '<div class="errgroup' + (g.lrs ? ' lrs' : '') + '"><div class="errrow"><span class="errname">' + esc(g.name) + '</span><span class="errbar"><span style="width:' + Math.round(g.n / max * 100) + '%"></span></span><span class="errcount">' + g.n + '</span></div>' +
       (g.parts.length > 1 || (g.parts[0] && g.parts[0][0]) ? '<p class="errdetail">' + g.parts.map(([l, n]) => esc(l) + ': ' + n).join(", ") + '</p>' : '') + '</div>').join("");
-    // gentle hint, never a diagnosis
-    const strong = ["spiegel","formaehnlich","eiie","umstellung"].reduce((s, k) => s + (tot[k] || 0), 0);
-    const spelling = Object.entries(tot).filter(([k]) => !["komma","satzende","leer","satzz","fall","verb","grammatik","doppelwort","verwechselt","dassdas","getrennt"].includes(k)).reduce((s, [, n]) => s + n, 0);
-    if(strong >= 5 && strong / Math.max(1, spelling) >= 0.2)
-      html += '<div class="lrs-hint"><b>Hinweis:</b> Verwechslungen wie b/d, m/n, ei/ie oder vertauschte Buchstaben kommen recht häufig vor (' + strong + ' von ' + spelling + ' Rechtschreibfehlern). Das kann ganz normal sein, besonders in den ersten Schuljahren. Wenn es so bleibt, lohnt sich ein Gespräch mit der Lehrkraft. Ob eine Lese-Rechtschreib-Schwäche vorliegt, kann nur ein Test bei Fachleuten klären, zum Beispiel beim schulpsychologischen Dienst oder in der Kinder- und Jugendpsychiatrie. Das Tagebuch kann das nicht feststellen.</div>';
+    html += '<p class="note">Ältere Zusammenfassungen ohne Wortverlauf. Die neue Übersicht trennt verbesserte, offene und beanstandete Stellen. Aus Buchstabenverwechslungen allein lässt sich keine LRS ableiten.</p>';
     box.innerHTML = html;
   }
   function renderParentWords(){
-    const ul = $("#parentWords"), list = Object.values(state.words).sort((a, b) => b.count - a.count || (b.last || "").localeCompare(a.last || "")).slice(0, 30);
+    const ul = $("#parentWords"), list = Object.values(state.words).filter(w=>!w.caseId || LC.ensure(state).cases.some(c=>c.id===w.caseId && c.shared)).sort((a, b) => b.count - a.count || (b.last || "").localeCompare(a.last || "")).slice(0, 30);
     ul.innerHTML = list.length ? list.map(w => '<li class="word"><b>' + esc(w.richtig) + '</b><small>' + esc(w.kategorie || "") + (w.count > 1 ? ', ' + w.count + '-mal' : '') + '</small></li>').join("") : '<li class="empty">Gerade keine.</li>';
   }
   function readCell(k){
@@ -1496,13 +1545,14 @@
     document.title = "Mein Tagebuch";
   }
   function enterChild(id){
+    clearTimeout(draftTimer);learningUI?.clear();
     useChild(id); save();
     // reset everything that belongs to the previous child
     session = newSession(); resultEl.hidden = true; resultEl.innerHTML = ""; doneEl.hidden = true; doneEl.innerHTML = ""; $("#writeArea").hidden = false; checkBtn.textContent = "Prüfen";
     ta.value = state.draft || ""; QUESTIONS.forEach(([k]) => { qa[k].value = (state.draftQ || {})[k] || ""; });
     $("#ideaPanel").hidden = true; $("#kidTitle").textContent = diaryTitle(); document.title = diaryTitle();
     if(typeof GM !== "undefined" && GM){ GM.over = true; GM = null; }
-    applyPrefs(); updateCount(); renderStreak(); renderWords(); renderEntries(); renderNames(); renderCoinBadge(); restoreDraftPic();
+    applyPrefs(); updateCount(); renderStreak(); renderWords(); renderEntries(); renderNames(); renderCoinBadge(); restoreDraftPic(); learningUI?.child();
   }
   function show(view){
     if(typeof arcadeTimer !== "undefined" && arcadeTimer) closeArcade();
@@ -1513,7 +1563,7 @@
   }
   function goHome(){ parentOpen = false; renderPinBox(); renderStreak(); renderHome(); show("homeView"); }
   document.querySelectorAll("[data-home]").forEach(b => b.onclick = goHome);
-  function openKid(){ settleWeeks(); renderCoinBadge(); showView(false); show("kidView"); }
+  function openKid(){ learningUI?.child(); settleWeeks(); renderCoinBadge(); showView(false); show("kidView"); }
   function renderKidLock(change){
     const n = childName(), box = $("#kidPinBox");
     $("#kidLockTitle").textContent = diaryTitle();
@@ -1560,8 +1610,8 @@
     family.children = family.children.filter(x => x !== id); delete family.data[id];
     useChild(family.children[0]); save(); renderParent(); renderHome();
   }
-  $("#childSel").onchange = () => { useChild($("#childSel").value); save(); renderParent(); };
-  $("#addKid").onclick = () => { if(addChild($("#newKidName").value)){ $("#newKidName").value = ""; $("#kidMsg").textContent = "Angelegt."; renderParent(); renderHome(); } else $("#kidMsg").textContent = "Bitte einen Namen eingeben."; };
+  $("#childSel").onchange = () => { clearTimeout(draftTimer);learningUI.clear();session=newSession();useChild($("#childSel").value); save(); renderParent(); };
+  $("#addKid").onclick = () => { if(addChild($("#newKidName").value)){ $("#newKidName").value = ""; $("#kidMsg").textContent = "Angelegt."; pSection="setup"; renderParent(); renderHome(); } else $("#kidMsg").textContent = "Bitte einen Namen eingeben."; };
   $("#addKidTop").onclick = () => { goSection("settings"); $("#newKidName").focus(); };
 
   // =====================================================================
@@ -1652,7 +1702,6 @@
     return list.length ? list : ["ss","dopp","ie","dehnung","gross","hartweich"];
   }
   // ---------- word dictation ----------
-  const LEITNER = [0, 1, 3, 7, 14, 30];
   function pickWords(n){
     const d = practiceData(), p = P(), today = todayKey(), out = [], seen = new Set();
     // 1) due words from his own practice list (spaced repetition)
@@ -1704,7 +1753,7 @@
       if(WD.phase === "ask"){
         const ok = v === it.word;
         p.wordSeen[it.word] = todayKey();
-        if(it.own){ const w = state.words[it.own]; if(w){ w.lv = ok ? Math.min((w.lv || 0) + 1, LEITNER.length - 1) : 0; w.due = addDays(todayKey(), LEITNER[w.lv]); if(ok && w.lv >= LEITNER.length - 1) delete state.words[it.own]; } }
+        if(it.own){ const w = state.words[it.own]; if(w){ const next=LC.nextReview(w.lv,ok);w.lv=next.level;w.due=addDays(todayKey(),next.days);if(next.mastered)delete state.words[it.own]; } }
         else if(!ok){ const k = lower(it.word); state.words[k] = state.words[k] || { richtig: it.word, kategorie: (TRICK[it.cat] || [""])[0], fine: it.cat, count: 0, last: todayKey() }; state.words[k].count++; }
         if(ok){ WD.right++; WD.i++; flash(true); save(); renderWordDictation(); if(WD && WD.i < WD.items.length) setTimeout(sayWord, 500); }
         else { WD.cats[it.cat] = (WD.cats[it.cat] || 0) + 1; WD.phase = "copy"; save(); renderWordDictation(); }
@@ -1828,6 +1877,7 @@
   }
   function gameBonusText(){ const c = R().cfg; return c.gamePerTask ? ' (+' + c.gamePerTask + ' Minuten Spielzeit 🎮)' : ''; }
   function renderPractice(){
+    learningUI?.child();
     const box = $("#practiceBox"), p = P(), n = todaysTasks();
     if(!practiceData()){ box.innerHTML = '<p class="empty">Die Übungsdaten fehlen in dieser Datei.</p>'; return; }
     const speech = canSpeak();
@@ -2062,6 +2112,8 @@
     try{ plain = await crypto.subtle.decrypt({ name:"AES-GCM", iv:b64d(f.iv) }, await keyFrom(pw, b64d(f.salt)), b64d(f.data)); }
     catch(e){ throw new Error("Das Kennwort stimmt nicht."); }
     const p = JSON.parse(new TextDecoder().decode(plain));
+    if(!p.state || p.v > 2 || f.v > 1) throw Error("Diese Sicherung benötigt eine neuere App-Version. Bitte zuerst die App aktualisieren.");
+    window.TBCompatibility.validate(p.state);
     if(p.state) p.state.savedAt = Date.now();
     localStorage.setItem(KEY, JSON.stringify(p.state));
     const db = await idb.open();
@@ -2080,10 +2132,10 @@
   const hdb = { open(){ return new Promise((res, rej) => { const r = indexedDB.open("tagebuch-ordner", 1); r.onupgradeneeded = () => r.result.createObjectStore("h"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); },
     async get(){ try{ const db = await this.open(); return await new Promise(res => { const q = db.transaction("h").objectStore("h").get("dir"); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); }); }catch(e){ return null; } },
     async set(v){ try{ const db = await this.open(); return await new Promise(res => { const tx = db.transaction("h", "readwrite"); v ? tx.objectStore("h").put(v, "dir") : tx.objectStore("h").delete("dir"); tx.oncomplete = res; tx.onerror = res; }); }catch(e){ return null; } } };
-  let dirHandle = null, dirOk = false, flushTimer = null, flushing2 = false, flushAgain = false;
+  let dirHandle = null, dirOk = false, dirVerified = false, flushTimer = null, flushing2 = false, flushAgain = false;
   const written = {};                                   // last written JSON per child, to write only changes
   const STORE = () => state.parent.storage || (state.parent.storage = { mode: "folder" });   // folder is the default
-  const folderReady = () => STORE().mode === "folder" && !!dirHandle && dirOk;
+  const folderReady = () => STORE().mode === "folder" && !!dirHandle && dirOk && dirVerified;
   // --- family key: makes the files unreadable in a text editor (not a protection against experts) ---
   let keyCache = null;
   async function famKey(){
@@ -2093,6 +2145,12 @@
   }
   async function enc(text){ const iv = crypto.getRandomValues(new Uint8Array(12)); const d = await crypto.subtle.encrypt({ name:"AES-GCM", iv }, await famKey(), new TextEncoder().encode(text)); return JSON.stringify({ tagebuch: 1, iv: b64e(iv), data: b64e(d) }); }
   async function dec(text){ const f = JSON.parse(text); if(!f || !f.tagebuch) return text; return new TextDecoder().decode(await crypto.subtle.decrypt({ name:"AES-GCM", iv: b64d(f.iv) }, await famKey(), b64d(f.data))); }
+  async function decWithKey(text,raw){
+    const f=JSON.parse(text);if(!f || !f.tagebuch)return text;
+    if(!raw)throw Error('Der Schlüssel zum Tagebuch fehlt.');
+    const key=await crypto.subtle.importKey('raw',b64d(raw),'AES-GCM',false,['decrypt']);
+    return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b64d(f.iv)},key,b64d(f.data)));
+  }
   // --- file helpers ---
   async function dirAt(path, create){ let d = dirHandle; for(const p of path.split("/").filter(Boolean)) d = await d.getDirectoryHandle(p, { create: create !== false }); return d; }
   async function writeText(path, text){ const parts = path.split("/"), name = parts.pop(); const d = await dirAt(parts.join("/")); const fh = await d.getFileHandle(name, { create:true }); const w = await fh.createWritable(); await w.write(text); await w.close(); }
@@ -2113,18 +2171,34 @@
     return dirOk;
   }
   async function connectFolder(){
+    dirVerified=false;clearTimeout(flushTimer);
+    try{await readFolder();dirVerified=true;}
+    catch(e){dirOk=false;STORE().lastError=e.message;window.TBCompatibility.problem(e.message);throw e;}
+  }
+  async function readFolder(){
     // newer data wins: folder config vs. this browser
     const cfgText = await readText("config/familie.json");
     const cfg = cfgText ? JSON.parse(cfgText) : null;
+    if(cfg && cfg.v > 3){ dirOk=false; throw Error("Dieser Ordner benötigt eine neuere App-Version. Bitte aktualisieren. Der Ordner wurde nicht überschrieben."); }
+    let folderData={};
+    if(cfg){
+      if(cfg.app!=='tagebuch' || !Array.isArray(cfg.children))throw Error('Die Familienkonfiguration im Ordner ist unvollständig. Bitte den bisherigen vollständigen Ordner wählen.');
+      for(const c of cfg.children){
+        const text=await readText('kinder/'+c.folder+'/files/tagebuch.json');
+        if(!text)throw Error('Eine Kinddatei fehlt. Bitte den vollständigen bisherigen Ordner auswählen.');
+        const d=JSON.parse(await decWithKey(text,cfg.key));window.TBCompatibility.validateChild(d);folderData[c.id]=d;
+      }
+    }
     const localHasData = family.children.length > 0;
     if(cfg && cfg.children && (!localHasData || (cfg.savedAt || 0) >= (family.savedAt || 0))){
       const fam = { v:2, parent: cfg.parent || {}, salt: cfg.salt || "", key: cfg.key, savedAt: cfg.savedAt, children: [], data: {}, active: cfg.active };
-      const prevKey = family.key; family.key = cfg.key; keyCache = null;
-      for(const c of cfg.children){
-        const t = await readText("kinder/" + c.folder + "/files/tagebuch.json"); if(!t) continue;
-        try{ const d = JSON.parse(await dec(t)); Object.assign(d, { id: c.id, name: c.name, folder: c.folder }); fam.children.push(c.id); fam.data[c.id] = d; written[c.id] = childJSON(d); }catch(e){}
-      }
-      if(cfg.children.length && !fam.children.length){ family.key = prevKey; keyCache = null; throw new Error("Die Tagebuch-Dateien konnten nicht gelesen werden."); }
+      try{
+        for(const c of cfg.children){
+          const d=folderData[c.id];
+          Object.assign(d,{id:c.id,name:c.name,folder:c.folder});fam.children.push(c.id);fam.data[c.id]=d;
+        }
+      }catch(e){dirOk=false;throw Error("Ordner nicht übernommen: "+e.message+" Vorhandene Daten wurden nicht überschrieben.");}
+      for(const id of fam.children)written[id]=childJSON(fam.data[id]);
       family = fam; family.parent = Object.assign({ pin:"", topic:"", notifyRead:false, lastReadPing:"", readMin:2, queue:[], grammar:true }, family.parent || {}); family.parent.queue = family.parent.queue || [];
       useChild(family.data[family.active] ? family.active : family.children[0]);
       try{ localStorage.setItem(KEY, childJSON(family)); }catch(e){}
@@ -2141,13 +2215,13 @@
           if(sure) await wipeBrowserData(true);
         }
       }
-      await flushFolder(true);                          // empty folder or older: write what this browser has
+      dirVerified=true;await flushFolder(true);                          // empty folder or older: write what this browser has
     }
   }
   async function initFolder(){
     if(STORE().mode !== "folder" || !canFolder()){ renderGate(); return; }
     dirHandle = await hdb.get();
-    if(dirHandle && await folderPermission(false)){ try{ await connectFolder(); }catch(e){} }
+    if(dirHandle && await folderPermission(false)){ try{ await connectFolder(); }catch(e){dirOk=false;STORE().lastError=e.message;window.TBCompatibility.problem(e.message);} }
     renderGate(); afterDataChange();
   }
   function afterDataChange(){ renderHome(); if(state.id && family.data[state.id] && !$("#kidView").hidden) enterChild(state.id); }
@@ -2171,7 +2245,7 @@
   async function pickFolder(){
     try{
       const h = await window.showDirectoryPicker({ id:"tagebuch", mode:"readwrite", startIn:"documents" });
-      dirHandle = h; await hdb.set(h); await folderPermission(true);
+      dirVerified=false;dirHandle = h; await hdb.set(h); await folderPermission(true);
       let hasApp = false; try{ await h.getFileHandle("Tagebuch.html"); hasApp = true; }catch(e){}
       if(!hasApp && !confirm("In diesem Ordner liegt keine „Tagebuch.html“. Trotzdem hier speichern?")){ dirHandle = null; await hdb.set(null); return; }
       STORE().mode = "folder"; await connectFolder(); save();
@@ -2181,7 +2255,7 @@
   // --- writing ---
   function scheduleAutoSave(ms){ if(!folderReady()) return; clearTimeout(flushTimer); flushTimer = setTimeout(() => flushFolder(), ms == null ? 1500 : ms); }
   async function flushFolder(force){
-    if(!dirHandle || !dirOk) return;
+    if(!dirHandle || !dirOk || !dirVerified) return;
     if(flushing2){ flushAgain = true; return; }
     flushing2 = true;
     try{
@@ -2208,6 +2282,7 @@
       try{ localStorage.setItem(KEY, childJSON(family)); }catch(e){}
     }catch(e){
       STORE().lastError = e && e.name === "NotAllowedError" ? "Kein Zugriff auf den Ordner." : "Speichern im Ordner fehlgeschlagen.";
+      learningUI?.message(STORE().lastError+" Kinder: Bitte holt einen Erwachsenen. Eltern: Unter Einstellungen → Speicherort den bisherigen Ordner verbinden und freien Speicher prüfen. Der Browserstand ist nur gesichert, wenn kein zusätzlicher Browser-Speicherfehler angezeigt wird.");
       if(e && e.name === "NotAllowedError"){ dirOk = false; renderGate(); }
     }
     flushing2 = false;
@@ -2458,7 +2533,7 @@
   if(window.TBUpdater) window.TBUpdater.configure({
     getDirectory: () => dirHandle,
     beforeReload: async () => {
-      save();
+      if(!save()) throw Error("Vor dem Update konnte nicht gespeichert werden. Bitte erst das Speicherproblem beheben.");
       if(!folderReady()) return;
       const deadline = Date.now() + 10000;
       while(flushing2 && Date.now() < deadline) await new Promise(res => setTimeout(res, 100));
@@ -2469,6 +2544,7 @@
     }
   });
   load();
+  learningUI=window.TBLearningUI.create({state:()=>state,hasChild:()=>!!family.data[state.id],transaction:learningTransaction,config:()=>R().cfg,refresh:()=>{renderParent();updateCount();},refreshCoins:renderCoinBadge,speak,stopSpeech,canSpeak,revisit:revisitWord});
   pickVoice();
   $("#dateLabel").textContent = fmtDate(todayKey());
   if(state.draft) ta.value = state.draft;
@@ -2479,6 +2555,7 @@
   if(state.id && family.data[state.id]) enterChild(state.id);
   renderCoinBadge(); renderHome(); applyPrefs();
   if(window.top !== window.self || (!/^file:/.test(location.protocol) && /claude|anthropic|usercontent/i.test(location.hostname))) $("#previewWarn").hidden = false;
+  window.TBCompatibility.ready();
   setTimeout(initSpell, 30);
   window.__rt = { tick: n => { for(let i=0;i<n;i++){ RT.lastAct = Date.now(); readTick(); } }, idle: n => { RT.lastAct = 0; for(let i=0;i<n;i++) readTick(); }, state: () => ({ sec: RT.sec, read: [...RT.read], visible: [...RT.visible], active: RT.active }) }; window.__coins = { coinsFor: v => coinsFor(v), settle: () => settleWeeks(), balance: () => balance(), R: () => R() }; window.__test = { check: t => check(t), ready: () => !!hun };
 })();

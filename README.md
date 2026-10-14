@@ -1,12 +1,22 @@
 # MeinLRSTagebuch
 
-Ein deutschsprachiges Tagebuch für Kinder mit Lese- und Rechtschreibübungen. Die Anwendung läuft in einem Browser und benötigt weder einen eigenen Backend-Server noch eine Installation von npm-Paketen.
+Ein deutschsprachiges Tagebuch für Kinder mit Rechtschreibübungen. Die Anwendung läuft in einem Browser und benötigt weder einen eigenen Backend-Server noch eine Installation von npm-Paketen.
 
 **Was ist neu?** In der [Änderungsübersicht für Eltern und Lehrkräfte](CHANGELOG.md) stehen die Neuerungen, behobene Probleme und Hinweise zu Updates.
 
 In der App öffnet die **Glocke oben rechts** dieselbe Historie, auch offline. Die Zahl zeigt ungelesene Einträge; beim Öffnen werden sie als gelesen markiert. Der Lesestand wird für den verwendeten Browser gespeichert, gemeinsam für alle Kinderprofile. Nach dem Löschen der Browserdaten erscheinen die Einträge wieder als neu.
 
 Die Bedienhilfe direkt in der App findet ihr unter **Eltern → Hilfe** sowie über **❓ Hilfe** im Kindertagebuch. Dort sind auch Stimmenauswahl, Shop, Updates und Glocke erklärt.
+
+## Testfassung 1.3.0 auf `dev`
+
+Die neuen Funktionen werden zunächst auf dem separaten Branch **[dev](https://github.com/seven0584/MeinLRSTagebuch/tree/dev)** zum Ausprobieren bereitgestellt. Sie sind noch nicht in `main` übernommen und kein reguläres Release.
+
+**[Testfassung als ZIP herunterladen](https://github.com/seven0584/MeinLRSTagebuch/archive/refs/heads/dev.zip)** · **[Anleitung zum Testen](docs/testfassung-dev.md)**
+
+Die ZIP vollständig in einen eigenen Testordner entpacken und `Tagebuch.html` in Chrome oder Edge öffnen. Dafür ein separates Browserprofil verwenden und zuerst ein erfundenes Testkind anlegen. Ein anderer Ordner allein trennt die Browserdaten nicht zuverlässig. Der Testordner darf nicht euer bisheriger Tagebuchordner sein.
+
+Die automatische Update-Suche liest weiterhin ausschließlich `main`. Neue Teststände von `dev` werden über den ZIP-Link geladen; bestehende Installationen bekommen die Testfassung nicht als automatisches Update angeboten.
 
 ## Funktionen
 
@@ -89,17 +99,62 @@ Das Wörterbuch und die Übungstexte sind enthalten. Die lokale Rechtschreibprü
 - **ntfy:** Bei eingerichteten Benachrichtigungen werden Meldungen an das konfigurierte Thema auf `https://ntfy.sh` gesendet. Ein Thema ist keine Zugangskontrolle; Namen und Meldungsinhalte können persönliche Informationen enthalten.
 - **Vorlesen:** Verfügbare Stimmen und deren Verhalten hängen vom Browser und Betriebssystem ab.
 
+## Schreibziele, offene Wörter und freiwillige Aufgaben
+
+Unter **Eltern → Gemeinsam starten** stehen Schreibumfang, Satzlänge, Schreibtage und Coins nebeneinander. Ein Beispieltext zeigt, ob das Ziel erreicht wäre und welche Tagebuch-Coins er bringen würde. Alle bisherigen Einstellungen und die Wochenabrechnung bleiben erhalten. Die Vorschau prüft keine Rechtschreibung.
+
+Kinder schreiben in einem Hauptfeld. Die drei Fragen stehen unter **Freiwillige Schreibideen**; eingetragene Antworten bleiben auch beim Zuklappen erhalten und zählen mit. Nach **Prüfen** können Kinder eine Wortstelle direkt bearbeiten, Hinweise öffnen oder melden, dass ein Tipp noch nicht hilft. **Hier weiß ich nicht weiter** und **Meine Schreibweise stimmt, bitte prüfen** stellen nur dieses einzelne Wort zurück. Die App korrigiert es nicht automatisch. Ein Eintrag mit offenen Wörtern kann abgeschlossen werden, sobald das bestehende Schreibziel und die übrigen Prüfungen erfüllt sind.
+
+Unter **Wörter und Rückmeldungen** lassen sich solche Stellen später bearbeiten oder gezielt mit den Eltern teilen. Neue private Wortformen, Kontextausschnitte und daraus entstandene Übungswörter sind in der Elternoberfläche nur nach Freigabe sichtbar. Vorhandene alte Übungswörter bleiben sichtbar. Ein Kontextausschnitt umfasst höchstens 160 Zeichen vor und nach dem Wort innerhalb desselben Satzes. Das ist ein Sichtschutz in der Oberfläche; die bestehenden Grenzen von PINs und Ordnerzugriff gelten weiter.
+
+Die Elternübersicht trennt beobachtete Verbesserungen, offene Wörter und beanstandete Bewertungen. Eine Beanstandung bleibt als Rückfrage erhalten, auch wenn das Kind danach weiterübt. Die Eltern können geteilte Stellen oder Aufgabenantworten bestätigen, als zulässig anerkennen oder ungeklärt lassen. Hinweise sind keine Diagnose. Weniger Markierungen allein belegen keinen Lernfortschritt; die Schreibmenge und die bearbeiteten Aufgaben können sich verändert haben.
+
+Unter **Übersicht → Eine freiwillige Aufgabe anbieten** können Eltern ein Wort-Diktat mit 1 bis 5 Wörtern oder einen kurzen Text aus einem kleinen eigenen Materialbestand wählen. Die Vorschau zeigt das Material. Der maximale Coinbetrag lässt sich je Aufgabe zwischen 0 und 10.000 einstellen; der letzte Betrag wird für dieses Kind vorbelegt. Noch nicht begonnene Aufgaben lassen sich ändern. Nach Beginn bleiben Material und Coinvereinbarung fest; Aufgaben können zurückgenommen werden, ohne den erreichten Anteil zu verlieren.
+
+Das Kind findet das Angebot unter **Üben → Für dich angeboten**. Aufgaben sind freiwillig und lassen sich pausieren. Bei Wort-Diktaten wird das Wort mit einem Satz zum Verständnis vorgelesen. Nach einem eigenen Versuch ist eine Vergleichsschreibweise verfügbar. Im kurzen Text werden Wortschreibweisen geprüft; Satzzeichen bringen dort keine zusätzlichen Coins und werden nicht bewertet. Antworten auf angebotene Aufgaben sind für Eltern sichtbar.
+
+Die Extra-Coins werden beim Abschluss separat gutgeschrieben: `abrunden(maximale Coins × bearbeitete Zielwörter / alle Zielwörter)`. Verbesserungen nach einem Hinweis zählen mit; leere Eingaben und nur übersprungene Wörter zählen nicht. Spätere Bearbeitung oder Anerkennung einer zulässigen eigenen Antwort kann den noch fehlenden Anteil ergänzen. Es gibt keine Doppelzahlung und keine automatische Rücknahme bereits gebuchter Coins. Die bisherigen freien Diktate bleiben mit ihrer Spielzeitvergütung verfügbar.
+
+Oben in der Kinderansicht stehen **verfügbare Coins** (nach Reservierungen für Einkaufswünsche) und **diese Woche gesammelte Tagebuch-Coins** getrennt. Die Wochenbedingungen bleiben unverändert.
+
+Automatische Mustervorschläge erfordern mindestens drei verschiedene zuordenbare Wörter an mindestens zwei Tagen in den letzten 30 Tagen. Beanstandete, ungeklärte und als zulässig anerkannte Fälle werden dafür ausgeschlossen. Diese Schwelle ist eine Produktheuristik, kein wissenschaftlich validierter Test und keine Vorgabe für die Übungshäufigkeit. Es gibt keine verpflichtende Klassenstufenabfrage. Die Regeln und Beispiele wurden bei der Umsetzung durchgesehen; eine externe pädagogische Begutachtung und beobachtete Tests mit Familien stehen aus.
+
+## Wenn nach einem Update etwas nicht funktioniert
+
+Kompatible vorhandene Profile werden um die neuen Lerndaten ergänzt. Einträge, bisherige Belohnungsregeln, PINs und Bilder bleiben im bestehenden Speichersystem. Neue Wortverläufe, Aufgaben und Buchungen gehören zu Browserstand, Ordnerspeicherung und kennwortgeschützter Sicherung. Die neuen Detaildaten werden in dieser Version nicht automatisch nach Alter gelöscht.
+
+Fehlen Programmteile oder wird ein unbekanntes neueres Datenformat erkannt, zeigt die App einen Starthinweis: Kinder sollen einen Erwachsenen holen; Eltern erhalten konkrete Schritte. Ein unbekannter oder unvollständiger Ordner wird vor Schreibzugriff zurückgewiesen, auch wenn sein Zeitstempel älter als der Browserstand ist.
+
+1. Die App einmal neu öffnen. Bleibt das Problem, die **vollständige aktuelle Veröffentlichung** von der [Release-Seite](https://github.com/seven0584/MeinLRSTagebuch/releases/latest) herunterladen.
+2. Alle Programmdateien zusammen entpacken. Nur `Tagebuch.html` und `app/` ersetzen; `config/` und `kinder/` behalten. Keine Browserdaten löschen. Denselben Browser und Speicherort verwenden.
+3. Unter **Eltern → Einstellungen → Speicherort** den bisherigen Ordner erneut verbinden. Bei einer fehlenden Stimme unter **Stimme und Diktat testen** eine Hörprobe machen; dort stehen auch die Windows- und macOS-Anleitungen.
+4. Bei einem Speicherfehler nicht schließen: noch sichtbaren Text kopieren, freien Speicher und Browser-Einstellungen prüfen. Fehlgeschlagene neue Lernschritte und Coinbuchungen werden nicht als gespeichert bestätigt. Eine Sicherung nur gezielt über **Sicherung wiederherstellen** einspielen.
+
+Die neuen Wortverläufe und Kontextausschnitte werden nicht zusätzlich an ntfy versandt. Die optionale Onlineprüfung des Tagebuchtexts durch LanguageTool bleibt eine eigene Einstellung.
+
 ## Entwicklung
+
+Die Umsetzung für Version 1.3.0 ist im [Entwicklungsplan](docs/entwicklungsplan-rechtschreibfoerderung.md) beschrieben. Das zugrunde liegende [Konzept](docs/konzept-rechtschreibfoerderung.md) enthält Anforderungen und Akzeptanzkriterien. Der [Prüfbericht](docs/pruefbericht-1.3.0.md) nennt technische Nachweise und offene Prüfungen mit echten Eltern und Kindern.
 
 Die Quellen bestehen aus HTML, CSS und JavaScript. Für den Betrieb gibt es keinen Paketmanager oder Build-Schritt. Die Updater-Tests verwenden den integrierten Test-Runner von Node.js (Version 22 oder neuer):
 
 ```bash
-node --test tests/update-core.test.cjs
+node --test tests/update-core.test.cjs tests/learning-core.test.cjs
 ```
 
 Für die Shop-Korrekturen gibt es zusätzlich einen Browser-Regressionstest. Wenn Python 3, Playwright und Chromium verfügbar sind, `node tests/shop-browser.cjs` ausführen. Der Test startet einen eigenen lokalen Server auf Port 8765 und verwendet ausschließlich Testprofile. Ein abweichender Chromium-Pfad kann über `CHROMIUM_PATH` gesetzt werden.
 
 `node tests/speech-browser.cjs` prüft Stimmenauswahl, Tempo, Hörproben, Stoppen, Speicherung und die Übernahme ins Kinderdiktat mit simulierten Stimmen. Er startet einen lokalen Testserver auf Port 8766. Diese Prüfung bewertet weder den hörbaren Klang noch das Öffnen echter Windows- oder macOS-Einstellungen; beides auf dem jeweiligen Gerät prüfen.
+
+Die neuen Browserprüfungen laufen mit denselben Voraussetzungen:
+
+```bash
+node tests/learning-browser.cjs
+node tests/learning-storage-browser.cjs
+node tests/learning-edge-browser.cjs
+```
+
+Sie verwenden künstliche Profile und eigene lokale Server auf den Ports 8767–8769. Die Ordnerprüfung simuliert Browser-Dateihandles, verwendet aber die tatsächliche Speicher- und Verschlüsselungslogik. Die Sicherung wird über den echten Download-/Wiederherstellungsablauf geprüft. Das ersetzt keinen Test des Betriebssystemdialogs auf einem Windows-PC oder Mac. Screenshots und temporäre Sicherungen liegen unter `/tmp`, nicht im Repository.
 
 Für die Entwicklung kann ein lokaler HTTP-Server verwendet werden:
 

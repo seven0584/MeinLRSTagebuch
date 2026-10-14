@@ -1,6 +1,39 @@
 // Generated from CHANGELOG.md by scripts/prepare-update.cjs.
 window.TB_CHANGELOG = [
   {
+    "id": "20f5312709e7273b",
+    "title": "Version 1.3.0 — 14. Oktober 2026",
+    "lines": [
+      "",
+      "- **Zunächst als Testfassung:** Die neuen Funktionen werden auf dem separaten GitHub-Branch `dev` mit ZIP-Download und einer [Schritt-für-Schritt-Testanleitung](docs/testfassung-dev.md) bereitgestellt. `main` bleibt unverändert; die automatische Update-Suche bietet diese Testfassung nicht an. Bitte in einem eigenen Testordner und separaten Browserprofil ausprobieren.",
+      "- **Einfacher einrichten:** Unter „Gemeinsam starten“ sehen Eltern Schreibziel, Satzlänge, Schreibtage und Coins zusammen. Ein Beispieltext zeigt, ob die Aufgabe machbar wäre und wann Coins verfügbar werden. Vorhandene Einstellungen bleiben erhalten.",
+      "- **Eine Wortstelle nach der anderen:** Kinder können direkt an einer Markierung verbessern, Tipps öffnen oder sagen, dass ein Tipp noch nicht hilft. „Hier weiß ich nicht weiter“ und „Meine Schreibweise stimmt, bitte prüfen“ lassen nur dieses Wort offen. Der Text wird nicht automatisch korrigiert; offene Stellen können später erneut angeschaut werden.",
+      "- **Mehr Ruhe beim Schreiben:** Ein Hauptfeld steht im Vordergrund; die freiwilligen Fragen lassen sich aufklappen. Gesammelte Wochen-Coins und tatsächlich verfügbare Coins werden getrennt angezeigt. Die bisherigen Tagesziele und Wochenregeln gelten weiter.",
+      "- **Nachvollziehbare Elternübersicht:** Verbesserte, ungelöste und beanstandete Wortstellen werden getrennt dargestellt. Neue private Wortstellen sehen Eltern nur nach Freigabe durch das Kind. Rückfragen zur Bewertung bleiben sichtbar, auch wenn das Kind weiterübt. Ältere Zusammenfassungen bleiben gesondert erhalten.",
+      "- **Freiwillige Übungen mit vereinbarter Belohnung:** Eltern können kurze Wort- und Text-Diktate ansehen, anbieten und dafür eigene Extra-Coins festlegen, auch 0. Das Kind kann pausieren. Bearbeitete Wörter erhalten ihren Anteil; bloßes Überspringen bringt keine Coins. Spätere Bearbeitung oder eine anerkannte zulässige Antwort ergänzt nur den fehlenden Anteil. Diese Aufgaben werden nie Voraussetzung für das Tagebuch.",
+      "- **Vorsichtigere Hinweise:** Mehrdeutige Wörterbuchvorschläge werden nicht als sichere Fehlerklasse ausgegeben. Regeln enthalten auch Gegenbeispiele; Buchstabenverwechslungen lösen keinen vermeintlich diagnostischen Schwellenhinweis mehr aus. Die geplante 30-Tage-Wiederholung eigener Übungswörter wird jetzt tatsächlich abgewartet. Namen bleiben getrennt je Kind. Die falsche Vorlage „zum tauschen“ wurde zu „zum Tauschen“ berichtigt.",
+      "- **Hilfe bei Updateproblemen:** Fehlt ein Programmteil oder passt ein gespeichertes Datenformat nicht zur App, erhalten Kinder und Eltern verständliche Hinweise mit nächsten Schritten. Unbekannte oder unvollständige Ordner werden vor dem Schreiben zurückgewiesen. Speicherfehler werden sichtbar; neue Aufgabenstände und Coins werden zusammen gespeichert.",
+      "- **Anleitungen und Prüfungen:** Elternhilfe, Kinderhilfe und README erklären die neuen Abläufe. Entwicklungsplan und Prüfbericht dokumentieren die Umsetzung und ihre Grenzen. Automatische Prüfungen belegen keine Lernwirkung und ersetzen keine Tests mit echten Familien.",
+      "",
+      "**Müsst ihr etwas tun?** Ein normales Update übernimmt kompatible Daten. Bei einem Startproblem die vollständigen Programmdateien erneut laden und nur `Tagebuch.html` und `app/` ersetzen; `config/`, `kinder/` und Browserdaten behalten. Danach gegebenenfalls den bisherigen Ordner erneut freigeben oder die Stimme im Elternbereich testen. Die bisherigen Belohnungseinstellungen müssen nicht neu angelegt werden.",
+      ""
+    ]
+  },
+  {
+    "id": "53fb075caeb911f4",
+    "title": "Konzept zur Rechtschreibförderung ergänzt — 14. Oktober 2026",
+    "lines": [
+      "",
+      "- Ein [Konzept für die weitere Entwicklung](docs/konzept-rechtschreibfoerderung.md) beschreibt, wie Kinder einzelne schwierige Wörter offenlassen und mögliche Fehlbewertungen melden könnten. Eltern sollen diese Fälle nachvollziehen und gezielte Übungsangebote mit einstellbaren Extra-Coins anlegen können.",
+      "- Das Dokument beschreibt auch die fachliche Überarbeitung der Fehlerklassen und Hinweise sowie die Grenzen der Auswertung. Die bisherigen Einstellungen zu Schreibumfang und Tagebuchbelohnungen bleiben Grundlage der Planung.",
+      "- Rückmeldungen zur Nutzung sind als Bedienanforderungen aufgenommen: zusammenhängende Elterneinstellungen, verständliche Empfehlungen, eine klare Schreibansicht und das direkte Bearbeiten markierter Wörter. Diese Verbesserungen haben Vorrang vor zusätzlichen Auswertungen und Aufgabenfunktionen.",
+      "- Die README verlinkt das Konzept als Ausgangspunkt für einen Entwicklungsplan und benennt Schreiben und Rechtschreibung als Schwerpunkt. Die beschriebenen neuen Funktionen sind noch nicht umgesetzt.",
+      "",
+      "**Was müsst ihr tun?** Nichts. Dies ist eine reine Dokumentationsänderung; die App, ihre Einstellungen und gespeicherten Daten werden dadurch nicht verändert. Ein App-Update ist dafür nicht erforderlich.",
+      ""
+    ]
+  },
+  {
     "id": "e4f5d2e03522aa5d",
     "title": "Version 1.2.1: Hilfe in der App ergänzt — 14. Oktober 2026",
     "lines": [

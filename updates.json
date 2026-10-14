@@ -1,32 +1,47 @@
 {
   "schema": 1,
-  "release": 5,
-  "version": "1.2.1",
+  "release": 6,
+  "version": "1.3.0",
   "files": [
     {
       "path": "Tagebuch.html",
-      "size": 46797,
-      "sha256": "52cf6d590da4873a62352684924fa11ee582881ec5589e4b3ce71d0dd05ac05e"
+      "size": 56366,
+      "sha256": "999690d447302e32eab1fca41a78e340f1eed936f3ffb88e7e8d2a370039cdf2"
     },
     {
       "path": "app/app.css",
-      "size": 33539,
-      "sha256": "cc1532cd13f7802e7d95ed4a3b9173ed83af997a74576d002e444f0a60d28446"
+      "size": 35759,
+      "sha256": "461e98db4a31d6fa0b113254b10780d2877a5196adc3f351345af1f286f94c49"
     },
     {
       "path": "app/app.js",
-      "size": 201458,
-      "sha256": "6cdbf812697fbaa70da0f8f8120da5525e0bdf53ac0f0699e0624a4a7adfb8c3"
+      "size": 211369,
+      "sha256": "89f8f259d71738e03256e3d784555ce8fdefa0b891e5798b580aecab38b707a9"
     },
     {
       "path": "app/changelog-data.js",
-      "size": 8560,
-      "sha256": "a52f21e2f094e35028ebb24896cf4780d1c6595652ad0cad309538d032f1abf6"
+      "size": 13772,
+      "sha256": "cf27a0eafe3092e1eb94bcc047559191e50c16ed939067134bc479073f5ae657"
+    },
+    {
+      "path": "app/compatibility.js",
+      "size": 1758,
+      "sha256": "ecefa277f6a88719443ccb86b80b110c0a75cb60ff953b0971c580c04fb563e7"
     },
     {
       "path": "app/hunspell.js",
       "size": 747722,
       "sha256": "6be6af4e85b15fef355f2fbc631887a0b20bad49e3024db5d9271219384422ba"
+    },
+    {
+      "path": "app/learning-core.js",
+      "size": 25010,
+      "sha256": "af391a17e8cbd50e10669e6d82435db24e7e96561885fae3a222748c0e8f58d2"
+    },
+    {
+      "path": "app/learning-ui.js",
+      "size": 23032,
+      "sha256": "213f54c4f8a10a9a2f1326d47dcdea386197d905b33ea14e3d59d36f06f07139"
     },
     {
       "path": "app/news.js",
@@ -76,7 +91,7 @@
     {
       "path": "app/uebungen.js",
       "size": 720706,
-      "sha256": "2b9d0fbbb74cb031adec8ea4d30949467105be132bbef88ad0277e5cd23bc45d"
+      "sha256": "4627da52d82985f873226a9aa4654bc6d67ba2c632c434f71eb8c79b754aab43"
     },
     {
       "path": "app/update-core.js",
@@ -91,7 +106,7 @@
     {
       "path": "app/version.js",
       "size": 151,
-      "sha256": "ad68399a1be619adcefb8e7558688c9cbb968ae8ee7614301b853db21849ad21"
+      "sha256": "53b97175cb71feb988cfd3c4d0bddb60725eda5d6b81261c4ebd160c7cfc0cd9"
     },
     {
       "path": "app/woerterbuch.js",
