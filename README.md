@@ -2,6 +2,8 @@
 
 Ein deutschsprachiges Tagebuch für Kinder mit Lese- und Rechtschreibübungen. Die Anwendung läuft in einem Browser und benötigt weder einen eigenen Backend-Server noch eine Installation von npm-Paketen.
 
+**Was ist neu?** In der [Änderungsübersicht für Eltern und Lehrkräfte](CHANGELOG.md) stehen die Neuerungen, behobene Probleme und Hinweise zu Updates.
+
 ## Funktionen
 
 - Tagebucheinträge mit Schreibimpulsen, Bildern und Emojis
@@ -98,6 +100,7 @@ Unter Windows kann der entsprechende Befehl `py -m http.server 8000 --bind 127.0
 ### Ein Update veröffentlichen
 
 1. Programmänderungen umsetzen und prüfen.
+   Die Änderungen in `CHANGELOG.md` für Eltern und Lehrkräfte erklären: Was ist neu oder behoben, und müssen sie etwas tun?
 2. In `app/version.js` die ganzzahlige `release` erhöhen und die angezeigte `version` ändern. Auch bei kleinen Korrekturen muss `release` steigen, damit bereits installierte Apps das Update erkennen.
 3. Aus dem Repository-Hauptordner `node scripts/prepare-update.cjs` ausführen. Das erzeugt `updates.json` mit den Größen und SHA-256-Prüfsummen der aktuellen Programmdateien.
 4. `node --test tests/update-core.test.cjs` ausführen. Nach Änderungen an Programmdateien das Manifest erneut erzeugen.
