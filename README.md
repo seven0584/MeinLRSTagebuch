@@ -22,6 +22,18 @@ Ein deutschsprachiges Tagebuch für Kinder mit Lese- und Rechtschreibübungen. D
 
 Die Ordnerspeicherung verwendet die File System Access API. Andere Browser unterstützen diesen Ablauf möglicherweise nicht. Als Alternative bietet die Startseite **nur im Browser speichern** an. Dabei gehen die gespeicherten Daten verloren, wenn die zugehörigen Browserdaten gelöscht werden. Regelmäßig Sicherungen erstellen.
 
+## Programmupdates
+
+Ab Version 1.0.0 prüft die App beim Öffnen automatisch, ob in diesem Repository ein Update bereitsteht. Auf der Startseite erscheint dann **Jetzt aktualisieren**. Erst nach einem Klick auf diese Schaltfläche und der Freigabe des Programmordners werden Dateien geändert. Mit **Später** lässt sich die Installation verschieben; **Nach Updates suchen** startet eine neue Prüfung.
+
+Für den ersten Umstieg von der ursprünglichen App muss diese Version einmal manuell heruntergeladen werden: `Tagebuch.html` und `app/` ersetzen, die vorhandenen Ordner `config/` und `kinder/` behalten. Danach stehen die Updates innerhalb der App zur Verfügung.
+
+Der Updater lädt ausschließlich `Tagebuch.html` und freigegebene Programmdateien unter `app/`. Er prüft die Größe und SHA-256-Prüfsumme jeder Datei, bevor die Installation beginnt. `config/`, `kinder/` und persönliche Sicherungen werden nicht aktualisiert. Nach der Installation auf **Neu laden** klicken; vorher speichert die App den aktuellen Stand.
+
+Die bisherigen Programmdateien werden in `.tagebuch-update-backup/` gesichert. Bei einem Schreibfehler versucht der Updater, sie wiederherzustellen. Ein unterbrochenes Update mit vorhandener `pending.json` wird beim nächsten Installationsversuch zuerst zurückgesetzt. Ein Absturz oder Stromausfall kann dennoch einen unvollständigen Programmstand hinterlassen: Falls die App nicht mehr startet, `Tagebuch.html` und `app/` erneut aus dem Repository herunterladen und ersetzen, ohne die Datenordner zu verändern.
+
+Ohne Internet oder bei einem fehlgeschlagenen Update-Check läuft die installierte App weiter. Die Prüfung fragt `updates.json` und bei bestätigter Installation die Programmdateien von `raw.githubusercontent.com/seven0584/MeinLRSTagebuch/main/` ab. Tagebuchtexte oder Einstellungen werden dabei nicht übermittelt. Das Repository muss für diesen Ablauf öffentlich zugänglich sein; der Updater speichert keine GitHub-Zugangsdaten. Die Prüfungen sichern die Übertragung und erkennen beschädigte Dateien; die Quelle der Programmupdates bleibt der vertrauenswürdige Stand dieses Repositories.
+
 ## Dateien und Speicherung
 
 ```text
@@ -59,7 +71,11 @@ Das Wörterbuch und die Übungstexte sind enthalten. Die lokale Rechtschreibprü
 
 ## Entwicklung
 
-Die Quellen bestehen aus HTML, CSS und JavaScript. Es gibt aktuell keinen Paketmanager, Build-Schritt oder automatisierten Test-Runner im Repository.
+Die Quellen bestehen aus HTML, CSS und JavaScript. Für den Betrieb gibt es keinen Paketmanager oder Build-Schritt. Die Updater-Tests verwenden den integrierten Test-Runner von Node.js (Version 22 oder neuer):
+
+```bash
+node --test tests/update-core.test.cjs
+```
 
 Für die Entwicklung kann ein lokaler HTTP-Server verwendet werden:
 
@@ -78,6 +94,16 @@ Unter Windows kann der entsprechende Befehl `py -m http.server 8000 --bind 127.0
 4. Einen Eintrag speichern, neu laden und die gespeicherten Daten kontrollieren.
 5. Bei Änderungen an der Speicherung zusätzlich Ordnerfreigabe, Sicherung und Wiederherstellung mit Testdaten prüfen.
 6. Online-Grammatikprüfung und Benachrichtigungen separat prüfen, wenn diese Funktionen geändert wurden.
+
+### Ein Update veröffentlichen
+
+1. Programmänderungen umsetzen und prüfen.
+2. In `app/version.js` die ganzzahlige `release` erhöhen und die angezeigte `version` ändern. Auch bei kleinen Korrekturen muss `release` steigen, damit bereits installierte Apps das Update erkennen.
+3. Aus dem Repository-Hauptordner `node scripts/prepare-update.cjs` ausführen. Das erzeugt `updates.json` mit den Größen und SHA-256-Prüfsummen der aktuellen Programmdateien.
+4. `node --test tests/update-core.test.cjs` ausführen. Nach Änderungen an Programmdateien das Manifest erneut erzeugen.
+5. Programmdateien, Versionsdatei und `updates.json` gemeinsam committen und auf `main` pushen.
+
+Das Manifest enthält bewusst keine Familien- oder Kinderdaten und keine Entwicklungsdateien. Ändert sich das Repository während eines Downloads, führen abweichende Prüfsummen zum Abbruch vor der Installation; später erneut prüfen.
 
 ## Lizenzen und Quellen
 

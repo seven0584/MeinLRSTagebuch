@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "release": 1,
+  "version": "1.0.0",
+  "files": [
+    {
+      "path": "Tagebuch.html",
+      "size": 37483,
+      "sha256": "b1aaf44e8a9b9b0b8f4cc54f7ffbb458b0aff58e01c3e6852189c666856c6465"
+    },
+    {
+      "path": "app/app.css",
+      "size": 31947,
+      "sha256": "310810da07d8daee2af28c8a3112919112cb74b42401780398458b5466561054"
+    },
+    {
+      "path": "app/app.js",
+      "size": 194917,
+      "sha256": "41f83a8faae860ee057d8f5871e704b617622126462ab7d450f11b8fcf59e65d"
+    },
+    {
+      "path": "app/hunspell.js",
+      "size": 747722,
+      "sha256": "6be6af4e85b15fef355f2fbc631887a0b20bad49e3024db5d9271219384422ba"
+    },
+    {
+      "path": "app/qrcode.js",
+      "size": 56694,
+      "sha256": "18ae399f81182bc9de916e9c77b195df20cc58d6f2d55a62b085a299f1bf1780"
+    },
+    {
+      "path": "app/sounds/sfx.js",
+      "size": 6240,
+      "sha256": "a2c71fd2f8f19fe680166dff20f77ffe8628d0c6a89a60bdd73c2c9997730818"
+    },
+    {
+      "path": "app/spiele/LIZENZEN.txt",
+      "size": 1076,
+      "sha256": "4d011198fffa0085d2fbb5a8b6f23aca9966dc6d772d95469861272c109cb659"
+    },
+    {
+      "path": "app/spiele/asteroiden.html",
+      "size": 6376,
+      "sha256": "5a4289fc25ef277e78678dbd36f7a0d8a3fe5cb119164b46e1bc938c21c10509"
+    },
+    {
+      "path": "app/spiele/bienchen.html",
+      "size": 11091,
+      "sha256": "53b3649e7e44c4f4d8836380cd678c014296d67ebe255408f1731924e955bf2c"
+    },
+    {
+      "path": "app/spiele/minensucher.html",
+      "size": 6266,
+      "sha256": "2609965745886def30deb6c15e02654bebae7ff33cc1de0745eab01c65bc9921"
+    },
+    {
+      "path": "app/spiele/schlange.html",
+      "size": 8634,
+      "sha256": "e7c8527be1cec278bc088edb72094d1f9ea55c116b743eb28f1c7255fafc1693"
+    },
+    {
+      "path": "app/spiele/weltraum-angriff.html",
+      "size": 12491,
+      "sha256": "d44c94c0b43d2ac217100db7899741acf779a4837ded52d9cc839b095eebd1b3"
+    },
+    {
+      "path": "app/uebungen.js",
+      "size": 720706,
+      "sha256": "2b9d0fbbb74cb031adec8ea4d30949467105be132bbef88ad0277e5cd23bc45d"
+    },
+    {
+      "path": "app/update-core.js",
+      "size": 6781,
+      "sha256": "c55fea36a32f7541fc8e53398d127f904578080313b1f8455b0d231798e1e3e1"
+    },
+    {
+      "path": "app/updater.js",
+      "size": 3740,
+      "sha256": "f121f486781930ec67db9567471adc83359358666a327f4cda6eb0ac91caf0ae"
+    },
+    {
+      "path": "app/version.js",
+      "size": 151,
+      "sha256": "b87fef61694dbb870c8413024b6f0ec16214e90ae3355242a3e39995361d0559"
+    },
+    {
+      "path": "app/woerterbuch.js",
+      "size": 1513977,
+      "sha256": "7dc2e967e427f88f52aada35e5431e76e82921ec27b9fc90775c8abd98b4116e"
+    }
+  ]
+}

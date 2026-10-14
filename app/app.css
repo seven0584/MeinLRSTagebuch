@@ -1,4 +1,7 @@
 
+.updatebox{margin:1.5rem auto;padding:1rem;max-width:45rem;border:1px solid var(--border);border-radius:12px;background:var(--card);text-align:center}
+.updatebox p{margin:0 0 .6rem}
+.updatebox button{margin:.25rem}
 :root{
   --bg:#E9EEF5; --paper:#FCFCF7; --line:#CCD9EC; --margin:#EDB1B1;
   --ink:#1E3A8A; --text:#23262D; --muted:#5B6372;

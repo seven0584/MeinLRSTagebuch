@@ -10,3 +10,6 @@
 !.env.example
 Thumbs.db
 .DS_Store
+
+# Sicherung der Programmdateien vor einem In-App-Update
+/.tagebuch-update-backup/

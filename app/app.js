@@ -2368,6 +2368,19 @@
   }
 
   // ---------- start ----------
+  if(window.TBUpdater) window.TBUpdater.configure({
+    getDirectory: () => dirHandle,
+    beforeReload: async () => {
+      save();
+      if(!folderReady()) return;
+      const deadline = Date.now() + 10000;
+      while(flushing2 && Date.now() < deadline) await new Promise(res => setTimeout(res, 100));
+      if(flushing2) throw new Error("Speichern läuft noch.");
+      clearTimeout(flushTimer);
+      await flushFolder();
+      if(STORE().lastError) throw new Error(STORE().lastError);
+    }
+  });
   load();
   $("#dateLabel").textContent = fmtDate(todayKey());
   if(state.draft) ta.value = state.draft;
