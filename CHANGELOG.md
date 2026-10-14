@@ -2,6 +2,15 @@
 
 Hier stehen die Änderungen am Tagebuch, erklärt für Eltern und Lehrkräfte. Die neuesten Einträge stehen oben. Bei Programmupdates nennen wir die Version, was sich im Alltag ändert und ob ihr etwas tun müsst.
 
+## Version 1.1.0: Die Neuerungen direkt in der App lesen — 14. Oktober 2026
+
+- Oben rechts findet ihr eine Glocke. Sie öffnet die gesamte Änderungsübersicht, auch ohne Internet.
+- Eine Zahl an der Glocke zeigt, wie viele Einträge ihr in diesem Browser noch nicht geöffnet habt.
+- Beim Öffnen sind die neuen Einträge mit „Neu“ markiert. Danach verschwindet die Zahl; die Übersicht könnt ihr jederzeit wieder lesen.
+- Die App merkt sich den Lesestand in diesem Browser. Er gilt gemeinsam für alle, die diesen Browser verwenden. Wenn die Browserdaten gelöscht werden, erscheinen die Einträge wieder als neu.
+
+**Was müsst ihr tun?** Version 1.1.0 über **Jetzt aktualisieren** installieren und danach **Neu laden** wählen. Wer noch eine Fassung ohne Update-Funktion verwendet, übernimmt einmal die neuen Programmdateien. Kinderprofile und Einträge bleiben erhalten.
+
 ## Ergänzte Dokumentation — 14. Oktober 2026
 
 - Diese Änderungsübersicht ist neu. Ihr könnt hier nachlesen, welche Funktionen hinzugekommen sind und was sich bei der Nutzung geändert hat.

@@ -2,6 +2,20 @@
 .updatebox{margin:1.5rem auto;padding:1rem;max-width:45rem;border:1px solid var(--border);border-radius:12px;background:var(--card);text-align:center}
 .updatebox p{margin:0 0 .6rem}
 .updatebox button{margin:.25rem}
+.newsbar{display:flex;justify-content:flex-end;position:sticky;top:0;z-index:30;padding:.5rem 1rem;background:var(--bg)}
+.newsbell{position:relative;min-width:3rem;min-height:3rem;border:1px solid var(--border);border-radius:50%;background:var(--card);color:var(--text);font-size:1.4rem;cursor:pointer}
+.newsbell:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.newsbadge{position:absolute;top:-.2rem;right:-.3rem;min-width:1.4rem;padding:.05rem .3rem;border-radius:1rem;background:var(--red);color:var(--card);font-size:.8rem;font-weight:700}
+.newsdialog{width:min(46rem,calc(100% - 2rem));max-height:85vh;border:1px solid var(--border);border-radius:14px;padding:1.2rem;background:var(--card);color:var(--text)}
+.newsdialog::backdrop{background:rgba(15,20,35,.55)}
+.newsdialog header{align-items:center;gap:.75rem}
+.newsentry{border-top:1px solid var(--border);padding:1rem 0}
+.newsentry h3{margin:0 0 .5rem;color:var(--ink);font-size:1.1rem}
+.newsentry h4{margin:1rem 0 .4rem}
+.newsentry p{margin:.5rem 0}
+.newsentry ul{padding-left:1.4rem}
+.newsnew{display:inline-block;margin-left:.5rem;padding:.1rem .5rem;border-radius:1rem;background:var(--greensoft);color:var(--green);font-size:.8rem}
+@media print{.newsbar,.newsdialog{display:none!important}}
 :root{
   --bg:#E9EEF5; --paper:#FCFCF7; --line:#CCD9EC; --margin:#EDB1B1;
   --ink:#1E3A8A; --text:#23262D; --muted:#5B6372;

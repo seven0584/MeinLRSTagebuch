@@ -4,6 +4,8 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const core = require('../app/update-core.js');
 const root = path.resolve(__dirname, '..');
+const changelog = require('./changelog.cjs');
+fs.writeFileSync(path.join(root, 'app/changelog-data.js'), changelog.generate(fs.readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8')));
 const source = fs.readFileSync(path.join(root, 'app/version.js'), 'utf8');
 const version = /release:\s*(\d+),\s*version:\s*"(\d+\.\d+\.\d+)"/.exec(source);
 if (!version) throw Error('Missing release/version in app/version.js');

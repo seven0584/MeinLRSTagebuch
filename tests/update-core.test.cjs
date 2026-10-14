@@ -8,6 +8,17 @@ const paths = ['Tagebuch.html', 'app/app.js', 'app/version.js', 'app/update-core
 const bytes = new Map(paths.map(p => [p, Buffer.from('new:' + p)]));
 const manifest = { schema: 1, release: 2, version: '1.1.0', files: paths.map(path => ({ path, size: bytes.get(path).length, sha256: crypto.createHash('sha256').update(bytes.get(path)).digest('hex') })) };
 const fetcher = async url => new Response(bytes.get(new URL(url).pathname.split('/main/')[1]) || '', { status: 200 });
+test('offline history matches CHANGELOG.md and preserves identifiers for existing headings', () => {
+  const root = path.resolve(__dirname, '..');
+  const changelog = require('../scripts/changelog.cjs');
+  const markdown = fs.readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8');
+  assert.equal(fs.readFileSync(path.join(root, 'app/changelog-data.js'), 'utf8'), changelog.generate(markdown));
+  const old = changelog.parse('## First release\n- Previous wording\n');
+  const revised = changelog.parse('## New release\n- New feature\n\n## First release\n- Corrected wording\n');
+  assert.equal(old[0].id, revised[1].id);
+  assert.notEqual(revised[0].id, revised[1].id);
+  assert.throws(() => changelog.parse('## Same\n## Same\n'), /duplicate/);
+});
 test('published manifest matches every application file and the release marker', () => {
   const root = path.resolve(__dirname, '..');
   const published = core.validate(JSON.parse(fs.readFileSync(path.join(root, 'updates.json'))));

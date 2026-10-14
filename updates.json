@@ -1,17 +1,17 @@
 {
   "schema": 1,
-  "release": 1,
-  "version": "1.0.0",
+  "release": 2,
+  "version": "1.1.0",
   "files": [
     {
       "path": "Tagebuch.html",
-      "size": 37483,
-      "sha256": "b1aaf44e8a9b9b0b8f4cc54f7ffbb458b0aff58e01c3e6852189c666856c6465"
+      "size": 38277,
+      "sha256": "92c92815e7454fb98c1fbe317b976a2929dbb69a879c3861c5f84658b06bf546"
     },
     {
       "path": "app/app.css",
-      "size": 31947,
-      "sha256": "310810da07d8daee2af28c8a3112919112cb74b42401780398458b5466561054"
+      "size": 33216,
+      "sha256": "d5c582e1c2074db6bb4062a69818b8a80b64c96df4f6c11284a4b14fb695cc88"
     },
     {
       "path": "app/app.js",
@@ -19,9 +19,19 @@
       "sha256": "41f83a8faae860ee057d8f5871e704b617622126462ab7d450f11b8fcf59e65d"
     },
     {
+      "path": "app/changelog-data.js",
+      "size": 4669,
+      "sha256": "add5c9ec5197b8a2fe3d404b0478465cc409308acc0bcc6ee44ad4aa1c51f799"
+    },
+    {
       "path": "app/hunspell.js",
       "size": 747722,
       "sha256": "6be6af4e85b15fef355f2fbc631887a0b20bad49e3024db5d9271219384422ba"
+    },
+    {
+      "path": "app/news.js",
+      "size": 3303,
+      "sha256": "9e0f1789f81d8f0f9ce45a0fe985f0f9551de3df47975c3d4d63489293952874"
     },
     {
       "path": "app/qrcode.js",
@@ -81,7 +91,7 @@
     {
       "path": "app/version.js",
       "size": 151,
-      "sha256": "b87fef61694dbb870c8413024b6f0ec16214e90ae3355242a3e39995361d0559"
+      "sha256": "9d587dddc6baa5b1f9140b2add90ccd01cbb12ecd1c0774c4027cbcc2af6f368"
     },
     {
       "path": "app/woerterbuch.js",

@@ -8,6 +8,16 @@
 
 </head>
 <body>
+<div class="newsbar">
+  <button type="button" id="newsBell" class="newsbell" aria-label="Änderungsübersicht öffnen" aria-haspopup="dialog" aria-controls="newsDialog">
+    <span aria-hidden="true">🔔</span><span id="newsBadge" class="newsbadge" aria-hidden="true" hidden></span>
+  </button>
+</div>
+<dialog id="newsDialog" class="newsdialog" aria-labelledby="newsTitle">
+  <header><h2 id="newsTitle">Was gibt es Neues?</h2><button type="button" id="newsClose" class="btn-ghost" aria-label="Änderungsübersicht schließen">Schließen ✕</button></header>
+  <p class="note">Hier findet ihr alle Änderungen am Tagebuch. Neue Einträge sind mit „Neu“ markiert.</p>
+  <div id="newsEntries"></div>
+</dialog>
 <main>
   <div id="homeView">
     <div class="home-head">
@@ -472,6 +482,8 @@
 <script src="app/woerterbuch.js"></script>
 <script src="app/uebungen.js"></script>
 <script src="app/version.js"></script>
+<script src="app/changelog-data.js"></script>
+<script src="app/news.js"></script>
 <script src="app/update-core.js"></script>
 <script src="app/updater.js"></script>
 <script src="app/app.js"></script>
