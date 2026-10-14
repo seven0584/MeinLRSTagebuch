@@ -1,0 +1,12 @@
+# Persönliche Laufzeitdaten; die mitgelieferten Hinweise bleiben versioniert.
+/config/*
+!/config/LIESMICH.txt
+/kinder/*
+!/kinder/LIESMICH.txt
+
+# Lokale Zugangsdaten und Betriebssystemdateien
+.env
+.env.*
+!.env.example
+Thumbs.db
+.DS_Store
