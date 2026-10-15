@@ -97,6 +97,20 @@
     if(index<0) return null;
     const f=fields[index];return {f,offset:position-SEG.parts[index][0]+f.value.indexOf(f.value.trim())};
   }
+  // Keep non-word edits inside the affected sentence(s), in the original field.
+  function correctionRange(target, mark){
+    const text=target.f.value, offset=target.offset, markEnd=offset+mark.w.length;
+    if(mark.spacing)return {start:offset,end:offset+mark.editEnd-mark.i};
+    let start=0,end=text.length;
+    for(const boundary of text.matchAll(/[.!?]+["“”»«')\]]*(?=\s|$)|\n+/g)){
+      const after=boundary.index+boundary[0].length;
+      if(after<=offset)start=after;
+      else if(after>=markEnd){end=after;break;}
+    }
+    // Preserve whitespace at field edges; leave separators between sentences alone.
+    if(start>0)while(start<offset && /\s/.test(text[start]))start++;
+    return {start,end};
+  }
   function replaceWord(position, old, value){
     if(!/^[\p{L}]+(?:['’\-][\p{L}]+)*$/u.test(value)) throw Error("Bitte nur die neue Schreibweise dieses Wortes eingeben.");
     const target=fieldAt(position);
@@ -500,6 +514,7 @@
   const NO_COMMA_BEFORE = new Set(["und","oder","so","als","auch","selbst","nur","außer","ohne","statt","anstatt","sowie","immer","erst","besonders","gerade","genau","kurz","lange","gleich","schon","noch","aber"]);
   function punctuation(text, toks, errs, skipComma){
     const P = (tok, cat, tip, tip2) => errs.push({ i:tok.i, w:tok.w, cat, tip, tip2, punct:true });
+    const space = (tok,end,kind,focus,tip,tip2) => errs.push({i:tok.i,w:text.slice(tok.i,kind==='missing'?focus:end),cat:'Leerzeichen',tip,tip2,punct:true,spacing:kind,focus,editEnd:end});
     toks.forEach((t, k) => {
       const prev = toks[k-1];
       if(t.label || (prev && (prev.label || prev.part !== t.part))) return;
@@ -510,10 +525,10 @@
       if(!prev) return;
       // space before punctuation: "Park ." / "Hallo ,"
       if(/\s[.,!?;:]/.test(between) && !/\.\.\./.test(between))
-        P(prev, "Leerzeichen", "Vor einem Satzzeichen steht kein Leerzeichen. Das Satzzeichen klebt am Wort davor.", "Schau dir den Platz direkt nach diesem Wort an.");
+        space(prev, prev.i+prev.w.length+between.trimEnd().length, "extra", prev.i+prev.w.length, "Vor dem Satzzeichen steht ein Leerzeichen zu viel. Das Satzzeichen gehört direkt an das Wort davor.", "Entferne den Abstand zwischen dem Wort und dem Satzzeichen.");
       // missing space after punctuation: "Park.Danach"
       else if(/[.,!?;:]$/.test(between) && !/\.\.\.$/.test(between))
-        P(t, "Leerzeichen", "Nach einem Satzzeichen kommt ein Leerzeichen.", "Schau dir den Platz direkt vor diesem Wort an.");
+        space(prev, t.i+t.w.length, "missing", t.i, "Zwischen „"+text.slice(prev.i,t.i)+"“ und „"+t.w+"“ fehlt ein Leerzeichen. Das Wort „"+t.w+"“ ist hier nicht wegen seiner Schreibweise markiert.", "Setze direkt hinter das Satzzeichen ein Leerzeichen.");
       // too many punctuation marks: ",," "..", ",." (but "...", "?!", "!!" are fine)
       const marks = between.replace(/[^.,!?;:]/g, "");
       if(marks.length > 1 && !/^(\.\.\.|[!?]+)$/.test(marks))
@@ -526,7 +541,7 @@
       const last = ptoks[ptoks.length-1];
       if(!last) continue;
       const tail = text.slice(last.i + last.w.length, pb);
-      if(/^\s+[.,!?;:]/.test(tail)) P(last, "Leerzeichen", "Vor einem Satzzeichen steht kein Leerzeichen. Das Satzzeichen klebt am Wort davor.", "Schau dir den Platz direkt nach diesem Wort an.");
+      if(/^\s+[.,!?;:]/.test(tail)) space(last, last.i+last.w.length+tail.trimEnd().length, "extra", last.i+last.w.length, "Vor dem Satzzeichen steht ein Leerzeichen zu viel. Das Satzzeichen gehört direkt an das Wort davor.", "Entferne den Abstand zwischen dem Wort und dem Satzzeichen.");
       else if(/^[.,!?;:]{2,}/.test(tail.trim()) && !/^(\.\.\.|[!?]+)/.test(tail.trim().replace(/[^.,!?;:].*$/s, "")))
         P(last, "Satzzeichen", "Hier stehen zu viele Satzzeichen hintereinander.", "Schau dir den Platz direkt nach diesem Wort an.");
       const partEnd = text.slice(pa, pb).replace(/[\s\p{Extended_Pictographic}\u{FE0F}\u{200D}\u{1F3FB}-\u{1F3FF}]+$/u, "");
@@ -702,7 +717,7 @@
       if(m.i<at || m.i+m.w.length>text.length)return;
       html+=escSeg(text,at,m.i,labels);
       const unknown=m.cat==='Nicht im Wörterbuch';
-      html+='<button type="button" class="review-mark'+(unknown?' uncertain':'')+(i===session.active?' active':'')+'" data-i="'+i+'" aria-pressed="'+(i===session.active)+'" aria-label="'+esc(m.cat+': '+m.w)+'">'+esc(m.w)+'</button>';
+      html+='<button type="button" class="review-mark'+(unknown?' uncertain':'')+(i===session.active?' active':'')+'" data-i="'+i+'" aria-pressed="'+(i===session.active)+'" aria-label="'+esc(m.spacing?m.tip:m.cat+': '+m.w)+'">'+esc(m.w)+'</button>';
       at=m.i+m.w.length;
     });
     $('#reviewText').innerHTML=html+escSeg(text,at,text.length,labels);
@@ -715,14 +730,17 @@
     setReviewMode(true);
     const e=errs[session.active],c=e.caseId?LC.getCase(state,e.caseId):null;
     const wordOnly=!!c,target=fieldAt(e.i),unknown=e.cat==='Nicht im Wörterbuch';
-    let editBase=session.checkedText,fieldText=target?.f.value,appliedWord=e.w,hintLevel=0;
+    const range=!wordOnly&&target?correctionRange(target,e):null;
+    let editBase=session.checkedText,fieldText=target?.f.value,editText=range?fieldText.slice(range.start,range.end):'',appliedWord=e.w,hintLevel=0;
     resultEl.hidden=false;
     resultEl.innerHTML=`<div class="word-editor">
       <p class="review-step">Stelle ${session.active+1} von ${errs.length}</p>
-      <h3>${esc(unknown?'Dieses Wort kenne ich nicht':e.cat)}</h3>
+      <h3>${esc(unknown?'Dieses Wort kenne ich nicht':e.spacing==='missing'?'Hier fehlt ein Leerzeichen':e.spacing==='extra'?'Hier ist ein Leerzeichen zu viel':e.cat)}</h3>
       ${unknown?'<p class="note dictionary-unknown">Das Wort kann trotzdem richtig sein. Mein Wörterbuch kennt diese Schreibweise nicht.</p>':''}
+      ${e.spacing?'<p class="note spacing-explanation">'+esc(e.tip)+'</p>':''}
       <div id="correctionFields">
-        ${wordOnly?'<label class="field" for="wordEdit">Deine Schreibweise</label><input id="wordEdit" autocomplete="off" spellcheck="false" value="'+esc(e.w)+'">':'<label class="field" for="wordEdit">Dein Satz oder Abschnitt</label><textarea id="wordEdit" rows="4" spellcheck="false">'+esc(fieldText||'')+'</textarea>'}
+        ${wordOnly?'<label class="field" for="wordEdit">Deine Schreibweise</label><input id="wordEdit" autocomplete="off" spellcheck="false" value="'+esc(e.w)+'">':'<label class="field" for="wordEdit">Deine betroffene Textstelle</label><textarea id="wordEdit" rows="4" spellcheck="false">'+esc(editText)+'</textarea>'}
+        ${!wordOnly?'<p class="note">Nur diese Textstelle wird bearbeitet. Der übrige Text bleibt erhalten.</p>':''}
         <div class="correction-actions" id="correctionActions">
           <button class="btn" id="wordApply">Prüfen</button>
           ${unknown?'':'<button class="btn-ghost" id="wordHint">Tipp</button>'}
@@ -768,9 +786,11 @@
         if(compose()!==editBase)throw Error('Der Text wurde geändert. Bitte zuerst erneut prüfen.');
         const value=wordOnly?editor.value.trim():editor.value;
         if(wordOnly){if(value!==appliedWord)replaceWord(e.i,appliedWord,value);}
-        else if(value!==fieldText){
+        else if(value!==editText){
           if(!target || target.f.value!==fieldText)throw Error('Der Text wurde geändert. Bitte zuerst erneut prüfen.');
-          target.f.value=value;target.f.dispatchEvent(new Event('input'));
+          target.f.value=fieldText.slice(0,range.start)+value+fieldText.slice(range.end);
+          target.f.dispatchEvent(new Event('input'));
+          range.end=range.start+value.length;editText=value;
         }
         editBase=compose();fieldText=target?.f.value;appliedWord=value;
         clearTimeout(draftTimer);rememberDraft();
@@ -840,12 +860,13 @@
     if(firstReview)$('#writeGrid').scrollIntoView({block:'start',behavior:'instant'});
     editor.focus({preventScroll:true});
     if(wordOnly)editor.select();else if(target){
+      const offset=target.offset-range.start;
       let caret=null;
       if(e.cat==='Satzende')caret=editor.value.trimEnd().length;
-      else if(e.cat==='Komma')caret=editor.value.slice(0,target.offset).trimEnd().length;
-      else if(e.cat==='Satzzeichen')caret=target.offset+e.w.length;
-      else if(e.cat==='Leerzeichen')caret=e.tip.startsWith('Nach')?target.offset:target.offset+e.w.length;
-      editor.setSelectionRange(caret??target.offset,caret??(target.offset+e.w.length));
+      else if(e.cat==='Komma')caret=editor.value.slice(0,offset).trimEnd().length;
+      else if(e.cat==='Satzzeichen')caret=offset+e.w.length;
+      else if(e.spacing)caret=offset+e.focus-e.i;
+      editor.setSelectionRange(caret??offset,caret??(offset+e.w.length));
     }
     if(innerWidth<900)editor.scrollIntoView({block:'center',behavior:'instant'});
     updateCount();

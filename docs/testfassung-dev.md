@@ -1,6 +1,6 @@
 # Testfassung herunterladen und ausprobieren
 
-Version 1.3.3 wird zuerst auf `dev` erprobt. Die bisherige Fassung auf `main` bleibt bestehen. Ein reguläres Release ist diese Testfassung noch nicht.
+Version 1.3.4 wird zuerst auf `dev` erprobt. Die bisherige Fassung auf `main` bleibt bestehen. Ein reguläres Release ist diese Testfassung noch nicht.
 
 ## Herunterladen und starten
 
@@ -9,7 +9,7 @@ Version 1.3.3 wird zuerst auf `dev` erprobt. Die bisherige Fassung auf `main` bl
 3. Die ZIP vollständig in einen neuen Ordner entpacken, beispielsweise `Tagebuch-Test`. Nicht über eure bisherige App kopieren. `Tagebuch.html` und der ganze Ordner `app/` müssen zusammenbleiben; nicht direkt aus der ZIP starten.
 4. In Chrome oder Edge über das Profilsymbol ein **zusätzliches Browserprofil** für den Test erstellen. Dafür ist keine Anmeldung oder Synchronisierung nötig. Das Profil dauerhaft behalten, wenn ihr später weiterprüfen wollt. Ein anderer Dateiordner allein trennt die Browserdaten nicht zuverlässig.
 5. Im Testprofil `Tagebuch.html` öffnen. Bei der Ordnerauswahl ausschließlich den neuen Testordner freigeben. Alternativ **nur im Browser speichern** wählen.
-6. Eine Eltern-PIN setzen und zunächst ein erfundenes Testkind anlegen. Unter der Glocke stehen die Änderungen zu **1.3.3** und der Hinweis zur Testfassung.
+6. Eine Eltern-PIN setzen und zunächst ein erfundenes Testkind anlegen. Unter der Glocke stehen die Änderungen zu **1.3.4** und der Hinweis zur Testfassung.
 
 Eine Installation oder ein Programmierwerkzeug ist dafür nicht erforderlich. Verwendet am Windows-PC oder Mac einen aktuellen Chrome oder Edge. Auf dem jeweiligen Gerät auch die Diktatstimme anhören; automatische Tests können deren Verständlichkeit nicht beurteilen.
 
@@ -21,6 +21,7 @@ Eine Installation oder ein Programmierwerkzeug ist dafür nicht erforderlich. Ve
 | Als Kind einen kurzen Text schreiben, etwa „Die Sone scheint auf die Blume.“; vorher das Testziel passend klein einstellen. | Die App kennt „Sone“ nicht und sagt ausdrücklich, dass ein Wort trotzdem richtig sein kann. Das Kind kann selbst „Sonne“ eingeben; ein vermeintlich sicherer Regeltipp aus einem bloßen Wörterbuchvorschlag entfällt. |
 | **Schreibideen anzeigen** öffnen, eine Frage beantworten und wieder ausblenden. | Die Fragen sind freiwillig. Die Antwort bleibt gespeichert, zählt mit und erscheint nach dem Prüfen im Text links. |
 | „Ich sehe Rotze und Popel.“ prüfen. | „Rotze“ wird nicht fälschlich wegen Groß-/Kleinschreibung markiert. „Popel“ ist gelb gepunktet unterstrichen. Rechts steht „Dieses Wort kenne ich nicht“, ohne Nomen-Tipp. |
+| Einen längeren Text mit „Du schreibst.Die App hilft mir.“ prüfen. | Die App benennt das fehlende Leerzeichen zwischen „schreibst.“ und „Die“. Rechts steht nur „schreibst.Die“ mit dem Cursor vor „Die“. Nach Einfügen eines Leerzeichens bleibt der übrige Text erhalten. |
 | Eine Unterstreichung anklicken und rechts verbessern; auch einen fehlenden Punkt ausprobieren. | Links ist der Text nicht bearbeitbar. Rechts bleibt die Korrekturstelle an derselben Position. Für Satzzeichen und Grammatik erscheint der betroffene Satz oder Abschnitt. Mit **Prüfen** wird die Änderung übernommen. |
 | Eine Verbesserung eintippen, eine andere Markierung anklicken und später **Text weiterschreiben** wählen. | Die gültige Eingabe bleibt erhalten. Beim Wechsel der Markierung wird die Änderung geprüft; beim Zurückgehen öffnet sich das ursprüngliche Schreibfeld. |
 | Bei einem Wort **Ich brauche Hilfe → Ich weiß nicht weiter** wählen. | Nur diese Stelle bleibt offen; der Originaltext wird nicht automatisch ersetzt. Wenn die übrigen Anforderungen erfüllt sind, lässt sich der Eintrag abschließen. |
@@ -33,7 +34,7 @@ Eine Installation oder ein Programmierwerkzeug ist dafür nicht erforderlich. Ve
 | „Weltraum-Angriff“ starten, bewegen und die Leertaste gedrückt halten. | Welle 1 hat 21 langsame Gegner, vier Leben und höchstens einen gegnerischen Schuss gleichzeitig. Nach einem Treffer blinkt das Schiff kurz und ist geschützt. |
 | Shop, Hörprobe, Elternhilfe und Kinderhilfe öffnen. | Bisherige Funktionen sind erreichbar; die Hilfen beschreiben die neuen Abläufe. |
 
-Lasst das Kind möglichst selbst suchen und erklären, was es verstanden hat. Notiert, wo Hilfe nötig war oder Frust entstand. Bei normaler Laptopbreite stehen Textblatt und Korrekturfenster oben bündig nebeneinander, in schmalen Fenstern untereinander. Bei langen Texten, großer Schrift oder starkem Zoom kann Scrollen nötig sein. Die technischen Prüfungen sind im [aktuellen Prüfbericht](pruefbericht-1.3.3.md) beschrieben; Bedienversuche mit echten Familien stehen noch aus.
+Lasst das Kind möglichst selbst suchen und erklären, was es verstanden hat. Notiert, wo Hilfe nötig war oder Frust entstand. Bei normaler Laptopbreite stehen Textblatt und Korrekturfenster oben bündig nebeneinander, in schmalen Fenstern untereinander. Bei langen Texten, großer Schrift oder starkem Zoom kann Scrollen nötig sein. Die technischen Prüfungen sind im [aktuellen Prüfbericht](pruefbericht-1.3.4.md) beschrieben; Bedienversuche mit echten Familien stehen noch aus.
 
 ## Vorhandene Daten als Kopie testen
 

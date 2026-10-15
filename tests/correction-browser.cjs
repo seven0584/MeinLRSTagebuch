@@ -187,12 +187,80 @@ const stored = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)
     await optional.close();
     console.log('PASS: punctuation in a collapsed optional answer edits only that answer, including whitespace offsets');
 
+    const optionalExcerpt = await openChild(browser), oe = optionalExcerpt.page;
+    await oe.locator('#ta').fill('Heute male ich. 😀');
+    await oe.locator('#optionalQuestions summary').click();
+    await oe.locator('[data-q="best"]').fill('  Ich spiele heute. Danach lese ich ein Buch .  ');
+    await oe.locator('#optionalQuestions summary').click();
+    await oe.locator('#checkBtn').click();
+    await oe.locator('#wordEdit').waitFor();
+    assert.equal(await oe.locator('#wordEdit').inputValue(), 'Buch .');
+    await oe.locator('#wordEdit').press('Delete');
+    await oe.locator('#returnToWriting').click();
+    assert.equal(await oe.locator('#ta').inputValue(), 'Heute male ich. 😀');
+    assert.equal(await oe.locator('[data-q="best"]').inputValue(), '  Ich spiele heute. Danach lese ich ein Buch.  ');
+    assert.equal((await stored(oe)).draftQ.best, '  Ich spiele heute. Danach lese ich ein Buch.  ');
+    await optionalExcerpt.close();
+
+    const spacing = await openChild(browser), sp = spacing.page;
+    const before = 'Heute spiele ich im Garten. '.repeat(8) + '\n\nDu ';
+    const after = ' App hilft mir. Danach lese ich ein Buch.';
+    await check(sp, before + 'schreibst.Die' + after);
+    assert.equal(await sp.locator('#result h3').innerText(), 'Hier fehlt ein Leerzeichen');
+    assert.match(await sp.locator('.spacing-explanation').innerText(), /Zwischen „schreibst\.“ und „Die“ fehlt ein Leerzeichen/);
+    assert.equal(await sp.locator('#reviewText .review-mark').first().innerText(), 'schreibst.');
+    assert.equal(await sp.locator('#wordEdit').inputValue(), 'schreibst.Die');
+    assert.deepEqual(await sp.locator('#wordEdit').evaluate(el => [el.selectionStart,el.selectionEnd]), [10,10]);
+    await sp.screenshot({path:'/tmp/tagebuch-spacing-1.3.4.png'});
+    await sp.locator('#wordEdit').press('Space');
+    assert.equal(await sp.locator('#wordEdit').inputValue(), 'schreibst. Die');
+    await sp.locator('#wordApply').click();
+    // The shipped dictionary does not know App; its independent yellow mark remains.
+    await sp.waitForFunction(() => document.querySelector('#wordEdit')?.value === 'App');
+    assert.equal(await sp.locator('.spacing-explanation').count(), 0);
+    await sp.locator('#wordHelp').click();
+    await sp.locator('#wordBelief').click();
+    await sp.locator('#doneArea').waitFor({state:'visible'});
+    assert.equal((await stored(sp)).entries[0].text, before + 'schreibst. Die' + after);
+    await spacing.close();
+
+    const extraSpace = await openChild(browser), es = extraSpace.page;
+    await check(es, 'Ich sehe einen Baum . Danach spiele ich.');
+    assert.equal(await es.locator('#result h3').innerText(), 'Hier ist ein Leerzeichen zu viel');
+    assert.equal(await es.locator('#wordEdit').inputValue(), 'Baum .');
+    assert.deepEqual(await es.locator('#wordEdit').evaluate(el=>[el.selectionStart,el.selectionEnd]), [4,4]);
+    await es.locator('#wordEdit').press('Delete');
+    await es.locator('#wordApply').click();
+    await es.locator('#doneArea').waitFor({state:'visible'});
+    assert.equal((await stored(es)).entries[0].text, 'Ich sehe einen Baum. Danach spiele ich.');
+    await extraSpace.close();
+
+    const tailSpace = await openChild(browser), ts = tailSpace.page;
+    await check(ts, 'Heute male ich. Ich spiele heute .  ');
+    assert.equal(await ts.locator('#wordEdit').inputValue(), 'heute .');
+    await ts.locator('#wordEdit').press('Delete');
+    await ts.locator('#wordApply').click();
+    await ts.locator('#doneArea').waitFor({state:'visible'});
+    assert.equal((await stored(ts)).entries[0].text, 'Heute male ich. Ich spiele heute.');
+    await tailSpace.close();
+
+    const sentence = await openChild(browser), sc = sentence.page;
+    await check(sc, 'Heute male ich. Ich spiele heute');
+    assert.equal(await sc.locator('#wordEdit').inputValue(), 'Ich spiele heute');
+    await sc.locator('#wordEdit').press('.');
+    await sc.locator('#returnToWriting').click();
+    assert.equal(await sc.locator('#ta').inputValue(), 'Heute male ich. Ich spiele heute.');
+    await sentence.close();
+    console.log('PASS: spacing feedback explains the boundary, not a spelling error; only the relevant excerpt is edited and all surrounding text is preserved');
+
     const comma = await openChild(browser), v = comma.page;
-    await check(v, 'Ich spiele weil ich Zeit habe.');
+    await check(v, 'Heute male ich. Ich spiele weil ich Zeit habe. Danach lese ich.');
+    assert.equal(await v.locator('#wordEdit').inputValue(), 'Ich spiele weil ich Zeit habe.');
     await v.locator('#wordEdit').press(',');
     assert.equal(await v.locator('#wordEdit').inputValue(), 'Ich spiele, weil ich Zeit habe.');
     await v.locator('#wordApply').click();
     await v.locator('#doneArea').waitFor({ state: 'visible' });
+    assert.equal((await stored(v)).entries[0].text, 'Heute male ich. Ich spiele, weil ich Zeit habe. Danach lese ich.');
     await comma.close();
     console.log('PASS: inserting a period or comma does not replace the marked word');
 
@@ -200,12 +268,13 @@ const stored = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)
       offset: text.indexOf('spiele spiele'), length: 'spiele spiele'.length,
       rule: { id: 'GERMAN_WORD_REPEAT_RULE', category: { id: 'GRAMMAR' } }, replacements: [{ value: 'spiele' }]
     }] : [] }), g = grammar.page;
-    await check(g, 'Ich spiele spiele im Garten.');
+    await check(g, 'Heute male ich. Ich spiele spiele im Garten. Danach lese ich.');
+    assert.equal(await g.locator('#wordEdit').inputValue(), 'Ich spiele spiele im Garten.');
     assert.equal(await g.locator('#wordEdit').evaluate(el => el.tagName), 'TEXTAREA');
     await g.locator('#wordEdit').fill('Ich spiele im Garten.');
     await g.locator('#wordApply').click();
     await g.locator('#doneArea').waitFor({ state: 'visible' });
-    assert.equal((await stored(g)).entries[0].text, 'Ich spiele im Garten.');
+    assert.equal((await stored(g)).entries[0].text, 'Heute male ich. Ich spiele im Garten. Danach lese ich.');
     await grammar.close();
 
     const online = await openChild(browser, { grammar: true, matches: text => [{

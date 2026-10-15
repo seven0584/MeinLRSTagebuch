@@ -8,7 +8,7 @@ In der App öffnet die **Glocke oben rechts** dieselbe Historie, auch offline. D
 
 Die Bedienhilfe direkt in der App findet ihr unter **Eltern → Hilfe** sowie über **❓ Hilfe** im Kindertagebuch. Dort sind auch Stimmenauswahl, Shop, Updates und Glocke erklärt.
 
-## Testfassung 1.3.3 auf `dev`
+## Testfassung 1.3.4 auf `dev`
 
 Die neuen Funktionen werden zunächst auf dem separaten Branch **[dev](https://github.com/seven0584/MeinLRSTagebuch/tree/dev)** zum Ausprobieren bereitgestellt. Sie sind noch nicht in `main` übernommen und kein reguläres Release.
 
@@ -107,7 +107,9 @@ Das Wörterbuch und die Übungstexte sind enthalten. Die lokale Rechtschreibprü
 
 Unter **Eltern → Gemeinsam starten** stehen Schreibumfang, Satzlänge, Schreibtage und Coins nebeneinander. Ein Beispieltext zeigt, ob das Ziel erreicht wäre und welche Tagebuch-Coins er bringen würde. Alle bisherigen Einstellungen und die Wochenabrechnung bleiben erhalten. Die Vorschau prüft keine Rechtschreibung.
 
-Kinder schreiben in einem großen Hauptfeld. **Schreibideen anzeigen** blendet die drei freiwilligen Fragen ein; eingetragene Antworten bleiben beim Ausblenden erhalten und zählen mit. Nach **Prüfen** steht links der nicht bearbeitbare Text mit anklickbaren Unterstreichungen. Rechts wird die ausgewählte Stelle verbessert: bei einem Wort dessen Schreibweise, bei Satzzeichen und Grammatik der betroffene Satz oder Abschnitt. Auch eingeklappte Antworten lassen sich dort verbessern. Ab 900 Pixel Fensterbreite stehen Textblatt und Korrekturfenster oben bündig nebeneinander; Überschrift und Hinweis stehen gemeinsam darüber. In schmaleren Fenstern stehen die Bereiche untereinander.
+Kinder schreiben in einem großen Hauptfeld. **Schreibideen anzeigen** blendet die drei freiwilligen Fragen ein; eingetragene Antworten bleiben beim Ausblenden erhalten und zählen mit. Nach **Prüfen** steht links der nicht bearbeitbare Text mit anklickbaren Unterstreichungen. Rechts wird die ausgewählte Stelle verbessert: bei einem Wort dessen Schreibweise, bei Satzzeichen und Grammatik nur der betroffene Satz oder Abschnitt. Der übrige Text bleibt beim Übernehmen unverändert. Bei Leerzeichenfehlern zeigt das Feld nur die kurze Stelle um das Satzzeichen; der Cursor steht am zu ändernden Abstand. Auch eingeklappte Antworten lassen sich dort verbessern. Ab 900 Pixel Fensterbreite stehen Textblatt und Korrekturfenster oben bündig nebeneinander; Überschrift und Hinweis stehen gemeinsam darüber. In schmaleren Fenstern stehen die Bereiche untereinander.
+
+**Leerzeichen verstehen:** Bei „schreibst.Die App“ ist „Die“ richtig geschrieben; zwischen Punkt und „Die“ fehlt ein Leerzeichen. Die App nennt diesen Abstand direkt, markiert die Stelle am Satzzeichen und zeigt rechts nur „schreibst.Die“. Das Leerzeichen dort selbst einfügen und **Prüfen** wählen. Vor einem Satzzeichen zeigt die App entsprechend „Hier ist ein Leerzeichen zu viel“.
 
 Im Korrekturbereich stehen zunächst **Prüfen**, bei einem passenden Hinweis **Tipp** und **Ich brauche Hilfe**. Der Tipp-Knopf bietet danach den weiteren Hinweis an. **Prüfen** übernimmt die Änderung und prüft erneut. Im Wortfeld geht das auch mit der Eingabetaste; im Satzfeld mit Strg+Eingabe beziehungsweise Cmd+Eingabe. Mit **Text weiterschreiben** wird wieder das ursprüngliche Schreibfeld geöffnet. Gültige eingegebene Korrekturen bleiben beim Wechsel der Markierung, beim Zurückgehen und beim normalen Neuladen erhalten.
 
@@ -144,7 +146,7 @@ Die neuen Wortverläufe und Kontextausschnitte werden nicht zusätzlich an ntfy 
 
 ## Entwicklung
 
-Die Umsetzung für Version 1.3.0 ist im [Entwicklungsplan](docs/entwicklungsplan-rechtschreibfoerderung.md) beschrieben. Das zugrunde liegende [Konzept](docs/konzept-rechtschreibfoerderung.md) enthält Anforderungen und Akzeptanzkriterien. Der [ursprüngliche Prüfbericht](docs/pruefbericht-1.3.0.md) nennt technische Nachweise und offene Prüfungen mit echten Eltern und Kindern. Die Korrekturen in 1.3.1 sind im [ergänzenden Prüfbericht](docs/pruefbericht-1.3.1.md) beschrieben. Der [Prüfbericht zu 1.3.2](docs/pruefbericht-1.3.2.md) dokumentiert die neue Ansicht und ihre Tests. Die bündige Ausrichtung, direkte Rückmeldung und leichtere erste Spielwelle sind im [Prüfbericht zu 1.3.3](docs/pruefbericht-1.3.3.md) geprüft.
+Die Umsetzung für Version 1.3.0 ist im [Entwicklungsplan](docs/entwicklungsplan-rechtschreibfoerderung.md) beschrieben. Das zugrunde liegende [Konzept](docs/konzept-rechtschreibfoerderung.md) enthält Anforderungen und Akzeptanzkriterien. Der [ursprüngliche Prüfbericht](docs/pruefbericht-1.3.0.md) nennt technische Nachweise und offene Prüfungen mit echten Eltern und Kindern. Die Korrekturen in 1.3.1 sind im [ergänzenden Prüfbericht](docs/pruefbericht-1.3.1.md) beschrieben. Der [Prüfbericht zu 1.3.2](docs/pruefbericht-1.3.2.md) dokumentiert die neue Ansicht und ihre Tests. Die bündige Ausrichtung, direkte Rückmeldung und leichtere erste Spielwelle sind im [Prüfbericht zu 1.3.3](docs/pruefbericht-1.3.3.md) geprüft. Der [Prüfbericht zu 1.3.4](docs/pruefbericht-1.3.4.md) beschreibt verständlichere Leerzeichenhinweise und die Bearbeitung begrenzter Textausschnitte.
 
 Die Quellen bestehen aus HTML, CSS und JavaScript. Für den Betrieb gibt es keinen Paketmanager oder Build-Schritt. Die Updater-Tests verwenden den integrierten Test-Runner von Node.js (Version 22 oder neuer):
 

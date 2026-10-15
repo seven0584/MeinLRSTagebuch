@@ -1,6 +1,20 @@
 // Generated from CHANGELOG.md by scripts/prepare-update.cjs.
 window.TB_CHANGELOG = [
   {
+    "id": "1af597f93dd3b34c",
+    "title": "Version 1.3.4: Leerzeichen verständlich zeigen und gezielt verbessern — 15. Oktober 2026",
+    "lines": [
+      "",
+      "- Bei „schreibst.Die App“ wurde bisher „Die“ als Markierung angezeigt, obwohl das Leerzeichen nach dem Punkt fehlte. Jetzt steht direkt „Hier fehlt ein Leerzeichen“ mit einer Erklärung der betroffenen Grenze. Die Markierung liegt am Wort vor dem Abstand samt Satzzeichen. „Die“ wird dadurch nicht mehr wie ein falsch geschriebenes Wort dargestellt.",
+      "- Im Verbesserungsfeld steht bei Leerzeichenfehlern nur die kurze Textstelle, zum Beispiel „schreibst.Die“. Der Cursor steht an der Stelle zum Einfügen. Bei einem überflüssigen Leerzeichen vor dem Satzzeichen erklärt die App ausdrücklich, dass dieser Abstand entfernt werden soll.",
+      "- Bei Satzzeichen- und Grammatikhinweisen steht im Korrekturfeld nur der betroffene Satz oder Abschnitt statt des gesamten Schreibfelds. Beim Übernehmen wird ausschließlich dieser Ausschnitt ersetzt; der übrige Text bleibt erhalten. Die App verbessert weiterhin nichts automatisch.",
+      "- README, Elternhilfe, Kinderhilfe und Testanleitung erklären diese Hinweise. Browserprüfungen decken fehlende und überflüssige Leerzeichen, längere Texte, Satzzeichen, Grammatik und den Erhalt des umgebenden Textes ab.",
+      "",
+      "**Was müsst ihr tun?** Die Testfassung wird ausschließlich auf `dev` bereitgestellt. Im separaten Testordner `Tagebuch.html` und den vollständigen Ordner `app/` ersetzen und neu laden; Datenordner und Test-Browserprofil behalten. Gespeicherte Texte und Einstellungen benötigen keine Umstellung. Die automatische Update-Suche liest weiterhin `main`. Bereits geschriebene Texte werden erst nach einer erneuten Prüfung mit den neuen Hinweisen angezeigt.",
+      ""
+    ]
+  },
+  {
     "id": "015e738a0e2ae0ca",
     "title": "Version 1.3.3: Bündige Prüfung und leichterer Spieleinstieg — 15. Oktober 2026",
     "lines": [
