@@ -1,5 +1,5 @@
 (function(){
-  if(!window.TBCompatibility || !window.TBLearning || !window.TBLearningUI || !document.querySelector('#learningParent')){
+  if(!window.TBCompatibility || !window.TBLearning || !window.TBLearningUI || !document.querySelector('#learningParent') || !document.querySelector('#reviewPane')){
     const box=document.getElementById('startupProblem') || document.body.insertBefore(document.createElement('section'),document.body.firstChild);
     box.id='startupProblem';box.hidden=false;box.setAttribute('role','alert');box.className='warn';
     box.innerHTML='<h2>Das Tagebuch braucht Hilfe beim Start</h2><p><b>Für Kinder:</b> Bitte hol einen Erwachsenen und lösche nichts.</p><p><b>Für Eltern:</b> Die Programmdateien passen nicht zusammen oder fehlen. Bitte die vollständige aktuelle App von <a href="https://github.com/seven0584/MeinLRSTagebuch/releases/latest">GitHub – neueste Veröffentlichung</a> herunterladen. Nur Tagebuch.html und app ersetzen. Die Ordner config und kinder sowie Browserdaten behalten. Danach im selben Browser neu öffnen und den bisherigen Speicherort verbinden.</p>';
@@ -645,19 +645,21 @@
 
   function showWarn(t){ warnEl.textContent = t; warnEl.hidden = false; }
 
-  let checking = false;
-  async function runCheck(){
+  let checking = false, reviewMode = false;
+  async function runCheck(selection){
     warnEl.hidden = true;
     const text = compose(), labels = SEG.labels;
     if(!goalMet()){ updateCount(); return; }
     if(!hun || checking) return;
     checking = true; checkBtn.disabled = true; allFields().forEach(f => { f.readOnly = true; });
     resultEl.querySelectorAll('button,input,textarea').forEach(el=>el.disabled=true);
+    $('#reviewPane').querySelectorAll('button').forEach(el=>el.disabled=true);
     statusEl.textContent = state.parent.grammar ? "Ich prüfe deinen Text …" : "";
     const checkingChild = state.id, checkingSession=session;
     const matches = await ltCheck(text);
-    checking = false; checkBtn.disabled = false; allFields().forEach(f => { f.readOnly = false; });
+    checking = false; checkBtn.disabled = false; allFields().forEach(f => { f.readOnly = reviewMode; });
     resultEl.querySelectorAll('button,input,textarea').forEach(el=>el.disabled=false);
+    $('#reviewPane').querySelectorAll('button').forEach(el=>el.disabled=false);
     if(checkingChild !== state.id || checkingSession !== session || $("#kidView").hidden) { updateCount(); return; }
     compose(); // SEG for this text again (LT is async)
     let errs = check(text, !!matches);
@@ -679,68 +681,171 @@
     learningUI.openWords();
     if(session.ignore) errs = errs.filter(e => !session.ignore[e.cat + "|" + e.w]);
     session.current = errs; session.checkedText = text; session.labels = labels; session.active = -1; session.more = false;
+    if(selection?.w)session.active=errs.findIndex(e=>selection.caseId?e.caseId===selection.caseId:e.w===selection.w&&e.cat===selection.cat);
     if(errs.length) renderResult();
     else finish(text);
   }
 
+  function setReviewMode(active){
+    reviewMode=active;
+    $('#writeGrid').classList.toggle('reviewing',active);
+    $('#writeArea').hidden=active;
+    $('#reviewPane').hidden=!active;
+    allFields().forEach(f=>f.readOnly=active||checking);
+    if(!active){resultEl.hidden=true;session.commitEditor=null;$('#reviewText').replaceChildren();}
+  }
+  function renderReviewText(select){
+    const text=session.checkedText, labels=session.labels;
+    let html='',at=0;
+    session.current.forEach((m,i)=>{
+      if(m.i<at || m.i+m.w.length>text.length)return;
+      html+=escSeg(text,at,m.i,labels);
+      const unknown=m.cat==='Nicht im Wörterbuch';
+      html+='<button type="button" class="review-mark'+(unknown?' uncertain':'')+(i===session.active?' active':'')+'" data-i="'+i+'" aria-pressed="'+(i===session.active)+'" aria-label="'+esc(m.cat+': '+m.w)+'">'+esc(m.w)+'</button>';
+      at=m.i+m.w.length;
+    });
+    $('#reviewText').innerHTML=html+escSeg(text,at,text.length,labels);
+    $('#reviewText').querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>select(Number(b.dataset.i)));
+  }
   function renderResult(){
     const errs=session.current;
     if(session.active<0 || session.active>=errs.length)session.active=0;
+    const firstReview=!reviewMode;
+    setReviewMode(true);
     const e=errs[session.active],c=e.caseId?LC.getCase(state,e.caseId):null;
-    const wordOnly=!!c, target=fieldAt(e.i);
-    let editBase=session.checkedText,fieldText=target?.f.value,appliedWord=e.w;
-    const unknown=e.cat==='Nicht im Wörterbuch';
-    resultEl.hidden=false;checkBtn.textContent="Nochmal prüfen";
-    resultEl.innerHTML='<h3>Eine Stelle nach der anderen</h3><p>'+errs.length+(errs.length===1?' Stelle':' Stellen')+' zum Anschauen. Die App kann sich irren.</p>'+
-      (session.basicOnly?'<p class="note">Offline-Prüfung: Rechtschreibung und einfache Satzzeichen. Keine vollständige Grammatikprüfung.</p>':'')+
-      '<div class="below">'+errs.map((m,i)=>'<button class="btn-ghost err'+(m.cat==='Nicht im Wörterbuch'?' uncertain':'')+(i===session.active?' active':'')+'" data-i="'+i+'" aria-pressed="'+(i===session.active)+'">'+esc(m.punct?m.cat+' bei „'+m.w+'“':m.w)+'</button>').join('')+'</div>'+
-      '<div class="word-editor"><p>'+esc(session.checkedText.slice(Math.max(0,e.i-65),e.i))+'<mark>'+esc(e.w)+'</mark>'+esc(session.checkedText.slice(e.i+e.w.length,e.i+e.w.length+65))+'</p>'+
-      (unknown?'<p class="note dictionary-unknown"><b>Nicht im Wörterbuch</b><br>'+esc(e.tip)+'</p>':!wordOnly?'<p>'+esc(e.tip)+'</p>':'')+
-      (wordOnly?'<label class="field">Hier das Wort verbessern<input id="wordEdit" autocomplete="off" spellcheck="false" value="'+esc(e.w)+'"></label>':'<label class="field">Hier den Satz oder Abschnitt verbessern<textarea id="wordEdit" rows="4" spellcheck="false">'+esc(fieldText||'')+'</textarea></label><p class="note">Oben siehst du die gemeinte Stelle. Hier kannst du Satzzeichen, Leerzeichen oder mehrere Wörter ändern.</p>')+
-      '<button class="btn" id="wordApply">Übernehmen und prüfen</button><p id="wordEditStatus" role="status"></p>'+
-      '<div class="below"><button class="btn-ghost" id="wordHint">'+(unknown?'Warum diese Markierung?':'Tipp')+'</button><button class="btn-ghost" id="moreBtn">'+(unknown?'Was kann ich tun?':'Noch ein Tipp')+'</button></div><p id="wordHintText" role="status"></p><button class="btn-ghost" id="hintUnclear">'+(unknown?'Die Erklärung hilft mir noch nicht':'Der Tipp hilft mir noch nicht')+'</button>'+
-      (c?(e.name?'<button class="btn-ghost" id="nameBtn">Das ist ein Name</button>':'')+'<label class="check"><input type="checkbox" id="shareWord">Dieses Wort und den Zusammenhang mit meinen Eltern teilen</label><div class="below"><button class="btn-ghost" id="wordUnknown">Hier weiß ich nicht weiter</button><button class="btn-ghost" id="wordDisagree">Meine Schreibweise stimmt, bitte prüfen</button></div><p class="note">Nur dieses Wort bleibt offen. Dein Text wird nicht automatisch verändert.</p>':'<button class="btn-ghost" id="okBtn">Ich finde, das stimmt so</button>')+
-      '</div><p class="stale" hidden>Der Text wurde geändert. Bitte erneut prüfen.</p>';
-    resultEl.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{session.active=Number(b.dataset.i);renderResult();});
-    $('#wordHint').onclick=()=>{if(c){try{learningTransaction(()=>LC.hint(state,c.id,1));}catch(ex){learningUI.message(ex.message);return;}}$('#wordHintText').textContent=e.tip;};
-    $('#moreBtn').onclick=()=>{if(c){try{learningTransaction(()=>LC.hint(state,c.id,2));}catch(ex){learningUI.message(ex.message);return;}}$('#wordHintText').textContent=e.tip2;};
-    $('#hintUnclear').onclick=()=>{if(c){try{learningTransaction(()=>LC.hintUnclear(state,c.id));}catch(ex){learningUI.message(ex.message);return;}}$('#wordHintText').textContent='Danke für den Hinweis. Du kannst weiterprobieren oder dieses Wort offenlassen.';};
-    $('#wordApply').onclick=()=>{
-      try{
-        if(checking)return;
-        if(compose()!==editBase)throw Error('Der Text wurde geändert. Bitte zuerst erneut prüfen.');
-        if(wordOnly)replaceWord(e.i,appliedWord,$('#wordEdit').value.trim());
-        else{
-          if(!target || target.f.value!==fieldText)throw Error('Der Text wurde geändert. Bitte zuerst erneut prüfen.');
-          target.f.value=$('#wordEdit').value;target.f.dispatchEvent(new Event('input'));
-        }
-        editBase=compose();fieldText=target?.f.value;appliedWord=$('#wordEdit').value.trim();
-        if(!goalMet()){
-          $('#wordEditStatus').textContent='Die Änderung wurde in deinen Text übernommen. '+statusEl.textContent;
-          return;
-        }
-        runCheck();
-      }catch(ex){$('#wordEditStatus').textContent=ex.message;}
+    const wordOnly=!!c,target=fieldAt(e.i),unknown=e.cat==='Nicht im Wörterbuch';
+    let editBase=session.checkedText,fieldText=target?.f.value,appliedWord=e.w,hintLevel=0;
+    resultEl.hidden=false;
+    resultEl.innerHTML=`<div class="word-editor">
+      <p class="review-step">Stelle ${session.active+1} von ${errs.length}</p>
+      <h3>${esc(unknown?'Dieses Wort kenne ich nicht':e.cat)}</h3>
+      ${unknown?'<p class="note dictionary-unknown">Das Wort kann trotzdem richtig sein. Mein Wörterbuch kennt diese Schreibweise nicht.</p>':''}
+      <div id="correctionFields">
+        ${wordOnly?'<label class="field" for="wordEdit">Deine Schreibweise</label><input id="wordEdit" autocomplete="off" spellcheck="false" value="'+esc(e.w)+'">':'<label class="field" for="wordEdit">Dein Satz oder Abschnitt</label><textarea id="wordEdit" rows="4" spellcheck="false">'+esc(fieldText||'')+'</textarea>'}
+        <div class="correction-actions" id="correctionActions">
+          <button class="btn" id="wordApply">Prüfen</button>
+          ${unknown?'':'<button class="btn-ghost" id="wordHint">Tipp</button>'}
+          <button class="btn-ghost" id="wordHelp" aria-expanded="false" aria-controls="correctionHelp">Ich brauche Hilfe</button>
+        </div>
+        <p id="wordHintText" class="correction-hint" role="status" hidden></p>
+      </div>
+      <div id="correctionHelp" hidden>
+        <p>Was passt für dich?</p>
+        <div class="help-choices">
+          <button class="btn-ghost" id="wordUnknown">Ich weiß nicht weiter</button>
+          <button class="btn-ghost" id="wordBelief">Ich glaube, meine Schreibweise stimmt</button>
+          <button class="review-back" id="helpBack">Zurück zur Verbesserung</button>
+        </div>
+        <p class="note">${c?'Nur diese Wortstelle bleibt offen. Teilen mit deinen Eltern entscheidest du später unter „Wörter und Rückmeldungen“.':'Dein Text bleibt erhalten. Bei dieser Stelle kann dir ein Erwachsener helfen.'}</p>
+      </div>
+      <div id="correctionBelief" hidden>
+        <p>Die App kann sich irren. Dein Text wird nicht automatisch geändert.</p>
+        <div class="help-choices">
+          <button class="btn" id="${c?'wordDisagree':'okBtn'}">${c?'Zur gemeinsamen Prüfung offenlassen':'Diese Markierung übergehen'}</button>
+          ${c&&e.name?'<button class="btn-ghost" id="nameBtn">Das ist ein Name</button>':''}
+          <button class="review-back" id="beliefBack">Zurück</button>
+        </div>
+      </div>
+      <p id="wordEditStatus" role="status"></p>
+      <p class="stale" hidden>Deine Änderung ist noch nicht geprüft.</p>
+      ${session.basicOnly?'<p class="note">Zurzeit nur die Prüfung auf dem Gerät.</p>':''}
+    </div>`;
+    const editor=$('#wordEdit');
+    const message=text=>{$('#wordEditStatus').textContent=text;};
+    const stage=which=>{
+      $('#correctionFields').hidden=which!=='edit';
+      $('#correctionHelp').hidden=which!=='help';
+      $('#correctionBelief').hidden=which!=='belief';
+      $('#wordHelp').setAttribute('aria-expanded',String(which!=='edit'));
+      const focus=which==='help'?$('#wordUnknown'):which==='belief'?$('#wordDisagree')||$('#okBtn'):editor;
+      focus.focus({preventScroll:true});
     };
-    $('#wordEdit').onkeydown=ev=>{if(ev.key==='Enter' && (wordOnly||ev.ctrlKey||ev.metaKey)){ev.preventDefault();$('#wordApply').click();}};
-    if(c){
-      const defer=reason=>{try{if(compose()!==session.checkedText)throw Error('Bitte den geänderten Text zuerst prüfen.');learningTransaction(()=>LC.defer(state,c.id,reason,$('#shareWord').checked));runCheck();}catch(ex){learningUI.message(ex.message);}};
-      if($('#nameBtn'))$('#nameBtn').onclick=()=>{try{learningTransaction(()=>{if(!state.names.includes(e.w))state.names.push(e.w);LC.defer(state,c.id,'disagree',$('#shareWord').checked);});renderNames();runCheck();}catch(ex){learningUI.message(ex.message);}};
-      $('#wordUnknown').onclick=()=>defer('unknown');$('#wordDisagree').onclick=()=>defer('disagree');
-    }else{
-      $('#okBtn').onclick=()=>{session.ignore ||= {};session.ignore[e.cat+'|'+e.w]=1;session.overrides=(session.overrides||0)+1;runCheck();};
+    function commitEdit(){
+      try{
+        if(checking)return false;
+        if(compose()!==editBase)throw Error('Der Text wurde geändert. Bitte zuerst erneut prüfen.');
+        const value=wordOnly?editor.value.trim():editor.value;
+        if(wordOnly){if(value!==appliedWord)replaceWord(e.i,appliedWord,value);}
+        else if(value!==fieldText){
+          if(!target || target.f.value!==fieldText)throw Error('Der Text wurde geändert. Bitte zuerst erneut prüfen.');
+          target.f.value=value;target.f.dispatchEvent(new Event('input'));
+        }
+        editBase=compose();fieldText=target?.f.value;appliedWord=value;
+        clearTimeout(draftTimer);rememberDraft();
+        if(!save())throw Error('Deine Änderung ist noch nicht gespeichert. Bitte nichts schließen und einen Erwachsenen holen.');
+        return true;
+      }catch(ex){message(ex.message);return false;}
     }
-    const editor=$('#wordEdit');editor.focus({preventScroll:true});
+    session.commitEditor=commitEdit;
+    function select(index){
+      if(checking)return;
+      const selected=errs[index];
+      if(!commitEdit())return;
+      if(compose()!==session.checkedText){
+        if(goalMet())runCheck(selected);
+        else message('Deine Änderung ist übernommen. '+statusEl.textContent+' Du kannst hier ergänzen oder „Text weiterschreiben“ wählen.');
+      }else{session.active=index;renderResult();}
+    }
+    renderReviewText(select);
+    $('#returnToWriting').onclick=()=>{
+      if(!commitEdit())return;
+      setReviewMode(false);updateCount();
+      const field=target?.f||ta;field.closest('details')?.setAttribute('open','');field.focus();
+    };
+    $('#wordApply').onclick=()=>{
+      if(!commitEdit())return;
+      if(!goalMet()){
+        $('#reviewText').innerHTML=escSeg(editBase,0,editBase.length,SEG.labels);
+        message('Die Änderung ist übernommen. '+statusEl.textContent+' Du kannst hier ergänzen oder „Text weiterschreiben“ wählen.');
+        return;
+      }
+      runCheck();
+    };
+    editor.onkeydown=ev=>{if(ev.key==='Enter'&&(wordOnly||ev.ctrlKey||ev.metaKey)){ev.preventDefault();$('#wordApply').click();}};
+    if($('#wordHint'))$('#wordHint').onclick=()=>{
+      const level=Math.min(hintLevel+1,2);
+      try{if(c)learningTransaction(()=>LC.hint(state,c.id,level));}catch(ex){message(ex.message);return;}
+      hintLevel=level;$('#wordHintText').hidden=false;$('#wordHintText').textContent=level===1?e.tip:e.tip2;
+      $('#wordHint').textContent=level===1?'Weiterer Tipp':'Tipp wiederholen';
+      $('#wordUnknown').textContent='Der Tipp hilft mir nicht';
+    };
+    $('#wordHelp').onclick=()=>stage('help');$('#helpBack').onclick=()=>stage('edit');
+    $('#wordBelief').onclick=()=>stage('belief');$('#beliefBack').onclick=()=>stage('help');
+    function defer(reason,name=false){
+      if(!commitEdit())return;
+      if(compose()!==session.checkedText){message('Bitte deine neue Schreibweise zuerst mit „Prüfen“ überprüfen.');stage('edit');return;}
+      try{
+        learningTransaction(()=>{
+          if(hintLevel && reason==='unknown')LC.hintUnclear(state,c.id);
+          if(name&&!state.names.includes(e.w))state.names.push(e.w);
+          LC.defer(state,c.id,reason,c.shared);
+        });
+        if(name)renderNames();runCheck();
+      }catch(ex){message(ex.message);}
+    }
+    $('#wordUnknown').onclick=()=>{
+      if(c)defer('unknown');
+      else{stage('edit');$('#wordHintText').hidden=false;$('#wordHintText').textContent=e.tip+' Bitte hol einen Erwachsenen, wenn dir das noch nicht hilft.';}
+    };
+    if(c){
+      $('#wordDisagree').onclick=()=>defer('disagree');
+      if($('#nameBtn'))$('#nameBtn').onclick=()=>defer('disagree',true);
+    }else $('#okBtn').onclick=()=>{
+      if(!commitEdit())return;
+      if(compose()!==session.checkedText){message('Bitte deine Änderung zuerst prüfen.');stage('edit');return;}
+      session.ignore ||= {};session.ignore[e.cat+'|'+e.w]=1;session.overrides=(session.overrides||0)+1;runCheck();
+    };
+    if(firstReview)$('#writeGrid').scrollIntoView({block:'start',behavior:'instant'});
+    editor.focus({preventScroll:true});
     if(wordOnly)editor.select();else if(target){
       let caret=null;
       if(e.cat==='Satzende')caret=editor.value.trimEnd().length;
       else if(e.cat==='Komma')caret=editor.value.slice(0,target.offset).trimEnd().length;
       else if(e.cat==='Satzzeichen')caret=target.offset+e.w.length;
       else if(e.cat==='Leerzeichen')caret=e.tip.startsWith('Nach')?target.offset:target.offset+e.w.length;
-      // Adding punctuation must not replace the highlighted word.
       editor.setSelectionRange(caret??target.offset,caret??(target.offset+e.w.length));
     }
-    editor.scrollIntoView({block:'center',behavior:'instant'});
+    if(innerWidth<900)editor.scrollIntoView({block:'center',behavior:'instant'});
     updateCount();
   }
 
@@ -775,7 +880,8 @@
     const open=learningSummary.deferred+learningSummary.contested;
     const headline=open?"Gespeichert – einige Wörter bleiben offen":"Dein Eintrag ist gespeichert!";
     const sub=learningSummary.resolved+' markierte Wortstellen verbessert. '+open+' Wörter zum späteren Anschauen. Die automatische Prüfung kann nicht alle Fehler erkennen.';
-    resultEl.hidden = true; resultEl.innerHTML = "";
+    setReviewMode(false);
+    resultEl.innerHTML = "";
     $("#writeArea").hidden = true;
     settleWeeks(); weeklyReport();
     const wp = weekPending(), cfgD = R().cfg.days;
@@ -788,11 +894,22 @@
     renderStreak(); renderWords(); renderEntries(); learningUI.child();
   }
   function reset(){
+    setReviewMode(false);
+    $("#optionalQuestions").open=false;
     session = newSession(); allFields().forEach(f => { f.value = ""; }); doneEl.hidden = true; doneEl.innerHTML = "";
     $("#writeArea").hidden = false; checkBtn.textContent = "Prüfen"; updateCount(); ta.focus();
     $("#drawPanel").hidden = true; $("#drawBtn").setAttribute("aria-expanded", "false"); updateDrawBtn();
   }
   checkBtn.addEventListener("click", runCheck);
+  $('#optionalQuestions').addEventListener('toggle',()=>{
+    $('#optionalQuestions summary').textContent=$('#optionalQuestions').open?'Schreibideen ausblenden':'Schreibideen anzeigen';
+  });
+  window.addEventListener('pagehide',()=>{
+    if(!$('#kidView').hidden && doneEl.hidden){
+      if(reviewMode&&!checking&&session.commitEditor)session.commitEditor();
+      clearTimeout(draftTimer);rememberDraft();save();
+    }
+  });
 
   // ---------- emojis ----------
   const EMOJI = {
@@ -1509,6 +1626,7 @@
   }
   function enterChild(id){
     clearTimeout(draftTimer);learningUI?.clear();
+    setReviewMode(false);$("#optionalQuestions").open=false;
     useChild(id); save();
     // reset everything that belongs to the previous child
     session = newSession(); resultEl.hidden = true; resultEl.innerHTML = ""; doneEl.hidden = true; doneEl.innerHTML = ""; $("#writeArea").hidden = false; checkBtn.textContent = "Prüfen";
@@ -1524,7 +1642,12 @@
     ["homeView","kidView","kidLockView","parentView"].forEach(v => { $("#" + v).hidden = v !== view; });
     window.scrollTo(0, 0);
   }
-  function goHome(){ parentOpen = false; renderPinBox(); renderStreak(); renderHome(); show("homeView"); }
+  function goHome(){
+    if(!$('#kidView').hidden && doneEl.hidden){
+      if(reviewMode&&!checking&&session.commitEditor&&!session.commitEditor())return;
+      clearTimeout(draftTimer);rememberDraft();if(!save())return;
+    }
+    parentOpen = false; renderPinBox(); renderStreak(); renderHome(); show("homeView"); }
   document.querySelectorAll("[data-home]").forEach(b => b.onclick = goHome);
   function openKid(){ learningUI?.child(); settleWeeks(); renderCoinBadge(); showView(false); show("kidView"); }
   function renderKidLock(change){

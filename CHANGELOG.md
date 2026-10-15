@@ -3,6 +3,16 @@
 Hier stehen die Änderungen am Tagebuch, erklärt für Eltern und Lehrkräfte. Die neuesten Einträge stehen oben. Bei Programmupdates nennen wir die Version, was sich im Alltag ändert und ob ihr etwas tun müsst.
 
 
+## Version 1.3.2: Den Text sehen und daneben verbessern — 15. Oktober 2026
+
+- **Text und Verbesserung nebeneinander:** Nach dem Prüfen sieht das Kind links seinen Text mit anklickbaren Unterstreichungen. Verbessert wird rechts, immer im selben Feld. Bei Satzzeichen und Grammatik erscheint dort der betroffene Satz oder Abschnitt. In schmalen Fenstern stehen die Bereiche untereinander; bei langen Texten kann Scrollen weiterhin nötig sein.
+- **Weniger Knöpfe auf einmal:** Zunächst erscheinen „Prüfen“, bei einem passenden Hinweis „Tipp“ und „Ich brauche Hilfe“. Die Hilfe bietet dann „Ich weiß nicht weiter“ oder „Ich glaube, meine Schreibweise stimmt“ an. Nach einem Tipp kann das Kind melden, dass dieser nicht hilft. Namen lassen sich über die Rückfrage zur Schreibweise merken. Private Wortstellen werden weiterhin nur nach einer eigenen Freigabe mit den Eltern geteilt.
+- **Fragen bleiben freiwillig:** „Schreibideen anzeigen“ blendet die drei Fragen ein. Beim Ausblenden bleiben Antworten erhalten und zählen mit. Über „Text weiterschreiben“ geht es aus der Prüfung zurück ins Heft.
+- **Eingegebene Verbesserungen behalten:** Gültige Korrekturen werden beim Wechsel der Markierung, beim Zurückgehen und beim normalen Neuladen als Entwurf übernommen. Ein unbekanntes Wort bleibt gelb gepunktet markiert und bekommt die Erklärung „Dieses Wort kenne ich nicht“, ohne geratenen Regeltipp.
+- **Anleitungen und Prüfungen ergänzt:** README, Elternhilfe, Kinderhilfe und Testanleitung beschreiben die neue Ansicht. Zusätzliche Browserprüfungen kontrollieren die Bedienung, Entwürfe und schmale Fenster. Schreibziele, Belohnungsregeln und das Datenformat bleiben erhalten.
+
+**Was müsst ihr tun?** Die aktuelle ZIP vom Branch `dev` laden und im Testordner die vollständigen Programmdateien `Tagebuch.html` und `app/` ersetzen. `config/`, `kinder/` und das Test-Browserprofil behalten. Die App neu öffnen und einen vorhandenen Entwurf erneut prüfen. Bei Startproblemen die vollständige ZIP erneut entpacken; keine Programmdateien verschiedener Versionen mischen. Die automatische Update-Suche verteilt diese Testfassung nicht; `main` bleibt unverändert.
+
 ## Version 1.3.1: Klarer korrigieren, unbekannte Wörter ehrlich benennen — 14. Oktober 2026
 
 - **Korrekturen bleiben an einer Stelle:** Wörter, Satzzeichen und Grammatik werden im selben Korrekturbereich unter dem Text bearbeitet. Für Satzzeichen oder mehrere Wörter erscheint dort der betroffene Satz beziehungsweise Abschnitt. Der bisherige Sprung zurück zum oberen Schreibfeld entfällt. Das funktioniert auch bei eingeklappten freiwilligen Antworten.

@@ -1,27 +1,27 @@
 {
   "schema": 1,
-  "release": 7,
-  "version": "1.3.1",
+  "release": 8,
+  "version": "1.3.2",
   "files": [
     {
       "path": "Tagebuch.html",
-      "size": 58086,
-      "sha256": "e6a8def257614e65c2a6a95a39b760e60be0404043501f17c4ecc71facc94af8"
+      "size": 59706,
+      "sha256": "ed0d7c6dd0030b9c4048fd81236b93279eed994e748096eb06e786ddf9e9ada4"
     },
     {
       "path": "app/app.css",
-      "size": 36136,
-      "sha256": "9dcc7884ba2ac9f84c4e263ccaf9f46ebfa1086126054984c393c6b466f04c59"
+      "size": 37127,
+      "sha256": "ab2bc07444301e6cd1d60bdaa8cdf007ac168be443698a7a21f48488a6f2c5e1"
     },
     {
       "path": "app/app.js",
-      "size": 207795,
-      "sha256": "14845a61af950eb1113de01d89859100621d2d99c8bc6abdccdfd00152f1a14f"
+      "size": 211940,
+      "sha256": "4969a2ca5114a23f0d0a83a8accdab949af16617910b168c4391eb1476741e72"
     },
     {
       "path": "app/changelog-data.js",
-      "size": 15902,
-      "sha256": "4952bdf3bbbfc583579d6893cabb8783ad69f8f82400c6e404c9d633b52e9117"
+      "size": 18268,
+      "sha256": "294f9629d24555c0789643d4cd715c520391818b33b3d20afae71cf83715b80e"
     },
     {
       "path": "app/compatibility.js",
@@ -35,8 +35,8 @@
     },
     {
       "path": "app/learning-core.js",
-      "size": 25845,
-      "sha256": "8cbc58d11ceef8390b9e372e3fc420cee369a6dce051502a73d6c3312ad63428"
+      "size": 25844,
+      "sha256": "ddba68b0d6af3212ee90e67937f9de6cc0ab64104714a95d2b0cf3dedaecd381"
     },
     {
       "path": "app/learning-ui.js",
@@ -106,7 +106,7 @@
     {
       "path": "app/version.js",
       "size": 151,
-      "sha256": "05307146a5e7e7a63492294db8d799c8899f303036f7b464c3ae1655787ea7ab"
+      "sha256": "8c978d9b32f4a69465b8d9bcd95349b10a6eb2d1160d57d4fa854448dcd67044"
     },
     {
       "path": "app/woerterbuch.js",

@@ -1,6 +1,6 @@
 # Testfassung herunterladen und ausprobieren
 
-Version 1.3.1 wird zuerst auf `dev` erprobt. Die bisherige Fassung auf `main` bleibt bestehen. Ein reguläres Release ist diese Testfassung noch nicht.
+Version 1.3.2 wird zuerst auf `dev` erprobt. Die bisherige Fassung auf `main` bleibt bestehen. Ein reguläres Release ist diese Testfassung noch nicht.
 
 ## Herunterladen und starten
 
@@ -9,7 +9,7 @@ Version 1.3.1 wird zuerst auf `dev` erprobt. Die bisherige Fassung auf `main` bl
 3. Die ZIP vollständig in einen neuen Ordner entpacken, beispielsweise `Tagebuch-Test`. Nicht über eure bisherige App kopieren. `Tagebuch.html` und der ganze Ordner `app/` müssen zusammenbleiben; nicht direkt aus der ZIP starten.
 4. In Chrome oder Edge über das Profilsymbol ein **zusätzliches Browserprofil** für den Test erstellen. Dafür ist keine Anmeldung oder Synchronisierung nötig. Das Profil dauerhaft behalten, wenn ihr später weiterprüfen wollt. Ein anderer Dateiordner allein trennt die Browserdaten nicht zuverlässig.
 5. Im Testprofil `Tagebuch.html` öffnen. Bei der Ordnerauswahl ausschließlich den neuen Testordner freigeben. Alternativ **nur im Browser speichern** wählen.
-6. Eine Eltern-PIN setzen und zunächst ein erfundenes Testkind anlegen. Unter der Glocke stehen die Änderungen zu **1.3.1** und der Hinweis zur Testfassung.
+6. Eine Eltern-PIN setzen und zunächst ein erfundenes Testkind anlegen. Unter der Glocke stehen die Änderungen zu **1.3.2** und der Hinweis zur Testfassung.
 
 Eine Installation oder ein Programmierwerkzeug ist dafür nicht erforderlich. Verwendet am Windows-PC oder Mac einen aktuellen Chrome oder Edge. Auf dem jeweiligen Gerät auch die Diktatstimme anhören; automatische Tests können deren Verständlichkeit nicht beurteilen.
 
@@ -19,17 +19,20 @@ Eine Installation oder ein Programmierwerkzeug ist dafür nicht erforderlich. Ve
 | --- | --- |
 | Als Eltern unter **Gemeinsam starten** ein kleines Ziel einstellen und den Beispieltext ansehen. | Es ist erkennbar, wann das Ziel erreicht wird und wann Tagebuch-Coins verfügbar werden. |
 | Als Kind einen kurzen Text schreiben, etwa „Die Sone scheint auf die Blume.“; vorher das Testziel passend klein einstellen. | Die App kennt „Sone“ nicht und sagt ausdrücklich, dass ein Wort trotzdem richtig sein kann. Das Kind kann selbst „Sonne“ eingeben; ein vermeintlich sicherer Regeltipp aus einem bloßen Wörterbuchvorschlag entfällt. |
-| „Ich sehe Rotze und Popel.“ prüfen. | „Rotze“ wird nicht fälschlich wegen Groß-/Kleinschreibung markiert. Bei „Popel“ steht „Nicht im Wörterbuch“, ohne Nomen-Tipp. |
-| Einen Punkt weglassen oder eine markierte Grammatikstelle bearbeiten. | Die Korrektur bleibt im selben Bereich. Dort steht für Satzzeichen und Grammatik der betroffene Satz oder Abschnitt zum Bearbeiten. |
-| Bei einem Wort **Hier weiß ich nicht weiter** wählen. | Nur diese Stelle bleibt offen; der Originaltext wird nicht automatisch ersetzt. Wenn die übrigen Anforderungen erfüllt sind, lässt sich der Eintrag abschließen. |
+| **Schreibideen anzeigen** öffnen, eine Frage beantworten und wieder ausblenden. | Die Fragen sind freiwillig. Die Antwort bleibt gespeichert, zählt mit und erscheint nach dem Prüfen im Text links. |
+| „Ich sehe Rotze und Popel.“ prüfen. | „Rotze“ wird nicht fälschlich wegen Groß-/Kleinschreibung markiert. „Popel“ ist gelb gepunktet unterstrichen. Rechts steht „Dieses Wort kenne ich nicht“, ohne Nomen-Tipp. |
+| Eine Unterstreichung anklicken und rechts verbessern; auch einen fehlenden Punkt ausprobieren. | Links ist der Text nicht bearbeitbar. Rechts bleibt die Korrekturstelle an derselben Position. Für Satzzeichen und Grammatik erscheint der betroffene Satz oder Abschnitt. Mit **Prüfen** wird die Änderung übernommen. |
+| Eine Verbesserung eintippen, eine andere Markierung anklicken und später **Text weiterschreiben** wählen. | Die gültige Eingabe bleibt erhalten. Beim Wechsel der Markierung wird die Änderung geprüft; beim Zurückgehen öffnet sich das ursprüngliche Schreibfeld. |
+| Bei einem Wort **Ich brauche Hilfe → Ich weiß nicht weiter** wählen. | Nur diese Stelle bleibt offen; der Originaltext wird nicht automatisch ersetzt. Wenn die übrigen Anforderungen erfüllt sind, lässt sich der Eintrag abschließen. |
+| „Ich sehe eine blume.“ prüfen, **Tipp** öffnen und danach **Ich brauche Hilfe → Der Tipp hilft mir nicht** wählen. | Es sind höchstens drei Aktionen gleichzeitig im Korrekturbereich sichtbar. Die offene Stelle und die Rückmeldung zum Tipp werden erfasst. |
 | Unter **Wörter und Rückmeldungen** eine Stelle ausdrücklich mit den Eltern teilen. | Die Eltern können die freigegebene Stelle sehen. Private neue Tagebuchstellen bleiben ohne Freigabe verborgen. |
 | In der Elternübersicht ein Wort-Diktat mit zwei Wörtern und höchstens 12 Extra-Coins anbieten. | Beim Kind erscheint unter **Üben → Für dich angeboten** eine freiwillige Aufgabe. |
 | Ein Zielwort bearbeiten, das andere offenlassen und die Aufgabe abschließen. Danach neu laden. | Für das bearbeitete Wort gibt es 6 Extra-Coins. Durch Neuladen werden sie nicht erneut gutgeschrieben. Späteres Bearbeiten des zweiten Wortes ergänzt den Rest. |
-| Eine Schreibweise mit **Meine Schreibweise stimmt, bitte prüfen** melden. | Die Rückfrage bleibt für die Eltern nachvollziehbar, auch wenn das Kind danach verbessert. |
+| Eine Wortstelle über **Ich brauche Hilfe → Ich glaube, meine Schreibweise stimmt → Zur gemeinsamen Prüfung offenlassen** melden. | Die Rückfrage wird erfasst und bleibt auch nach einer späteren Verbesserung erhalten. Private Wortformen sehen Eltern erst nach der gesonderten Freigabe. |
 | Eine Aufgabe pausieren, die App neu öffnen und weiterüben. | Der gespeicherte Aufgabenstand ist wieder da. Auch ein kurzer Text als Aufgabe lässt sich anbieten und ausprobieren. |
 | Shop, Hörprobe, Elternhilfe und Kinderhilfe öffnen. | Bisherige Funktionen sind erreichbar; die Hilfen beschreiben die neuen Abläufe. |
 
-Lasst das Kind möglichst selbst suchen und erklären, was es verstanden hat. Notiert, wo Hilfe nötig war oder Frust entstand. Die technischen Prüfungen sind im [Prüfbericht](pruefbericht-1.3.0.md) beschrieben; Bedienversuche mit echten Familien stehen noch aus.
+Lasst das Kind möglichst selbst suchen und erklären, was es verstanden hat. Notiert, wo Hilfe nötig war oder Frust entstand. Bei normaler Laptopbreite stehen Text und Verbesserung nebeneinander, in schmalen Fenstern untereinander. Bei langen Texten, großer Schrift oder starkem Zoom kann Scrollen nötig sein. Die technischen Prüfungen sind im [aktuellen Prüfbericht](pruefbericht-1.3.2.md) beschrieben; Bedienversuche mit echten Familien stehen noch aus.
 
 ## Vorhandene Daten als Kopie testen
 

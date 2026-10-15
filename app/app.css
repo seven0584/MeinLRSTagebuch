@@ -276,24 +276,6 @@ header.bar{justify-content:flex-start;align-items:center}
 .modalbox{background:var(--card);border-radius:14px;padding:1rem 1.2rem;width:min(62rem,100%);max-height:96vh;overflow:auto}
 .modalhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;font-size:1.2rem}
 .modalbox #pad{max-height:calc(96vh - 11rem);width:auto;max-width:100%;margin:0 auto}
-@media (min-width:1000px){
-  #writeGrid{display:grid;grid-template-columns:minmax(0,1fr);gap:1.2rem;align-items:start}
-  #writeGrid:has(> #result:not([hidden])){grid-template-columns:minmax(0,1.55fr) minmax(0,1fr)}
-  #writeArea{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);grid-template-rows:auto 1fr auto;grid-template-areas:"mlbl q" "text q" "tools check";gap:0 1rem;align-items:start}
-  #writeArea > .mainlabel{grid-area:mlbl;margin:0}
-  #writeArea > .sheet{grid-area:text}
-  #writeArea .questions > .q:first-child{margin-top:0}
-  #writeArea > .questions{grid-area:q;margin-top:0}
-  #writeArea > .toolrow{grid-area:tools;margin-top:.6rem}
-  #writeArea > .below{grid-area:check;margin-top:.6rem;justify-content:flex-end}
-  #ta{height:calc(100vh - 23.6rem);min-height:12rem;resize:none}
-  .questions .qnote{margin:.4rem 0 0}
-  .q{margin-top:.35rem}
-  .q textarea.lined{min-height:calc(var(--lh) * 2.2);height:calc((100vh - 26rem) / 3);max-height:9rem;resize:none}
-  #result{margin-top:0;position:sticky;top:.5rem;max-height:calc(100vh - 1rem);overflow:auto}
-  #result .result-msg{margin-top:0}
-  main.wide #kidView > header{margin-bottom:.4rem}
-}
 /* parent area with menu */
 .pwrap{display:grid;grid-template-columns:16.5rem minmax(0,1fr);gap:1.5rem;align-items:start}
 .pmenu{display:flex;flex-direction:column;gap:.3rem;position:sticky;top:1rem;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:.5rem}
@@ -487,3 +469,33 @@ details.parents summary{cursor:pointer;color:var(--muted);font-weight:700}
 #learningParent .rulegrid > *, [data-sec="setup"] .rulegrid > * { min-width:0; }
 #openLearning:empty { display:none; }
 #startupProblem { color:#422700; background:#fff3cf; }
+
+/* Writing stays free-form; checking pairs the read-only sheet with one editor. */
+#writeGrid { scroll-margin-top:4.5rem; }
+#reviewPane, #result { min-width:0; }
+.review-heading { display:flex; align-items:center; justify-content:space-between; gap:.75rem; flex-wrap:wrap; }
+.review-heading h2 { margin:0; }
+.review-back { border:0; background:transparent; color:var(--ink); text-decoration:underline; text-underline-offset:3px; padding:.4rem 0; }
+#reviewText { min-height:14rem; padding-top:.5rem; padding-bottom:1rem; }
+.review-legend { font-size:.85rem; }
+.review-mark { font:inherit; line-height:inherit; color:inherit; background:transparent; border:0; padding:0; text-decoration:underline wavy var(--red); text-decoration-thickness:2px; text-underline-offset:5px; border-radius:2px; }
+.review-mark.uncertain { text-decoration:underline dotted #b07800; text-decoration-thickness:3px; background:color-mix(in srgb,#ffd66b 25%,transparent); }
+.review-mark.active { outline:2px solid var(--ink); outline-offset:2px; }
+.review-mark.uncertain.active { outline-color:#b07800; }
+#result .word-editor { margin:0; background:var(--card); border-color:var(--border); padding:1rem; }
+#result h3 { margin:.2rem 0 .65rem; color:var(--ink); font-size:1.2rem; }
+.review-step { color:var(--muted); font-size:.85rem; margin:0; }
+#wordEdit { background:var(--paper); color:var(--text); border:1px solid var(--border); border-radius:7px; font-size:1.15rem; }
+.correction-actions { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.9rem; }
+.correction-actions button { font-size:1rem; padding:.5rem .8rem; }
+.help-choices { display:flex; flex-direction:column; align-items:stretch; gap:.65rem; }
+.correction-hint { margin:.8rem 0 0; padding:.65rem; background:var(--paper); border-radius:6px; }
+#wordEditStatus:empty { display:none; }
+@media (min-width:900px){
+  #writeGrid.reviewing { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(20rem,1fr); gap:1.4rem; align-items:start; }
+  #writeGrid.reviewing #result { margin:0; position:sticky; top:4.5rem; }
+}
+@media (max-width:899px){
+  #reviewPane .note { font-size:.9rem; }
+  #reviewText { min-height:8rem; }
+}

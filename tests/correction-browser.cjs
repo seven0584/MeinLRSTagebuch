@@ -26,13 +26,17 @@ async function openChild(browser, { grammar = false, matches = () => [], minWord
   await page.evaluate(([key, value]) => localStorage.setItem(key, JSON.stringify(value)), [KEY, family(grammar, minWords)]);
   await page.reload();
   await page.waitForFunction(() => window.__test?.ready());
+  await enterChild(page, true);
+  return { page, async close() { assert.deepEqual(errors, []); await context.close(); } };
+}
+
+async function enterChild(page, first = false) {
   await page.locator('[data-kid="test"]').click();
   await page.waitForFunction(() => document.activeElement === document.querySelector('#kidPinBox .p1'));
   await page.locator('#kidPinBox .p1').fill('5678');
-  await page.locator('#kidPinBox .p2').fill('5678');
+  if (first) await page.locator('#kidPinBox .p2').fill('5678');
   await page.locator('#kidPinBox .go').click();
   await page.locator('#kidView').waitFor({ state: 'visible' });
-  return { page, async close() { assert.deepEqual(errors, []); await context.close(); } };
 }
 
 async function check(page, text) {
@@ -71,10 +75,15 @@ const stored = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)
       assert.deepEqual(await p.evaluate(t => __test.check(t).filter(m => !m.punct), text), [], text);
     }
     await check(p, 'Ich sehe Rotze und Popel.');
-    assert.match(await p.locator('.dictionary-unknown').innerText(), /Nicht im Wörterbuch.*kann trotzdem richtig sein/s);
-    assert.equal(await p.locator('#result .err.uncertain').count(), 1);
-    await p.locator('#wordHint').click();
-    assert.doesNotMatch(await p.locator('#wordHintText').innerText(), /Nomen|Großschreibung|Kleinschreibung/);
+    assert.equal(await p.locator('#result h3').innerText(), 'Dieses Wort kenne ich nicht');
+    assert.match(await p.locator('.dictionary-unknown').innerText(), /kann trotzdem richtig sein.*Wörterbuch kennt diese Schreibweise nicht/s);
+    assert.equal(await p.locator('#reviewText .review-mark.uncertain').count(), 1);
+    assert.equal(await p.locator('#wordHint').count(),0);
+    assert.equal(await p.locator('#correctionActions button:visible').count(),2);
+    await p.locator('#wordHelp').click();
+    assert.equal(await p.locator('#result button:visible').count(), 3);
+    await p.locator('#wordBelief').click();
+    assert((await p.locator('#result button:visible').count()) <= 3);
     assert.equal(await p.locator('#wordEdit').inputValue(), 'Popel');
     await p.locator('#wordDisagree').click();
     await p.locator('#doneArea').waitFor({ state: 'visible' });
@@ -82,6 +91,8 @@ const stored = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)
     assert.equal(saved.entries[0].text, 'Ich sehe Rotze und Popel.');
     assert.deepEqual(saved.learning.cases.map(c => c.category), ['unknown']);
     assert(saved.learning.cases.every(c => c.expected === null));
+    assert(saved.learning.cases.every(c => !c.shared));
+    assert.equal(saved.learning.cases[0].status, 'contested');
     assert.equal(saved.entries[0].errCats.gross, undefined);
     assert.equal(saved.entries[0].errCats.klein, undefined);
     assert.deepEqual(await p.evaluate(c => TBLearning.recommendations(c), saved), []);
@@ -96,12 +107,12 @@ const stored = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)
     await q.waitForFunction(() => document.querySelector('#wordEdit')?.tagName === 'TEXTAREA');
     assert.equal(await q.locator('#wordEdit').inputValue(), 'Meine Mutter spielt im Garten');
     assert.equal(await q.locator('#editOriginal').count(), 0);
-    assert.match(await q.locator('#result [data-i]').innerText(), /Satzende bei „Garten“/);
+    assert.match(await q.locator('#reviewText [data-i]').getAttribute('aria-label'), /Satzende: Garten/);
     assert(await q.locator('#wordEdit').evaluate(el => el === document.activeElement));
     const box = await q.locator('#wordEdit').boundingBox();
     assert(box.y >= 0 && box.y + box.height <= 800);
     await q.setViewportSize({ width: 900, height: 768 });
-    await q.locator('#result [data-i]').click();
+    await q.locator('#reviewText [data-i]').click();
     const narrowBox = await q.locator('#wordEdit').boundingBox();
     assert(narrowBox.y >= 0 && narrowBox.y + narrowBox.height <= 768);
     assert(await q.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
@@ -120,14 +131,22 @@ const stored = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)
     console.log('PASS: word and punctuation corrections use the same visible editor; an actual correction can establish its rule afterwards');
 
     const optional = await openChild(browser), r = optional.page;
+    assert.equal(await r.locator('#optionalQuestions summary').innerText(), 'Schreibideen anzeigen');
     await r.locator('#ta').fill('Ich male.');
     await r.locator('#optionalQuestions summary').click();
     await r.locator('[data-q="best"]').fill('  Ich spiele heute  ');
+    await r.getByText('Schreibideen ausblenden', { exact: true }).waitFor();
+    assert.equal(await r.locator('#optionalQuestions summary').innerText(), 'Schreibideen ausblenden');
     await r.locator('#optionalQuestions summary').click();
     await r.locator('#checkBtn').click();
     await r.locator('textarea#wordEdit').waitFor();
     assert.equal(await r.locator('#wordEdit').inputValue(), '  Ich spiele heute  ');
     assert.equal(await r.locator('#optionalQuestions').getAttribute('open'), null);
+    assert.match(await r.locator('#reviewText').innerText(), /Ich male\.[\s\S]*Ich spiele heute/);
+    assert.equal(await r.locator('#ta').isVisible(), false);
+    assert.equal(await r.locator('#ta').evaluate(el => el.readOnly), true);
+    assert.equal(await r.locator('#reviewText').evaluate(el => el.isContentEditable), false);
+    assert.equal(await r.locator('#reviewText input,#reviewText textarea').count(), 0);
     await r.locator('#wordEdit').fill('  Ich spiele heute.  ');
     await r.locator('#wordApply').click();
     await r.locator('#doneArea').waitFor({ state: 'visible' });
@@ -170,7 +189,7 @@ const stored = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)
 
     const stale = await openChild(browser), t = stale.page;
     await check(t, 'Ich spiele heute');
-    await t.locator('#ta').fill('Mein neuer Text steht hier.');
+    await t.locator('#ta').evaluate(el=>{el.value='Mein neuer Text steht hier.';el.dispatchEvent(new Event('input'));});
     await t.locator('#wordEdit').fill('Ich spiele heute.');
     await t.locator('#wordApply').click();
     assert.match(await t.locator('#wordEditStatus').innerText(), /Text wurde geändert/);
@@ -188,6 +207,95 @@ const stored = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)
     assert.equal((await stored(u)).entries[0].text, 'Ich spiele heute im Garten.');
     await goal.close();
     console.log('PASS: stale corrections cannot overwrite a newer draft; shortening below the goal allows further edits in the same area');
+
+    const repeated = await openChild(browser), a = repeated.page;
+    await check(a, 'Ich sehe eine blume. Dort steht auch eine blume.');
+    assert.equal(await a.locator('#reviewText .review-mark').count(), 2);
+    assert.equal(await a.locator('#result button:visible').count(), 3);
+    await a.locator('#wordHint').click();
+    assert.equal(await a.locator('#wordHint').innerText(), 'Weiterer Tipp');
+    await a.locator('#wordHint').click();
+    assert.equal(await a.locator('#wordHint').innerText(), 'Tipp wiederholen');
+    assert.equal(await a.locator('#result button:visible').count(), 3);
+    await a.locator('#wordHelp').click();
+    assert.equal(await a.locator('#wordUnknown').innerText(), 'Der Tipp hilft mir nicht');
+    await a.locator('#wordUnknown').click();
+    await a.waitForFunction(() => document.querySelectorAll('#reviewText .review-mark').length === 1);
+    const partial = await stored(a);
+    assert.equal(partial.entries.length, 0);
+    assert.deepEqual(partial.learning.cases.map(c => c.status), ['deferred', 'active']);
+    assert(partial.learning.cases.every(c => !c.shared));
+    assert(partial.learning.cases[0].events.some(e => e.type === 'hint_unclear'));
+    await a.locator('#wordEdit').fill('Blume');
+    await a.locator('#wordApply').click();
+    await a.locator('#doneArea').waitFor({ state: 'visible' });
+    assert.equal((await stored(a)).entries[0].text, 'Ich sehe eine blume. Dort steht auch eine Blume.');
+    await repeated.close();
+    console.log('PASS: three actions per step; two hint levels and unclear feedback; deferring one occurrence leaves the next occurrence to work on and stays private');
+
+    const pending = await openChild(browser), b = pending.page;
+    await check(b, 'Meine Muter sieht eine blume.');
+    await b.locator('#wordEdit').fill('Mutter');
+    await b.locator('#reviewText .review-mark').last().click();
+    await b.waitForFunction(() => document.querySelector('#wordEdit')?.value === 'blume');
+    assert.equal((await stored(b)).draft, 'Meine Mutter sieht eine blume.');
+    assert.equal(await b.locator('#reviewText').innerText(), 'Meine Mutter sieht eine blume.');
+    await b.locator('#wordEdit').fill('Blume');
+    await b.locator('#returnToWriting').click();
+    assert.equal(await b.locator('#ta').inputValue(), 'Meine Mutter sieht eine Blume.');
+    assert.equal(await b.locator('#ta').evaluate(el => el.readOnly), false);
+    assert.equal(await b.locator('#reviewPane').isVisible(), false);
+    await b.locator('#ta').fill('Meine Mutter sieht eine Bluume.');
+    await b.locator('#checkBtn').click();
+    await b.locator('#wordEdit').waitFor();
+    await b.locator('#wordEdit').fill('Blume');
+    await b.locator('#kidView [data-home]').click();
+    assert.equal((await stored(b)).draft, 'Meine Mutter sieht eine Blume.');
+    await enterChild(b);
+    assert.equal(await b.locator('#ta').inputValue(), 'Meine Mutter sieht eine Blume.');
+    await b.locator('#ta').fill('Meine Muter spielt im Garten.');
+    await b.locator('#checkBtn').click();
+    await b.locator('#wordEdit').waitFor();
+    await b.locator('#wordEdit').fill('Mutter');
+    await b.reload();
+    await b.waitForFunction(() => window.__test?.ready());
+    await enterChild(b);
+    assert.equal(await b.locator('#ta').inputValue(), 'Meine Mutter spielt im Garten.');
+    await pending.close();
+    console.log('PASS: pending corrections survive selecting another mark, returning to writing, leaving the child view and reloading');
+
+    const name = await openChild(browser), n = name.page;
+    await check(n, 'Ich sehe Zorplix heute.');
+    await n.locator('#wordHelp').click();
+    await n.locator('#wordBelief').click();
+    assert.equal(await n.locator('#result button:visible').count(), 3);
+    await n.locator('#nameBtn').click();
+    await n.locator('#doneArea').waitFor({ state: 'visible' });
+    assert((await stored(n)).names.includes('Zorplix'));
+    assert((await stored(n)).learning.cases.every(c => !c.shared));
+    await name.close();
+
+    const layout = await openChild(browser), l = layout.page;
+    const normalText = ('Heute spiele ich mit meiner Mutter im Garten. Wir sehen eine schöne Blume und einen Baum. ').repeat(3) + 'Ich sehe eine blume.';
+    await check(l, normalText);
+    for (const width of [1280, 1024, 900]) {
+      await l.setViewportSize({ width, height: 768 });
+      const left = await l.locator('#reviewPane').boundingBox(), right = await l.locator('#result').boundingBox();
+      const actions = await l.locator('#correctionActions').boundingBox();
+      assert(left.x + left.width <= right.x, 'text and editor must be side by side');
+      assert(actions.y >= 0 && actions.y + actions.height <= 768, 'main actions must be visible');
+      assert(await l.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    }
+    await l.setViewportSize({ width: 1280, height: 800 });
+    await l.screenshot({ path: '/tmp/tagebuch-review-layout.png' });
+    await l.emulateMedia({ colorScheme: 'dark' });
+    await l.screenshot({ path: '/tmp/tagebuch-review-dark.png' });
+    await l.setViewportSize({ width: 600, height: 768 });
+    const stackedLeft = await l.locator('#reviewPane').boundingBox(), stackedRight = await l.locator('#result').boundingBox();
+    assert(stackedLeft.y + stackedLeft.height <= stackedRight.y);
+    assert(await l.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await layout.close();
+    console.log('PASS: names remain available without automatic sharing; read-only text and correction actions fit side by side at laptop widths, narrow view stacks without horizontal overflow');
   } finally {
     if (browser) await browser.close();
     server.kill();

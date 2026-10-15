@@ -8,7 +8,7 @@ In der App öffnet die **Glocke oben rechts** dieselbe Historie, auch offline. D
 
 Die Bedienhilfe direkt in der App findet ihr unter **Eltern → Hilfe** sowie über **❓ Hilfe** im Kindertagebuch. Dort sind auch Stimmenauswahl, Shop, Updates und Glocke erklärt.
 
-## Testfassung 1.3.1 auf `dev`
+## Testfassung 1.3.2 auf `dev`
 
 Die neuen Funktionen werden zunächst auf dem separaten Branch **[dev](https://github.com/seven0584/MeinLRSTagebuch/tree/dev)** zum Ausprobieren bereitgestellt. Sie sind noch nicht in `main` übernommen und kein reguläres Release.
 
@@ -103,9 +103,13 @@ Das Wörterbuch und die Übungstexte sind enthalten. Die lokale Rechtschreibprü
 
 Unter **Eltern → Gemeinsam starten** stehen Schreibumfang, Satzlänge, Schreibtage und Coins nebeneinander. Ein Beispieltext zeigt, ob das Ziel erreicht wäre und welche Tagebuch-Coins er bringen würde. Alle bisherigen Einstellungen und die Wochenabrechnung bleiben erhalten. Die Vorschau prüft keine Rechtschreibung.
 
-Kinder schreiben in einem Hauptfeld. Die drei Fragen stehen unter **Freiwillige Schreibideen**; eingetragene Antworten bleiben auch beim Zuklappen erhalten und zählen mit. Nach **Prüfen** bleibt jede Korrektur im selben Bereich unter dem Text: Bei einem Wort wird dessen Schreibweise bearbeitet, bei Satzzeichen und Grammatik der betroffene Satz oder Abschnitt. **Übernehmen und prüfen** trägt die Änderung in den ursprünglichen Text ein. Auch eingeklappte Antworten werden dort bearbeitet; ein Wechsel zurück zum oberen Schreibfeld ist nicht nötig. Im Wortfeld prüft die Eingabetaste; im Satzfeld fügt sie eine neue Zeile ein, Strg+Eingabe beziehungsweise Cmd+Eingabe prüft.
+Kinder schreiben in einem großen Hauptfeld. **Schreibideen anzeigen** blendet die drei freiwilligen Fragen ein; eingetragene Antworten bleiben beim Ausblenden erhalten und zählen mit. Nach **Prüfen** steht links der nicht bearbeitbare Text mit anklickbaren Unterstreichungen. Rechts wird die ausgewählte Stelle verbessert: bei einem Wort dessen Schreibweise, bei Satzzeichen und Grammatik der betroffene Satz oder Abschnitt. Auch eingeklappte Antworten lassen sich dort verbessern. Ab 900 Pixel Fensterbreite stehen beide Bereiche nebeneinander, in schmaleren Fenstern untereinander.
 
-**Nicht im Wörterbuch** heißt: Die App kennt diese Schreibweise nicht, sie kann trotzdem richtig sein. Das enthaltene Hunspell-/igerman98-Wörterbuch ist kein Duden. Aus einem bloß ähnlichen Wort wird kein Regeltipp abgeleitet. Unter **Warum diese Markierung?** und **Was kann ich tun?** steht die Erklärung. Bekannte Großschreibungsfälle und Diktate mit vorgegebenem Zielwort behalten ihre Tipps. **Hier weiß ich nicht weiter** und **Meine Schreibweise stimmt, bitte prüfen** stellen nur dieses einzelne Wort zurück. Die App korrigiert es nicht automatisch. Ein Eintrag mit offenen Wörtern kann abgeschlossen werden, sobald das bestehende Schreibziel und die übrigen Prüfungen erfüllt sind.
+Im Korrekturbereich stehen zunächst **Prüfen**, bei einem passenden Hinweis **Tipp** und **Ich brauche Hilfe**. Der Tipp-Knopf bietet danach den weiteren Hinweis an. **Prüfen** übernimmt die Änderung und prüft erneut. Im Wortfeld geht das auch mit der Eingabetaste; im Satzfeld mit Strg+Eingabe beziehungsweise Cmd+Eingabe. Mit **Text weiterschreiben** wird wieder das ursprüngliche Schreibfeld geöffnet. Gültige eingegebene Korrekturen bleiben beim Wechsel der Markierung, beim Zurückgehen und beim normalen Neuladen erhalten.
+
+**Dieses Wort kenne ich nicht** heißt: Die App kennt diese Schreibweise nicht, sie kann trotzdem richtig sein. Solche Stellen sind gelb gepunktet unterstrichen. Das enthaltene Hunspell-/igerman98-Wörterbuch ist kein Duden. Aus einem bloß ähnlichen Wort wird kein Regeltipp abgeleitet; hier erscheint deshalb kein **Tipp**-Knopf. Bekannte Großschreibungsfälle und Diktate mit vorgegebenem Zielwort behalten ihre Tipps.
+
+Unter **Ich brauche Hilfe** kann das Kind **Ich weiß nicht weiter** wählen. Nach einem geöffneten Tipp heißt dieser Knopf **Der Tipp hilft mir nicht**; die Rückmeldung wird mit erfasst. **Ich glaube, meine Schreibweise stimmt → Zur gemeinsamen Prüfung offenlassen** meldet eine mögliche Fehlbewertung. Bei einem möglichen Namen steht dort auch **Das ist ein Name**. Zurückgestellt wird nur diese Wortstelle, ohne automatische Korrektur und ohne automatische Freigabe des privaten Textes. Ein Eintrag mit offenen Wörtern kann abgeschlossen werden, sobald das bestehende Schreibziel und die übrigen Prüfungen erfüllt sind. Bei Satzzeichen oder Grammatik bietet die Hilfe einen Hinweis; unter der Rückfrage zur Schreibweise lässt sich eine unpassende Markierung übergehen.
 
 Unter **Wörter und Rückmeldungen** lassen sich solche Stellen später bearbeiten oder gezielt mit den Eltern teilen. Neue private Wortformen, Kontextausschnitte und daraus entstandene Übungswörter sind in der Elternoberfläche nur nach Freigabe sichtbar. Vorhandene alte Übungswörter bleiben sichtbar. Ein Kontextausschnitt umfasst höchstens 160 Zeichen vor und nach dem Wort innerhalb desselben Satzes. Das ist ein Sichtschutz in der Oberfläche; die bestehenden Grenzen von PINs und Ordnerzugriff gelten weiter.
 
@@ -136,7 +140,7 @@ Die neuen Wortverläufe und Kontextausschnitte werden nicht zusätzlich an ntfy 
 
 ## Entwicklung
 
-Die Umsetzung für Version 1.3.0 ist im [Entwicklungsplan](docs/entwicklungsplan-rechtschreibfoerderung.md) beschrieben. Das zugrunde liegende [Konzept](docs/konzept-rechtschreibfoerderung.md) enthält Anforderungen und Akzeptanzkriterien. Der [ursprüngliche Prüfbericht](docs/pruefbericht-1.3.0.md) nennt technische Nachweise und offene Prüfungen mit echten Eltern und Kindern. Die Korrekturen in 1.3.1 sind im [ergänzenden Prüfbericht](docs/pruefbericht-1.3.1.md) beschrieben.
+Die Umsetzung für Version 1.3.0 ist im [Entwicklungsplan](docs/entwicklungsplan-rechtschreibfoerderung.md) beschrieben. Das zugrunde liegende [Konzept](docs/konzept-rechtschreibfoerderung.md) enthält Anforderungen und Akzeptanzkriterien. Der [ursprüngliche Prüfbericht](docs/pruefbericht-1.3.0.md) nennt technische Nachweise und offene Prüfungen mit echten Eltern und Kindern. Die Korrekturen in 1.3.1 sind im [ergänzenden Prüfbericht](docs/pruefbericht-1.3.1.md) beschrieben. Der [Prüfbericht zu 1.3.2](docs/pruefbericht-1.3.2.md) dokumentiert die neue Ansicht und ihre Tests.
 
 Die Quellen bestehen aus HTML, CSS und JavaScript. Für den Betrieb gibt es keinen Paketmanager oder Build-Schritt. Die Updater-Tests verwenden den integrierten Test-Runner von Node.js (Version 22 oder neuer):
 
