@@ -492,7 +492,8 @@ details.parents summary{cursor:pointer;color:var(--muted);font-weight:700}
 .correction-hint { margin:.8rem 0 0; padding:.65rem; background:var(--paper); border-radius:6px; }
 #wordEditStatus:empty { display:none; }
 @media (min-width:900px){
-  #writeGrid.reviewing { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(20rem,1fr); gap:1.4rem; align-items:start; }
+  #writeGrid.reviewing { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(20rem,1fr); column-gap:1.4rem; row-gap:.5rem; align-items:start; }
+  #writeGrid.reviewing #reviewIntro { grid-column:1 / -1; }
   #writeGrid.reviewing #result { margin:0; position:sticky; top:4.5rem; }
 }
 @media (max-width:899px){

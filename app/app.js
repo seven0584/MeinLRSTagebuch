@@ -691,6 +691,7 @@
     $('#writeGrid').classList.toggle('reviewing',active);
     $('#writeArea').hidden=active;
     $('#reviewPane').hidden=!active;
+    $('#reviewIntro').hidden=!active;
     allFields().forEach(f=>f.readOnly=active||checking);
     if(!active){resultEl.hidden=true;session.commitEditor=null;$('#reviewText').replaceChildren();}
   }
@@ -726,6 +727,7 @@
           <button class="btn" id="wordApply">Prüfen</button>
           ${unknown?'':'<button class="btn-ghost" id="wordHint">Tipp</button>'}
           <button class="btn-ghost" id="wordHelp" aria-expanded="false" aria-controls="correctionHelp">Ich brauche Hilfe</button>
+          ${unknown&&c&&e.name?'<button class="btn-ghost" id="nameBtn">Das ist ein Name</button>':''}
         </div>
         <p id="wordHintText" class="correction-hint" role="status" hidden></p>
       </div>
@@ -742,7 +744,7 @@
         <p>Die App kann sich irren. Dein Text wird nicht automatisch geändert.</p>
         <div class="help-choices">
           <button class="btn" id="${c?'wordDisagree':'okBtn'}">${c?'Zur gemeinsamen Prüfung offenlassen':'Diese Markierung übergehen'}</button>
-          ${c&&e.name?'<button class="btn-ghost" id="nameBtn">Das ist ein Name</button>':''}
+          ${!unknown&&c&&e.name?'<button class="btn-ghost" id="nameBtn">Das ist ein Name</button>':''}
           <button class="review-back" id="beliefBack">Zurück</button>
         </div>
       </div>
@@ -810,7 +812,7 @@
       $('#wordUnknown').textContent='Der Tipp hilft mir nicht';
     };
     $('#wordHelp').onclick=()=>stage('help');$('#helpBack').onclick=()=>stage('edit');
-    $('#wordBelief').onclick=()=>stage('belief');$('#beliefBack').onclick=()=>stage('help');
+    $('#wordBelief').onclick=()=>{if(unknown&&c)defer('disagree');else stage('belief');};$('#beliefBack').onclick=()=>stage('help');
     function defer(reason,name=false){
       if(!commitEdit())return;
       if(compose()!==session.checkedText){message('Bitte deine neue Schreibweise zuerst mit „Prüfen“ überprüfen.');stage('edit');return;}
@@ -828,7 +830,7 @@
       else{stage('edit');$('#wordHintText').hidden=false;$('#wordHintText').textContent=e.tip+' Bitte hol einen Erwachsenen, wenn dir das noch nicht hilft.';}
     };
     if(c){
-      $('#wordDisagree').onclick=()=>defer('disagree');
+      if($('#wordDisagree'))$('#wordDisagree').onclick=()=>defer('disagree');
       if($('#nameBtn'))$('#nameBtn').onclick=()=>defer('disagree',true);
     }else $('#okBtn').onclick=()=>{
       if(!commitEdit())return;

@@ -79,13 +79,11 @@ const stored = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)
     assert.match(await p.locator('.dictionary-unknown').innerText(), /kann trotzdem richtig sein.*Wörterbuch kennt diese Schreibweise nicht/s);
     assert.equal(await p.locator('#reviewText .review-mark.uncertain').count(), 1);
     assert.equal(await p.locator('#wordHint').count(),0);
-    assert.equal(await p.locator('#correctionActions button:visible').count(),2);
+    assert.equal(await p.locator('#correctionActions button:visible').count(),3);
     await p.locator('#wordHelp').click();
     assert.equal(await p.locator('#result button:visible').count(), 3);
     await p.locator('#wordBelief').click();
-    assert((await p.locator('#result button:visible').count()) <= 3);
-    assert.equal(await p.locator('#wordEdit').inputValue(), 'Popel');
-    await p.locator('#wordDisagree').click();
+    // One click on the belief is enough for yellow dictionary marks.
     await p.locator('#doneArea').waitFor({ state: 'visible' });
     const saved = await stored(p);
     assert.equal(saved.entries[0].text, 'Ich sehe Rotze und Popel.');
@@ -98,6 +96,40 @@ const stored = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)
     assert.deepEqual(await p.evaluate(c => TBLearning.recommendations(c), saved), []);
     await unknown.close();
     console.log('PASS: Rotze stays accepted; Popel and guessed targets stay unknown without a false rule or recommendation; known spelling and casing remain valid');
+
+    const immediate = await openChild(browser), i = immediate.page;
+    const repeatedUnknown = 'Ich sehe Popel. Dort liegt Popel. Ich sehe eine blume.';
+    await check(i, repeatedUnknown);
+    assert.equal(await i.locator('#reviewText .uncertain').count(), 2);
+    await i.locator('#wordHelp').click();
+    await i.locator('#wordBelief').click();
+    await i.waitForFunction(() => document.querySelectorAll('#reviewText .uncertain').length === 1);
+    let immediateSaved = await stored(i);
+    assert.equal(immediateSaved.draft, repeatedUnknown);
+    assert.equal(immediateSaved.entries.length, 0);
+    assert.equal(immediateSaved.learning.cases[0].status, 'contested');
+    assert.equal(immediateSaved.learning.cases[0].pendingReview.value, 'Popel');
+    assert(immediateSaved.learning.cases[0].events.some(e => e.type === 'deferred' && e.reason === 'disagree'));
+    assert.equal(immediateSaved.learning.cases[1].status, 'active');
+    assert(immediateSaved.learning.cases.every(c => !c.shared));
+    await i.reload();
+    await i.waitForFunction(() => window.__test?.ready());
+    await enterChild(i);
+    await i.locator('#checkBtn').click();
+    await i.locator('#wordEdit').waitFor();
+    assert.equal(await i.locator('#reviewText .uncertain').count(), 1);
+    await i.locator('#wordHelp').click();
+    await i.locator('#wordBelief').click();
+    await i.waitForFunction(() => document.querySelector('#wordEdit')?.value === 'blume');
+    await i.locator('#wordEdit').fill('Blume');
+    await i.locator('#wordApply').click();
+    await i.locator('#doneArea').waitFor({state:'visible'});
+    immediateSaved = await stored(i);
+    assert.equal(immediateSaved.entries[0].text, repeatedUnknown.replace('blume', 'Blume'));
+    assert.equal(immediateSaved.entries[0].learningSummary.contested, 2);
+    assert.equal(immediateSaved.entries[0].learningSummary.pendingReviews, 2);
+    await immediate.close();
+    console.log('PASS: yellow words stop blocking immediately, occurrence by occurrence; feedback stays private, survives reload and is counted at completion');
 
     const mixed = await openChild(browser), q = mixed.page;
     await check(q, 'Meine Muter spielt im Garten');
@@ -266,8 +298,6 @@ const stored = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)
 
     const name = await openChild(browser), n = name.page;
     await check(n, 'Ich sehe Zorplix heute.');
-    await n.locator('#wordHelp').click();
-    await n.locator('#wordBelief').click();
     assert.equal(await n.locator('#result button:visible').count(), 3);
     await n.locator('#nameBtn').click();
     await n.locator('#doneArea').waitFor({ state: 'visible' });
@@ -283,6 +313,8 @@ const stored = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)
       const left = await l.locator('#reviewPane').boundingBox(), right = await l.locator('#result').boundingBox();
       const actions = await l.locator('#correctionActions').boundingBox();
       assert(left.x + left.width <= right.x, 'text and editor must be side by side');
+      const sheet = await l.locator('#reviewPane .sheet').boundingBox();
+      assert(Math.abs(sheet.y - right.y) <= 1, 'sheet and correction window must start at the same height');
       assert(actions.y >= 0 && actions.y + actions.height <= 768, 'main actions must be visible');
       assert(await l.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     }

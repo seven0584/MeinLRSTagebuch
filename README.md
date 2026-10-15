@@ -8,7 +8,7 @@ In der App öffnet die **Glocke oben rechts** dieselbe Historie, auch offline. D
 
 Die Bedienhilfe direkt in der App findet ihr unter **Eltern → Hilfe** sowie über **❓ Hilfe** im Kindertagebuch. Dort sind auch Stimmenauswahl, Shop, Updates und Glocke erklärt.
 
-## Testfassung 1.3.2 auf `dev`
+## Testfassung 1.3.3 auf `dev`
 
 Die neuen Funktionen werden zunächst auf dem separaten Branch **[dev](https://github.com/seven0584/MeinLRSTagebuch/tree/dev)** zum Ausprobieren bereitgestellt. Sie sind noch nicht in `main` übernommen und kein reguläres Release.
 
@@ -64,6 +64,10 @@ Im Elternbereich unter **Belohnungen** gilt der Shop für das oben ausgewählte 
 
 Bei leeren Namen oder Preisen unter 1 Coin bleibt der letzte gültige Stand erhalten; die App zeigt einen Hinweis. **Löschen** entfernt einen Artikel ausdrücklich. Der Preis wird in ganzen Coins gespeichert.
 
+## Weltraum-Angriff
+
+Mit **← / →** bewegen, die **Leertaste gedrückt halten** zum Schießen. Welle 1 beginnt mit 21 statt 55 Gegnern. Sie bewegen sich langsamer und schießen seltener, mit langsameren Geschossen und höchstens einem gegnerischen Schuss gleichzeitig. Es gibt vier Leben und nach einem Treffer etwa 1,5 Sekunden Schutz. Auch die letzten Gegner beschleunigen nur begrenzt; spätere Wellen werden schrittweise schwieriger. Die Spielgeschwindigkeit bleibt auch auf Bildschirmen mit höherer Bildwiederholrate gleich. Freischaltung und Spielzeit gelten wie bisher.
+
 ## Dateien und Speicherung
 
 ```text
@@ -103,13 +107,13 @@ Das Wörterbuch und die Übungstexte sind enthalten. Die lokale Rechtschreibprü
 
 Unter **Eltern → Gemeinsam starten** stehen Schreibumfang, Satzlänge, Schreibtage und Coins nebeneinander. Ein Beispieltext zeigt, ob das Ziel erreicht wäre und welche Tagebuch-Coins er bringen würde. Alle bisherigen Einstellungen und die Wochenabrechnung bleiben erhalten. Die Vorschau prüft keine Rechtschreibung.
 
-Kinder schreiben in einem großen Hauptfeld. **Schreibideen anzeigen** blendet die drei freiwilligen Fragen ein; eingetragene Antworten bleiben beim Ausblenden erhalten und zählen mit. Nach **Prüfen** steht links der nicht bearbeitbare Text mit anklickbaren Unterstreichungen. Rechts wird die ausgewählte Stelle verbessert: bei einem Wort dessen Schreibweise, bei Satzzeichen und Grammatik der betroffene Satz oder Abschnitt. Auch eingeklappte Antworten lassen sich dort verbessern. Ab 900 Pixel Fensterbreite stehen beide Bereiche nebeneinander, in schmaleren Fenstern untereinander.
+Kinder schreiben in einem großen Hauptfeld. **Schreibideen anzeigen** blendet die drei freiwilligen Fragen ein; eingetragene Antworten bleiben beim Ausblenden erhalten und zählen mit. Nach **Prüfen** steht links der nicht bearbeitbare Text mit anklickbaren Unterstreichungen. Rechts wird die ausgewählte Stelle verbessert: bei einem Wort dessen Schreibweise, bei Satzzeichen und Grammatik der betroffene Satz oder Abschnitt. Auch eingeklappte Antworten lassen sich dort verbessern. Ab 900 Pixel Fensterbreite stehen Textblatt und Korrekturfenster oben bündig nebeneinander; Überschrift und Hinweis stehen gemeinsam darüber. In schmaleren Fenstern stehen die Bereiche untereinander.
 
 Im Korrekturbereich stehen zunächst **Prüfen**, bei einem passenden Hinweis **Tipp** und **Ich brauche Hilfe**. Der Tipp-Knopf bietet danach den weiteren Hinweis an. **Prüfen** übernimmt die Änderung und prüft erneut. Im Wortfeld geht das auch mit der Eingabetaste; im Satzfeld mit Strg+Eingabe beziehungsweise Cmd+Eingabe. Mit **Text weiterschreiben** wird wieder das ursprüngliche Schreibfeld geöffnet. Gültige eingegebene Korrekturen bleiben beim Wechsel der Markierung, beim Zurückgehen und beim normalen Neuladen erhalten.
 
 **Dieses Wort kenne ich nicht** heißt: Die App kennt diese Schreibweise nicht, sie kann trotzdem richtig sein. Solche Stellen sind gelb gepunktet unterstrichen. Das enthaltene Hunspell-/igerman98-Wörterbuch ist kein Duden. Aus einem bloß ähnlichen Wort wird kein Regeltipp abgeleitet; hier erscheint deshalb kein **Tipp**-Knopf. Bekannte Großschreibungsfälle und Diktate mit vorgegebenem Zielwort behalten ihre Tipps.
 
-Unter **Ich brauche Hilfe** kann das Kind **Ich weiß nicht weiter** wählen. Nach einem geöffneten Tipp heißt dieser Knopf **Der Tipp hilft mir nicht**; die Rückmeldung wird mit erfasst. **Ich glaube, meine Schreibweise stimmt → Zur gemeinsamen Prüfung offenlassen** meldet eine mögliche Fehlbewertung. Bei einem möglichen Namen steht dort auch **Das ist ein Name**. Zurückgestellt wird nur diese Wortstelle, ohne automatische Korrektur und ohne automatische Freigabe des privaten Textes. Ein Eintrag mit offenen Wörtern kann abgeschlossen werden, sobald das bestehende Schreibziel und die übrigen Prüfungen erfüllt sind. Bei Satzzeichen oder Grammatik bietet die Hilfe einen Hinweis; unter der Rückfrage zur Schreibweise lässt sich eine unpassende Markierung übergehen.
+Unter **Ich brauche Hilfe** kann das Kind **Ich weiß nicht weiter** wählen. Nach einem geöffneten Tipp heißt dieser Knopf **Der Tipp hilft mir nicht**; die Rückmeldung wird mit erfasst. **Ich glaube, meine Schreibweise stimmt** meldet eine mögliche Fehlbewertung. Bei gelb markierten unbekannten Wörtern wird genau diese Stelle sofort nicht mehr blockiert, ohne weiteren Bestätigungsschritt. Die Schreibweise bleibt unverändert; Rückmeldung und offene Prüfbitte bleiben gespeichert, auch nach Neuladen. Bei anderen Markierungen folgt weiterhin **Zur gemeinsamen Prüfung offenlassen** beziehungsweise **Diese Markierung übergehen**. Bei einem möglichen Namen steht **Das ist ein Name** bei gelben Wörtern direkt neben den Hauptaktionen, sonst in der Rückfrage. Zurückgestellt wird nur diese Wortstelle, ohne automatische Korrektur und ohne automatische Freigabe des privaten Textes. Ein Eintrag mit offenen Wörtern kann abgeschlossen werden, sobald das bestehende Schreibziel und die übrigen Prüfungen erfüllt sind. Bei Satzzeichen oder Grammatik bietet die Hilfe einen Hinweis; unter der Rückfrage zur Schreibweise lässt sich eine unpassende Markierung übergehen.
 
 Unter **Wörter und Rückmeldungen** lassen sich solche Stellen später bearbeiten oder gezielt mit den Eltern teilen. Neue private Wortformen, Kontextausschnitte und daraus entstandene Übungswörter sind in der Elternoberfläche nur nach Freigabe sichtbar. Vorhandene alte Übungswörter bleiben sichtbar. Ein Kontextausschnitt umfasst höchstens 160 Zeichen vor und nach dem Wort innerhalb desselben Satzes. Das ist ein Sichtschutz in der Oberfläche; die bestehenden Grenzen von PINs und Ordnerzugriff gelten weiter.
 
@@ -140,12 +144,12 @@ Die neuen Wortverläufe und Kontextausschnitte werden nicht zusätzlich an ntfy 
 
 ## Entwicklung
 
-Die Umsetzung für Version 1.3.0 ist im [Entwicklungsplan](docs/entwicklungsplan-rechtschreibfoerderung.md) beschrieben. Das zugrunde liegende [Konzept](docs/konzept-rechtschreibfoerderung.md) enthält Anforderungen und Akzeptanzkriterien. Der [ursprüngliche Prüfbericht](docs/pruefbericht-1.3.0.md) nennt technische Nachweise und offene Prüfungen mit echten Eltern und Kindern. Die Korrekturen in 1.3.1 sind im [ergänzenden Prüfbericht](docs/pruefbericht-1.3.1.md) beschrieben. Der [Prüfbericht zu 1.3.2](docs/pruefbericht-1.3.2.md) dokumentiert die neue Ansicht und ihre Tests.
+Die Umsetzung für Version 1.3.0 ist im [Entwicklungsplan](docs/entwicklungsplan-rechtschreibfoerderung.md) beschrieben. Das zugrunde liegende [Konzept](docs/konzept-rechtschreibfoerderung.md) enthält Anforderungen und Akzeptanzkriterien. Der [ursprüngliche Prüfbericht](docs/pruefbericht-1.3.0.md) nennt technische Nachweise und offene Prüfungen mit echten Eltern und Kindern. Die Korrekturen in 1.3.1 sind im [ergänzenden Prüfbericht](docs/pruefbericht-1.3.1.md) beschrieben. Der [Prüfbericht zu 1.3.2](docs/pruefbericht-1.3.2.md) dokumentiert die neue Ansicht und ihre Tests. Die bündige Ausrichtung, direkte Rückmeldung und leichtere erste Spielwelle sind im [Prüfbericht zu 1.3.3](docs/pruefbericht-1.3.3.md) geprüft.
 
 Die Quellen bestehen aus HTML, CSS und JavaScript. Für den Betrieb gibt es keinen Paketmanager oder Build-Schritt. Die Updater-Tests verwenden den integrierten Test-Runner von Node.js (Version 22 oder neuer):
 
 ```bash
-node --test tests/update-core.test.cjs tests/learning-core.test.cjs
+node --test tests/update-core.test.cjs tests/learning-core.test.cjs tests/weltraum.test.cjs
 ```
 
 Für die Shop-Korrekturen gibt es zusätzlich einen Browser-Regressionstest. Wenn Python 3, Playwright und Chromium verfügbar sind, `node tests/shop-browser.cjs` ausführen. Der Test startet einen eigenen lokalen Server auf Port 8765 und verwendet ausschließlich Testprofile. Ein abweichender Chromium-Pfad kann über `CHROMIUM_PATH` gesetzt werden.
@@ -159,9 +163,10 @@ node tests/learning-browser.cjs
 node tests/learning-storage-browser.cjs
 node tests/learning-edge-browser.cjs
 node tests/correction-browser.cjs
+node tests/weltraum-browser.cjs
 ```
 
-Sie verwenden künstliche Profile und eigene lokale Server auf den Ports 8767–8770. Die Korrekturprüfung verwendet das tatsächliche mitgelieferte Wörterbuch, prüft unter anderem „Rotze“ und „Popel“ sowie den gemeinsamen Editor für Wort-, Satzzeichen- und Grammatikstellen. Antworten der optionalen Onlineprüfung werden dabei simuliert. Die Ordnerprüfung simuliert Browser-Dateihandles, verwendet aber die tatsächliche Speicher- und Verschlüsselungslogik. Die Sicherung wird über den echten Download-/Wiederherstellungsablauf geprüft. Das ersetzt keinen Test des Betriebssystemdialogs auf einem Windows-PC oder Mac. Screenshots und temporäre Sicherungen liegen unter `/tmp`, nicht im Repository.
+Sie verwenden künstliche Profile und eigene lokale Server auf den Ports 8767–8771. Die Korrekturprüfung verwendet das tatsächliche mitgelieferte Wörterbuch, prüft unter anderem „Rotze“ und „Popel“ sowie den gemeinsamen Editor für Wort-, Satzzeichen- und Grammatikstellen. Sie prüft außerdem die bündige Oberkante bei 900, 1024 und 1280 Pixel Breite und die sofortige Freigabe gelber Wörter samt gespeichertem Rückmeldungsverlauf. Antworten der optionalen Onlineprüfung werden dabei simuliert. Der Spieltest im Browser prüft Start, Pfeiltasten, Dauerschießen, Treffer, Wellenwechsel und Neustart; die fünf Spieltests im Node-Test-Runner prüfen Beschussgrenzen, Trefferschutz, sanften Schwierigkeitsanstieg und das Tempo bei 60/120 Hz. Die Ordnerprüfung simuliert Browser-Dateihandles, verwendet aber die tatsächliche Speicher- und Verschlüsselungslogik. Die Sicherung wird über den echten Download-/Wiederherstellungsablauf geprüft. Das ersetzt keinen Test des Betriebssystemdialogs auf einem Windows-PC oder Mac. Screenshots und temporäre Sicherungen liegen unter `/tmp`, nicht im Repository.
 
 Für die Entwicklung kann ein lokaler HTTP-Server verwendet werden:
 
@@ -188,7 +193,7 @@ Unter Windows kann der entsprechende Befehl `py -m http.server 8000 --bind 127.0
 2. In `app/version.js` die ganzzahlige `release` erhöhen und die angezeigte `version` ändern. Auch bei kleinen Korrekturen muss `release` steigen, damit bereits installierte Apps das Update erkennen.
 3. Aus dem Repository-Hauptordner `node scripts/prepare-update.cjs` ausführen. Das erzeugt die Offline-Änderungsübersicht `app/changelog-data.js` aus `CHANGELOG.md` sowie `updates.json` mit den Größen und SHA-256-Prüfsummen der aktuellen Programmdateien. Die erzeugte Übersicht nicht von Hand ändern.
 4. `node --test tests/update-core.test.cjs` ausführen. Nach Änderungen an Programmdateien das Manifest erneut erzeugen.
-5. Programmdateien, Versionsdatei und `updates.json` gemeinsam committen und auf `main` pushen.
+5. Programmdateien, Versionsdatei und `updates.json` gemeinsam committen. Diese Testfassung ausschließlich auf `dev` pushen; `main` und die automatische Update-Quelle bleiben unverändert. Ein reguläres Release auf `main` ist ein gesonderter Schritt.
 
 Das Manifest enthält bewusst keine Familien- oder Kinderdaten und keine Entwicklungsdateien. Ändert sich das Repository während eines Downloads, führen abweichende Prüfsummen zum Abbruch vor der Installation; später erneut prüfen.
 

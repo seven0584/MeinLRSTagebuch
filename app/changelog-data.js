@@ -1,6 +1,21 @@
 // Generated from CHANGELOG.md by scripts/prepare-update.cjs.
 window.TB_CHANGELOG = [
   {
+    "id": "015e738a0e2ae0ca",
+    "title": "Version 1.3.3: Bündige Prüfung und leichterer Spieleinstieg — 15. Oktober 2026",
+    "lines": [
+      "",
+      "- Textblatt und Korrekturfenster beginnen bei normaler Laptopbreite jetzt auf gleicher Höhe. Überschrift und Hinweis stehen gemeinsam darüber; im schmalen Fenster bleiben die Bereiche untereinander.",
+      "- Bei gelb markierten, dem Wörterbuch unbekannten Wörtern genügt unter „Ich brauche Hilfe“ jetzt „Ich glaube, meine Schreibweise stimmt“. Genau diese Stelle blockiert sofort nicht mehr; die zusätzliche Bestätigung entfällt. Die Schreibweise bleibt stehen. Rückmeldung und offene Prüfbitte bleiben gespeichert, auch nach Neuladen. Gleiche Wörter an anderen Stellen werden weiterhin einzeln geprüft; private Texte werden dadurch nicht automatisch mit Eltern geteilt.",
+      "- „Das ist ein Name“ bleibt erreichbar: Bei gelben Wörtern steht es gegebenenfalls direkt neben „Prüfen“. Bei anderen Markierungen bleibt die bisherige Rückfrage bestehen.",
+      "- „Weltraum-Angriff“ beginnt mit 21 statt 55 Gegnern, langsameren Bewegungen und langsamerem, seltenerem Beschuss. In Welle 1 gibt es höchstens einen gegnerischen Schuss gleichzeitig. Vier Leben, ein kurzer Schutz nach Treffern und die begrenzte Beschleunigung der letzten Gegner erleichtern den Einstieg. Spätere Wellen werden schrittweise schwieriger. Die Spielgeschwindigkeit hängt nicht mehr von der Bildwiederholrate ab.",
+      "- README, Elternhilfe, Kinderhilfe und Testanleitung erklären die geänderten Abläufe. Automatische Prüfungen wurden für die Ausrichtung, unmittelbare Freigabe samt Rückmeldung und den Spieleinstieg ergänzt.",
+      "",
+      "**Was müsst ihr tun?** Diese Testfassung wird ausschließlich auf `dev` bereitgestellt. Im separaten Testordner die vollständig entpackten Programmdateien `Tagebuch.html` und `app/` ersetzen und neu laden; die Datenordner und das Test-Browserprofil behalten. Gespeicherte Einträge und Einstellungen benötigen keine Umstellung. Die automatische Update-Suche liest weiterhin `main` und verteilt diese Testfassung nicht. Die [Testanleitung](docs/testfassung-dev.md) beschreibt den Ablauf.",
+      ""
+    ]
+  },
+  {
     "id": "28fc90c767b6eba5",
     "title": "Version 1.3.2: Den Text sehen und daneben verbessern — 15. Oktober 2026",
     "lines": [

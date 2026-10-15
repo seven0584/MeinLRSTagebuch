@@ -1,6 +1,6 @@
 # Testfassung herunterladen und ausprobieren
 
-Version 1.3.2 wird zuerst auf `dev` erprobt. Die bisherige Fassung auf `main` bleibt bestehen. Ein reguläres Release ist diese Testfassung noch nicht.
+Version 1.3.3 wird zuerst auf `dev` erprobt. Die bisherige Fassung auf `main` bleibt bestehen. Ein reguläres Release ist diese Testfassung noch nicht.
 
 ## Herunterladen und starten
 
@@ -9,7 +9,7 @@ Version 1.3.2 wird zuerst auf `dev` erprobt. Die bisherige Fassung auf `main` bl
 3. Die ZIP vollständig in einen neuen Ordner entpacken, beispielsweise `Tagebuch-Test`. Nicht über eure bisherige App kopieren. `Tagebuch.html` und der ganze Ordner `app/` müssen zusammenbleiben; nicht direkt aus der ZIP starten.
 4. In Chrome oder Edge über das Profilsymbol ein **zusätzliches Browserprofil** für den Test erstellen. Dafür ist keine Anmeldung oder Synchronisierung nötig. Das Profil dauerhaft behalten, wenn ihr später weiterprüfen wollt. Ein anderer Dateiordner allein trennt die Browserdaten nicht zuverlässig.
 5. Im Testprofil `Tagebuch.html` öffnen. Bei der Ordnerauswahl ausschließlich den neuen Testordner freigeben. Alternativ **nur im Browser speichern** wählen.
-6. Eine Eltern-PIN setzen und zunächst ein erfundenes Testkind anlegen. Unter der Glocke stehen die Änderungen zu **1.3.2** und der Hinweis zur Testfassung.
+6. Eine Eltern-PIN setzen und zunächst ein erfundenes Testkind anlegen. Unter der Glocke stehen die Änderungen zu **1.3.3** und der Hinweis zur Testfassung.
 
 Eine Installation oder ein Programmierwerkzeug ist dafür nicht erforderlich. Verwendet am Windows-PC oder Mac einen aktuellen Chrome oder Edge. Auf dem jeweiligen Gerät auch die Diktatstimme anhören; automatische Tests können deren Verständlichkeit nicht beurteilen.
 
@@ -28,11 +28,12 @@ Eine Installation oder ein Programmierwerkzeug ist dafür nicht erforderlich. Ve
 | Unter **Wörter und Rückmeldungen** eine Stelle ausdrücklich mit den Eltern teilen. | Die Eltern können die freigegebene Stelle sehen. Private neue Tagebuchstellen bleiben ohne Freigabe verborgen. |
 | In der Elternübersicht ein Wort-Diktat mit zwei Wörtern und höchstens 12 Extra-Coins anbieten. | Beim Kind erscheint unter **Üben → Für dich angeboten** eine freiwillige Aufgabe. |
 | Ein Zielwort bearbeiten, das andere offenlassen und die Aufgabe abschließen. Danach neu laden. | Für das bearbeitete Wort gibt es 6 Extra-Coins. Durch Neuladen werden sie nicht erneut gutgeschrieben. Späteres Bearbeiten des zweiten Wortes ergänzt den Rest. |
-| Eine Wortstelle über **Ich brauche Hilfe → Ich glaube, meine Schreibweise stimmt → Zur gemeinsamen Prüfung offenlassen** melden. | Die Rückfrage wird erfasst und bleibt auch nach einer späteren Verbesserung erhalten. Private Wortformen sehen Eltern erst nach der gesonderten Freigabe. |
+| Eine Wortstelle über **Ich brauche Hilfe → Ich glaube, meine Schreibweise stimmt** melden. | Bei einem gelben Wort verschwindet die Blockierung sofort, ohne weitere Bestätigung. Die Rückfrage wird erfasst und bleibt auch nach Neuladen oder einer späteren Verbesserung erhalten. Private Wortformen sehen Eltern erst nach der gesonderten Freigabe. |
 | Eine Aufgabe pausieren, die App neu öffnen und weiterüben. | Der gespeicherte Aufgabenstand ist wieder da. Auch ein kurzer Text als Aufgabe lässt sich anbieten und ausprobieren. |
+| „Weltraum-Angriff“ starten, bewegen und die Leertaste gedrückt halten. | Welle 1 hat 21 langsame Gegner, vier Leben und höchstens einen gegnerischen Schuss gleichzeitig. Nach einem Treffer blinkt das Schiff kurz und ist geschützt. |
 | Shop, Hörprobe, Elternhilfe und Kinderhilfe öffnen. | Bisherige Funktionen sind erreichbar; die Hilfen beschreiben die neuen Abläufe. |
 
-Lasst das Kind möglichst selbst suchen und erklären, was es verstanden hat. Notiert, wo Hilfe nötig war oder Frust entstand. Bei normaler Laptopbreite stehen Text und Verbesserung nebeneinander, in schmalen Fenstern untereinander. Bei langen Texten, großer Schrift oder starkem Zoom kann Scrollen nötig sein. Die technischen Prüfungen sind im [aktuellen Prüfbericht](pruefbericht-1.3.2.md) beschrieben; Bedienversuche mit echten Familien stehen noch aus.
+Lasst das Kind möglichst selbst suchen und erklären, was es verstanden hat. Notiert, wo Hilfe nötig war oder Frust entstand. Bei normaler Laptopbreite stehen Textblatt und Korrekturfenster oben bündig nebeneinander, in schmalen Fenstern untereinander. Bei langen Texten, großer Schrift oder starkem Zoom kann Scrollen nötig sein. Die technischen Prüfungen sind im [aktuellen Prüfbericht](pruefbericht-1.3.3.md) beschrieben; Bedienversuche mit echten Familien stehen noch aus.
 
 ## Vorhandene Daten als Kopie testen
 
