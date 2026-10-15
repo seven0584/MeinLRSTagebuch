@@ -8,15 +8,13 @@ In der App öffnet die **Glocke oben rechts** dieselbe Historie, auch offline. D
 
 Die Bedienhilfe direkt in der App findet ihr unter **Eltern → Hilfe** sowie über **❓ Hilfe** im Kindertagebuch. Dort sind auch Stimmenauswahl, Shop, Updates und Glocke erklärt.
 
-## Testfassung 1.3.4 auf `dev`
+## Aktuelle Version 1.3.4
 
-Die neuen Funktionen werden zunächst auf dem separaten Branch **[dev](https://github.com/seven0584/MeinLRSTagebuch/tree/dev)** zum Ausprobieren bereitgestellt. Sie sind noch nicht in `main` übernommen und kein reguläres Release.
+Version **1.3.4** ist auf **[main](https://github.com/seven0584/MeinLRSTagebuch/tree/main)** regulär verfügbar. Sie enthält die bisher auf `dev` erprobten Lernfunktionen, die bündige Korrekturansicht, verständliche Leerzeichenhinweise und den leichteren Einstieg in Weltraum-Angriff.
 
-**[Testfassung als ZIP herunterladen](https://github.com/seven0584/MeinLRSTagebuch/archive/refs/heads/dev.zip)** · **[Anleitung zum Testen](docs/testfassung-dev.md)**
+Bestehende Installationen mit Update-Funktion können auf der Startseite **Nach Updates suchen → Jetzt aktualisieren** wählen und anschließend **Neu laden**. Die Update-Suche liest `main`. Ohne Update-Funktion oder bei einer manuellen Aktualisierung die **[aktuelle Version als ZIP herunterladen](https://github.com/seven0584/MeinLRSTagebuch/archive/refs/heads/main.zip)**, vollständig entpacken und nur `Tagebuch.html` sowie `app/` ersetzen. Eigene Ordner `config/` und `kinder/` und das bisherige Browserprofil behalten; vorhandene Daten benötigen keine Umstellung.
 
-Die ZIP vollständig in einen eigenen Testordner entpacken und `Tagebuch.html` in Chrome oder Edge öffnen. Dafür ein separates Browserprofil verwenden und zuerst ein erfundenes Testkind anlegen. Ein anderer Ordner allein trennt die Browserdaten nicht zuverlässig. Der Testordner darf nicht euer bisheriger Tagebuchordner sein.
-
-Die automatische Update-Suche liest weiterhin ausschließlich `main`. Neue Teststände von `dev` werden über den ZIP-Link geladen; bestehende Installationen bekommen die Testfassung nicht als automatisches Update angeboten.
+Wer bereits die Testfassung 1.3.4 verwendet, hat denselben Programmstand. Eine gesonderte Installation ist dafür nicht nötig. Künftige Teststände auf `dev` werden erst nach einer Übernahme nach `main` über die Update-Suche verteilt. Die [Anleitung zum separaten Testen](docs/testfassung-dev.md) bleibt für Versuche mit Testdaten verfügbar.
 
 ## Funktionen
 
@@ -195,7 +193,7 @@ Unter Windows kann der entsprechende Befehl `py -m http.server 8000 --bind 127.0
 2. In `app/version.js` die ganzzahlige `release` erhöhen und die angezeigte `version` ändern. Auch bei kleinen Korrekturen muss `release` steigen, damit bereits installierte Apps das Update erkennen.
 3. Aus dem Repository-Hauptordner `node scripts/prepare-update.cjs` ausführen. Das erzeugt die Offline-Änderungsübersicht `app/changelog-data.js` aus `CHANGELOG.md` sowie `updates.json` mit den Größen und SHA-256-Prüfsummen der aktuellen Programmdateien. Die erzeugte Übersicht nicht von Hand ändern.
 4. `node --test tests/update-core.test.cjs` ausführen. Nach Änderungen an Programmdateien das Manifest erneut erzeugen.
-5. Programmdateien, Versionsdatei und `updates.json` gemeinsam committen. Diese Testfassung ausschließlich auf `dev` pushen; `main` und die automatische Update-Quelle bleiben unverändert. Ein reguläres Release auf `main` ist ein gesonderter Schritt.
+5. Programmdateien, Versionsdatei und `updates.json` gemeinsam committen. Teststände zunächst auf `dev` veröffentlichen. Nach Freigabe den geprüften Stand samt passenden Veröffentlichungshinweisen nach `main` übernehmen; dort wird er über die automatische Update-Suche angeboten.
 
 Das Manifest enthält bewusst keine Familien- oder Kinderdaten und keine Entwicklungsdateien. Ändert sich das Repository während eines Downloads, führen abweichende Prüfsummen zum Abbruch vor der Installation; später erneut prüfen.
 

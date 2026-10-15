@@ -1,6 +1,6 @@
 # Testfassung herunterladen und ausprobieren
 
-Version 1.3.4 wird zuerst auf `dev` erprobt. Die bisherige Fassung auf `main` bleibt bestehen. Ein reguläres Release ist diese Testfassung noch nicht.
+Version 1.3.4 wurde am 15. Oktober 2026 nach der Erprobung auf `dev` als reguläre Version nach `main` übernommen. Für die normale Installation und Updates gilt die [README](../README.md). Die folgende Anleitung beschreibt weiterhin das getrennte Ausprobieren mit Testdaten; künftige `dev`-Stände können von der regulären Version abweichen.
 
 ## Herunterladen und starten
 
@@ -9,7 +9,7 @@ Version 1.3.4 wird zuerst auf `dev` erprobt. Die bisherige Fassung auf `main` bl
 3. Die ZIP vollständig in einen neuen Ordner entpacken, beispielsweise `Tagebuch-Test`. Nicht über eure bisherige App kopieren. `Tagebuch.html` und der ganze Ordner `app/` müssen zusammenbleiben; nicht direkt aus der ZIP starten.
 4. In Chrome oder Edge über das Profilsymbol ein **zusätzliches Browserprofil** für den Test erstellen. Dafür ist keine Anmeldung oder Synchronisierung nötig. Das Profil dauerhaft behalten, wenn ihr später weiterprüfen wollt. Ein anderer Dateiordner allein trennt die Browserdaten nicht zuverlässig.
 5. Im Testprofil `Tagebuch.html` öffnen. Bei der Ordnerauswahl ausschließlich den neuen Testordner freigeben. Alternativ **nur im Browser speichern** wählen.
-6. Eine Eltern-PIN setzen und zunächst ein erfundenes Testkind anlegen. Unter der Glocke stehen die Änderungen zu **1.3.4** und der Hinweis zur Testfassung.
+6. Eine Eltern-PIN setzen und zunächst ein erfundenes Testkind anlegen. Unter der Glocke stehen die Änderungen zu **1.3.4**. Auf `main` steht zusätzlich der Hinweis zur regulären Veröffentlichung.
 
 Eine Installation oder ein Programmierwerkzeug ist dafür nicht erforderlich. Verwendet am Windows-PC oder Mac einen aktuellen Chrome oder Edge. Auf dem jeweiligen Gerät auch die Diktatstimme anhören; automatische Tests können deren Verständlichkeit nicht beurteilen.
 
@@ -49,6 +49,6 @@ Zum bisherigen Alltag zurückkehren: die bisherige App im ursprünglichen Browse
 
 ## Weitere Teststände und Rückmeldung
 
-Die automatische Update-Suche fragt weiterhin `main` ab. Sie installiert weder diesen noch spätere `dev`-Teststände. Für einen neuen Teststand dieselbe ZIP-Adresse nutzen, die Test-App schließen und im Testordner nur `Tagebuch.html` und `app/` durch die vollständig entpackten Programmdateien ersetzen. Eigene `config/`- und `kinder/`-Ordner sowie die Daten des Test-Browserprofils behalten. Bei Startproblemen die vollständige `dev`-ZIP erneut laden; keine Dateien verschiedener Versionen mischen.
+Die automatische Update-Suche fragt `main` ab. Version 1.3.4 ist dort jetzt regulär verfügbar. Spätere ausschließlich auf `dev` veröffentlichte Teststände werden darüber nicht verteilt. Für einen neuen Teststand dieselbe ZIP-Adresse nutzen, die Test-App schließen und im Testordner nur `Tagebuch.html` und `app/` durch die vollständig entpackten Programmdateien ersetzen. Eigene `config/`- und `kinder/`-Ordner sowie die Daten des Test-Browserprofils behalten. Bei Startproblemen die vollständige `dev`-ZIP erneut laden; keine Dateien verschiedener Versionen mischen.
 
 Bei einem Problem bitte Version, Windows/macOS, Browser, die ausgeführten Schritte und die sichtbare Meldung notieren. Dazu beschreiben, was stattdessen erwartet wurde. Für Beispiele erfundene Texte nutzen; persönliche Tagebucheinträge oder Sicherungsdateien gehören nicht in öffentliche GitHub-Issues.

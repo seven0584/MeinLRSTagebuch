@@ -20,8 +20,8 @@
     },
     {
       "path": "app/changelog-data.js",
-      "size": 22379,
-      "sha256": "239771bd6de0a7c3293cc7b7b40255568956ec62e2e30fc1234e4a6c8f1f9a74"
+      "size": 23840,
+      "sha256": "c80d22a7e828ba89a401986a739733e229d2331e6993818bc28d25ca7aa51a8d"
     },
     {
       "path": "app/compatibility.js",

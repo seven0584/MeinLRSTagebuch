@@ -1,6 +1,18 @@
 // Generated from CHANGELOG.md by scripts/prepare-update.cjs.
 window.TB_CHANGELOG = [
   {
+    "id": "2541cfbdf36aa8c8",
+    "title": "Version 1.3.4: Jetzt als reguläres Update verfügbar — 15. Oktober 2026",
+    "lines": [
+      "",
+      "- Die auf `dev` erprobten Änderungen bis Version 1.3.4 stehen jetzt regulär auf `main` bereit. Damit erreicht die Update-Suche auch die neuen Lernfunktionen, die Korrekturansicht mit Text links und Verbesserung rechts, die unmittelbare Rückmeldung zu gelben Wörtern, verständliche Leerzeichenhinweise und den leichteren Einstieg in Weltraum-Angriff.",
+      "- Gegenüber der Testfassung 1.3.4 ändern sich die Programmfunktionen nicht. README und Testanleitung erklären jetzt die reguläre Bereitstellung. Die älteren Einträge darunter beschreiben die vorausgegangenen Teststände und ihren damaligen Veröffentlichungsweg.",
+      "",
+      "**Was müsst ihr tun?** Auf der Startseite **Nach Updates suchen**, dann **Jetzt aktualisieren** und nach der Installation **Neu laden** wählen. Ohne Update-Funktion die vollständige ZIP von `main` entpacken und nur `Tagebuch.html` und `app/` ersetzen. Eure Ordner `config/` und `kinder/` sowie das bisherige Browserprofil behalten. Gespeicherte Einträge, Profile, Coins und Einstellungen benötigen keine Umstellung. Wer bereits die Testfassung 1.3.4 verwendet, hat denselben Programmstand und muss sie nicht erneut installieren. Die Programmversion bleibt 1.3.4; dieser Eintrag dokumentiert ihre reguläre Veröffentlichung.",
+      ""
+    ]
+  },
+  {
     "id": "1af597f93dd3b34c",
     "title": "Version 1.3.4: Leerzeichen verständlich zeigen und gezielt verbessern — 15. Oktober 2026",
     "lines": [
