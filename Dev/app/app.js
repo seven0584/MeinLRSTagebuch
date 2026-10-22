@@ -11,7 +11,7 @@
   let hun = null;
   let session = newSession();
 
-  function newSession(){ return { cats:{}, catKeys:{}, checks:0, firstCount:0, found:{}, current:[], checkedText:"", active:-1, more:false }; }
+  function newSession(){ return { cats:{}, catKeys:{}, checks:0, firstCount:0, found:{}, current:[], checkedText:"", active:-1, more:false, helped:false, deferred:0 }; }
 
   // ---------- helpers ----------
   const pad2 = n => String(n).padStart(2,"0");
@@ -41,6 +41,9 @@
     family.parent = Object.assign({ pin:"", topic:"", notifyRead:false, lastReadPing:"", readMin:2, queue:[], grammar:true }, family.parent || {});
     family.parent.queue = family.parent.queue || [];
     family.children = family.children.filter(id => family.data[id]);
+    for(const id of family.children)for(const entry of family.data[id].entries || []){
+      if(entry.mood?.ai?.status==="pending")entry.mood.ai={status:"error",moods:[],unclear:true};
+    }
     useChild(family.data[family.active] ? family.active : family.children[0]);
   }
   function useChild(id){
@@ -133,8 +136,8 @@
     return false;
   }
   // ---------- free text + optional questions ----------
-  const QUESTIONS = [["best","Das Beste heute:"],["learned","Das habe ich heute gelernt:"],["tomorrow","Was ich morgen schaffen möchte:"]];
-  const ALL_Q = [["best","Das Beste heute:"],["worst","Das Schlimmste heute:"],["learned","Das habe ich heute gelernt:"],["tomorrow","Was ich morgen schaffen möchte:"]]; // "worst" only for older entries
+  const QUESTIONS = TB_REFLECTION.questions.map(q=>[q.key,q.label]);
+  const ALL_Q = [["best","Das Beste heute:"],["worst","Das Schlimmste heute:"],["learned","Das habe ich heute gelernt:"],["tomorrow","Was ich morgen schaffen möchte:"],["feeling","Wie fühlst du dich gerade?"],["difficult","Was war heute schwierig?"]];
   const qa = {}; document.querySelectorAll("textarea.qa").forEach(el => { qa[el.dataset.q] = el; });
   const allFields = () => [ta, ...Object.values(qa)];
   let SEG = null;
@@ -162,7 +165,7 @@
     }
     return out + esc(text.slice(p, b));
   }
-  function entryText(e){ const v = { free: e.text || "" }; ALL_Q.forEach(([k]) => { v[k] = (e.answers && e.answers[k]) || ""; }); const s = compose(v, ALL_Q); return { text: s, labels: SEG.labels }; }
+  function entryText(e){ const v = { free: e.text || "" }; ALL_Q.forEach(([k]) => { v[k] = (e.answers && e.answers[k]) || ""; }); const labels=ALL_Q.map(([k,l])=>[k,e.answerLabels?.[k] || l]); const s = compose(v, labels); return { text: s, labels: SEG.labels }; }
   function entryHtml(e){ const x = entryText(e); return escSeg(x.text, 0, x.text.length, x.labels); }
 
   function tokens(text){
@@ -373,13 +376,14 @@
     });
     return bestScore <= 2.01 ? best : null;
   }
+  function knownName(word){return state.names.includes(word) || ((state.name || "").match(/[\p{L}]+(?:['’-][\p{L}]+)*/gu) || []).includes(word);}
   function check(text, skipComma){
     const errs = [];
     const toks = tokens(text);
     toks.forEach((t, k) => { t.k = k; });
     for(const t of toks){
       const w = t.w;
-      if(t.label) continue;
+      if(t.label || knownName(w)) continue;
       if(w.length > 1 && w === w.toLocaleUpperCase("de-DE")) continue; // ABKÜRZUNG
       if(t.start && !t.soft && !isUpper1(w)){
         if(correct(cap(w)) || correct(w)){
@@ -466,7 +470,7 @@
       }
       const w = text.slice(a, b).replace(/\s+$/, ""); b = a + w.length;
       if(!w || overlaps(a, b) || (SEG && SEG.text === text && inLabel(SEG.labels, a, b))) continue;
-      if(cat === "TYPOS" && state.names.includes(w)) continue;
+      if(cat === "TYPOS" && knownName(w)) continue;
       const tip = ltTip(m, w);
       errs.push({ i:a, w, cat:tip.cat, tip:tip.tip, tip2:tip.tip2, punct: cat !== "TYPOS", fix: cat === "TYPOS" && m.replacements && m.replacements[0] ? m.replacements[0].value : null });
       taken.push([a, b]);
@@ -539,44 +543,16 @@
       week.appendChild(el);
     }
   }
-  // ---------- kid view: mistake patterns instead of an endless word list ----------
-  const PAT_ICON = { gross:"🔠", klein:"🔡", ss:"🐍", ie:"📏", dehnung:"🤫", dopp:"👯", ae:"🅰️", aeu:"🏠", hartweich:"🔨", fvw:"🐦",
-    spiegel:"🪞", formaehnlich:"〰️", eiie:"🥚", umstellung:"🔀", auslassung:"🕳️", zusatz:"➕", komma:"✏️", satzende:"🛑",
-    leer:"↔️", satzz:"❗", dassdas:"⚖️", fall:"🧩", verb:"🏃", getrennt:"✂️" };
+  // ---------- shared mistake categories for exercises and parent statistics ----------
   const LEGACY_FINE = { "s, ss oder ß":"ss", "Doppelkonsonant":"dopp", "ie oder i":"ie", "Dehnungs-h":"dehnung", "ä oder e":"ae", "äu oder eu":"aeu",
     "b/p, d/t oder g/k":"hartweich", "f, v oder w":"fvw", "Großschreibung":"gross", "Kleinschreibung":"klein", "ei oder ie":"eiie",
     "b oder d, p oder q":"spiegel", "m, n oder u":"formaehnlich", "Buchstaben vertauscht":"umstellung", "Buchstabe fehlt":"auslassung", "Buchstabe zu viel":"zusatz" };
   const wordFine = w => w.fine || LEGACY_FINE[w.kategorie] || "other";
-  let showAllPatterns = false;
   function catCounts(fromDays, toDays){
     const a = new Date(); a.setDate(a.getDate() - fromDays); const b = new Date(); b.setDate(b.getDate() - toDays);
     const from = keyOf(a), to = keyOf(b), tot = {};
     state.entries.filter(e => e.errCats && e.date >= from && e.date <= to).forEach(e => Object.entries(e.errCats).forEach(([k, n]) => { tot[k] = (tot[k] || 0) + n; }));
     return tot;
-  }
-  function renderWords(){
-    const now = catCounts(29, 0), before = catCounts(59, 30);
-    const byCat = {};
-    Object.entries(state.words).forEach(([key, w]) => { const k = wordFine(w); (byCat[k] = byCat[k] || []).push([key, w]); });
-    const cats = [...new Set([...Object.keys(now), ...Object.keys(byCat)])].filter(k => TRICK[k])
-      .map(k => ({ k, n: now[k] || 0, prev: before[k] || 0, words: (byCat[k] || []).sort((a, b) => (b[1].last || "").localeCompare(a[1].last || "")) }))
-      .sort((a, b) => b.n - a.n || b.words.length - a.words.length);
-    const box = $("#patterns");
-    if(!cats.length){ box.innerHTML = '<p class="empty">Gerade gibt es nichts zu üben. Weiter so! 🌟</p>'; return; }
-    const shown = showAllPatterns ? cats : cats.slice(0, 3);
-    box.innerHTML = '<div class="pats">' + shown.map(c => {
-      const trend = c.prev && c.n < c.prev ? '<p class="trend good">📉 Seltener als im Monat davor. Super!</p>'
-        : (c.n >= 3 ? '<p class="trend">Das passiert dir gerade öfter. Mit dem Trick schaffst du das!</p>' : '');
-      const chips = c.words.slice(0, 3).map(([key, w]) => '<span class="chip">' + esc(w.richtig) + '<button type="button" data-done="' + esc(key) + '" aria-label="' + esc(w.richtig) + ' kann ich">✓</button></span>').join("");
-      const more = c.words.length > 3 ? '<span class="chipmore">+' + (c.words.length - 3) + ' weitere</span>' : '';
-      const dots = c.n ? '<span class="dots" title="' + c.n + '-mal in den letzten 30 Tagen">' + "●".repeat(Math.min(c.n, 8)) + (c.n > 8 ? "+" : "") + '</span>' : '';
-      return '<div class="pat"><div class="pat-head"><span class="pat-icon" aria-hidden="true">' + (PAT_ICON[c.k] || "🔍") + '</span><b>' + esc(TRICK[c.k][0]) + '</b>' + dots + '</div>' +
-        '<p class="pat-trick">💡 ' + esc(TRICK[c.k][1]) + '</p>' + trend +
-        (chips ? '<div class="chips"><span class="chiplabel">Deine Wörter:</span>' + chips + more + '</div>' : '') + '</div>';
-    }).join("") + '</div>' +
-      (cats.length > 3 ? '<button type="button" class="linkbtn" id="patAll">' + (showAllPatterns ? 'Weniger anzeigen' : 'Alle ' + cats.length + ' anzeigen') + '</button>' : '');
-    box.querySelectorAll("[data-done]").forEach(b => b.onclick = () => { delete state.words[b.dataset.done]; save(); renderWords(); });
-    const all = $("#patAll"); if(all) all.onclick = () => { showAllPatterns = !showAllPatterns; renderWords(); };
   }
   function renderNames(){
     const ul = $("#names"); ul.innerHTML = "";
@@ -589,31 +565,116 @@
       li.appendChild(b); ul.appendChild(li);
     });
   }
-  function renderEntries(){
-    const ul = $("#entries"); ul.innerHTML = "";
-    if(!state.entries.length){ ul.innerHTML = '<li class="empty">Dein erster Tagebucheintrag erscheint hier, sobald alles richtig ist.</li>'; return; }
-    $("#readAll").hidden = false;
-    for(const e of state.entries.slice(0,3)){
-      const li = document.createElement("li"); li.className = "entry";
-      const badge = !e.firstErrors ? '<span class="badge clean">auf Anhieb fehlerfrei</span>'
-        : '<span class="badge fixed">'+e.firstErrors+' Fehler selbst verbessert</span>';
-      li.innerHTML = '<div class="entry-top"><span>'+esc(fmtDate(e.date))+'</span>'+badge+(e.pic ? '<span>🎨 mit Bild</span>' : '')+'</div><p>'+entryHtml(e)+'</p>';
-      ul.appendChild(li);
+  // ---------- writing ----------
+  const writingSidebar=document.createElement("aside");writingSidebar.id="writeSidebar";writingSidebar.setAttribute("aria-label","Hinweise und Tagesrückblick");
+  const moodContainer=document.createElement("div");moodContainer.id="moodPicker";
+  const moodDialog=document.createElement("dialog");moodDialog.id="moodDialog";moodDialog.className="mood-finish-dialog";moodDialog.setAttribute("aria-labelledby","moodFinishTitle");moodDialog.dataset.helpTopic="moods";
+  moodDialog.dataset.helpText="Wähle ein bis drei Gefühle für deinen Eintrag. Mit „Eintrag speichern“ schließt du ihn ab. „Zurück zum Text“ oder Escape lässt deinen Text unverändert und speichert noch keinen Eintrag.";
+  moodDialog.innerHTML='<h2 id="moodFinishTitle"><span id="moodFinishGreeting"></span></h2><p class="mood-encouragement">Du hast heute an deinem Text gearbeitet. Mach weiter so!</p><div class="below"><button type="button" class="btn-ghost" id="moodCancel">Zurück zum Text</button><button type="button" class="btn" id="moodSave" disabled>Eintrag speichern</button></div>';
+  moodDialog.insertBefore(moodContainer,moodDialog.querySelector(".below"));document.body.append(moodDialog);
+  let pendingFinish=null;
+  const moodConfig=()=>state.parent.moodSharing || {enabled:true,ai:true};
+  const moodEnabled=()=>moodConfig().enabled === true;
+  const moodPicker=TB_MOOD_UI.createPicker({container:moodContainer,selected:[],onChange:ids=>{state.draftMood=ids;save();$("#moodSave").disabled=!ids.length;}});
+  const reflectionDetails=document.createElement("details");reflectionDetails.id="reflectionDetails";reflectionDetails.open=true;
+  const reflectionSummary=document.createElement("summary");reflectionSummary.textContent="Dein Tagesrückblick · freiwillig";
+  reflectionDetails.append(reflectionSummary,document.querySelector(".questions"));
+  writingSidebar.append(warnEl,resultEl,reflectionDetails);$("#writeGrid").append(writingSidebar);
+  function renderMoodPicker(){
+    moodContainer.hidden=!moodEnabled();moodPicker.set(state.draftMood || [],{notify:false});
+    moodContainer.querySelector(".mood-privacy").textContent=moodConfig().ai && tutorConfig().provider==="ollama"?"Deine Auswahl und KI-Hinweise auf Gefühle im Freitext sehen deine Eltern. Dein Text wird ihnen nicht angezeigt.":"Deine Auswahl sehen deine Eltern. Dein Tagebuchtext wird ihnen nicht angezeigt.";
+    $("#moodSave").disabled=!moodReady();
+  }
+  function moodReady(){return !moodEnabled() || moodPicker.get().length>0;}
+  function cancelMoodFinish(){pendingFinish=null;if(moodDialog.open)moodDialog.close();if(session.current.length)renderResult();}
+  $("#moodCancel").onclick=cancelMoodFinish;
+  moodDialog.addEventListener("cancel",cancelMoodFinish);
+  $("#moodSave").onclick=()=>{
+    const pending=pendingFinish;
+    if(!pending || !moodReady())return;
+    pendingFinish=null;moodDialog.close();
+    if(pending.owner!==state || pending.session!==session || pending.text!==compose())return;
+    finish(pending.text,{moodConfirmed:true,leaveOpen:pending.leaveOpen});
+  };
+  const moodJobs=new Set();
+  async function analyseEntryMood(entry,childId){
+    if(entry.mood?.ai?.status!=="pending" || moodJobs.has(entry))return;
+    const owner=family,child=owner.data[childId],cfg={...tutorConfig()};
+    if(!child || !child.entries.includes(entry))return;
+    moodJobs.add(entry);const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),180000);
+    try {
+      const reply=await TB_OLLAMA.createProvider({model:cfg.model || "",execution:cfg.execution || "cpu"}).mood(entry.text,{signal:controller.signal});
+      if(owner!==family || !child.entries.includes(entry))return;
+      entry.mood.ai={status:"ready",...reply};
+    }catch(e){if(owner===family && child.entries.includes(entry))entry.mood.ai={status:"error",moods:[],unclear:true};}
+    finally {
+      clearTimeout(timer);moodJobs.delete(entry);
+      if(owner===family && child.entries.includes(entry)){save();if(parentOpen && state.id===childId)renderMoodOverview();}
     }
   }
-
-  // ---------- writing ----------
+  function renderMoodOverview(){
+    $("#moodOverview").hidden=!moodEnabled();
+    $("#moodSummary").hidden=!moodEnabled();$("#moodDisabledMessage").hidden=moodEnabled();
+    if(moodEnabled()){
+      TB_MOOD_UI.renderSummary({container:$("#moodSummary"),entries:state.entries,today:todayKey(),onOpen:()=>goSection("moods")});
+      TB_MOOD_UI.renderOverview({container:$("#moodOverview"),entries:state.entries,today:todayKey()});
+    }
+  }
+  const editorSurface=document.createElement("div");editorSurface.className="editor-surface";ta.before(editorSurface);
+  const editorBackdrop=document.createElement("div");editorBackdrop.className="lined editor-backdrop";editorBackdrop.setAttribute("aria-hidden","true");
+  editorSurface.append(editorBackdrop,ta);
+  const cloudNotice=document.createElement("p");cloudNotice.className="note";cloudNotice.id="openaiChildNotice";cloudNotice.hidden=true;
+  cloudNotice.textContent="Die KI im Internet (OpenAI) bekommt deinen Text, wenn du prüfst oder Hilfe anforderst.";
+  editorSurface.before(cloudNotice);
+  function currentMark(mark,text=compose()){
+    const old=session.checkedText;if(!mark || old.slice(mark.i,mark.i+mark.w.length)!==mark.w) return null;
+    if(old===text) return {...mark};
+    let start=0,a=old.length,b=text.length;
+    while(start<a && start<b && old[start]===text[start]) start++;
+    while(a>start && b>start && old[a-1]===text[b-1]){a--;b--;}
+    let i=mark.i,end=i+mark.w.length;
+    if(a<=i) {i+=b-a;end+=b-a;}
+    else if(start>=end) {}
+    else if(start>=i && a<=end) end+=b-a;
+    else return null;
+    if(!mark.punct && /^[\p{L}’'-]+$/u.test(mark.w)){
+      while(i>0 && /[\p{L}’'-]/u.test(text[i-1]))i--;
+      while(end<text.length && /[\p{L}’'-]/u.test(text[end]))end++;
+    }
+    const w=text.slice(i,end);
+    return w.trim() && w.length<=(mark.cloudReview?240:80) && !w.includes("\n") ? {...mark,i,w} : null;
+  }
+  function syncEditorMarks(){
+    const text=compose(),free=ta.value.trim(),leading=ta.value.length-ta.value.trimStart().length;
+    const marks=session.current.map((e,idx)=>({e:currentMark(e,text),idx})).filter(({e})=>e && e.i>=0 && e.i+e.w.length<=free.length).sort((a,b)=>a.e.i-b.e.i);
+    let html="",pos=0;
+    for(const {e,idx} of marks){const at=e.i+leading;if(at<pos) continue;html+=esc(ta.value.slice(pos,at))+'<span class="inline-mark'+(idx===session.active?' active':'')+'">'+esc(e.w)+'</span>';pos=at+e.w.length;}
+    editorBackdrop.innerHTML=html+esc(ta.value.slice(pos))+"\n";
+    editorSurface.classList.toggle("has-marks",marks.length>0);
+    editorBackdrop.style.width=ta.clientWidth+"px";editorBackdrop.scrollTop=ta.scrollTop;editorBackdrop.scrollLeft=ta.scrollLeft;
+  }
+  ta.addEventListener("scroll",()=>{editorBackdrop.scrollTop=ta.scrollTop;editorBackdrop.scrollLeft=ta.scrollLeft;});
+  new ResizeObserver(syncEditorMarks).observe(ta);
+  ta.addEventListener("click",()=>{
+    const text=compose(),at=ta.selectionStart-(ta.value.length-ta.value.trimStart().length);
+    const i=session.current.findIndex(e=>{const m=currentMark(e,text);return m && at>=m.i && at<=m.i+m.w.length;});
+    if(i>=0){cancelLearningHelp();session.active=i;session.more=false;renderResult();}
+  });
+  function reflectionOnly(){return !ta.value.trim() && QUESTIONS.some(([k])=>qa[k].value.trim());}
   function countSentences(t){ const min = (state && state.reward && state.reward.cfg && state.reward.cfg.sentenceWords) || R().cfg.sentenceWords || 1; return t.split(/[.!?]+/).filter(s => /\p{L}/u.test(s) && tokens(s).length >= min).length; }
   const minWords = () => R().cfg.entryWords, minSent = () => R().cfg.entrySentences;
   let spellReady = false;
-  function goalMet(){ const c = contentText(); return countSentences(c) >= minSent() && tokens(c).length >= minWords(); }
+  function goalMet(){ const c = contentText(); return !!reflectionOnly() || (countSentences(c) >= minSent() && tokens(c).length >= minWords()); }
   function updateCount(){
+    cloudNotice.hidden=state.parent.learningHelp?.provider!=="openai";
     const c = contentText(), n = countSentences(c), w = tokens(c).length;
     const sc = $("#sentenceCount");
     const MIN_WORDS = minWords(), MIN_SENTENCES = minSent();
     sc.innerHTML = '<span class="goal'+(w>=MIN_WORDS?' met':'')+'">'+w+' von '+MIN_WORDS+' Wörtern</span>, <span class="goal'+(n>=MIN_SENTENCES?' met':'')+'">'+n+' von '+MIN_SENTENCES+(MIN_SENTENCES===1?' Satz':' Sätzen')+'</span>';
+    if(reflectionOnly()) sc.textContent="Freiwilliger Tagesrückblick · Ein Wort oder Emoji reicht";
     if(spellReady){
       checkBtn.disabled = !goalMet();
+      checkBtn.textContent=reflectionOnly()?"Antworten speichern":session.checks?"Nochmal prüfen":"Prüfen";
       if(goalMet()) statusEl.textContent = "";
       else {
         const parts = [];
@@ -623,6 +684,8 @@
       }
     }
     if(session.checks && compose() !== session.checkedText){ const st = resultEl.querySelector(".stale"); if(st) st.hidden = false; }
+    const finishToday=$("#finishToday");if(finishToday)finishToday.disabled=checking || !contentText().trim();
+    syncEditorMarks();
   }
   let draftTimer = null;
   Object.values(qa).forEach(el => el.addEventListener("input", () => {
@@ -633,21 +696,193 @@
 
   function showWarn(t){ warnEl.textContent = t; warnEl.hidden = false; }
 
+  // Application code uses only the tutor contract. Runtime/network details live in adapters.
+  let tutorService = null, tutorProvider = null, tutorKey = "", helpEpoch = 0, spellingReviewJob = null, spellingReviewCache = null;
+  const tutorConfig = () => state.parent.learningHelp || { provider:"off", model:"" };
+  const tutorEnabled = () => ["ollama","openai"].includes(tutorConfig().provider);
+  window.addEventListener("openai-access-disabled",()=>{
+    if(tutorConfig().provider!=="openai")return;
+    cancelLearningHelp();spellingReviewCache=null;state.parent.learningHelp={provider:"off",model:""};save();renderMoodPicker();updateCount();
+  });
+  window.addEventListener("openai-key-removed",()=>{
+    if(tutorConfig().provider!=="openai" && $("#tutorProvider").value!=="openai")return;
+    if(tutorConfig().provider==="openai"){cancelLearningHelp();spellingReviewCache=null;state.parent.learningHelp={provider:"off",model:""};save();}
+    $("#tutorProvider").value=tutorConfig().provider==="ollama"?"ollama":"off";void TB_OPENAI_SETTINGS.render(state.parent.learningHelp);renderMoodPicker();
+    $("#tutorStatus").textContent="OpenAI ist ausgeschaltet. Der API-Schlüssel wurde entfernt.";
+  });
+  function cancelLearningHelp(){
+    spellingReviewJob?.controller.abort();
+    helpEpoch++; if(tutorService) tutorService.cancel();
+    session.current.forEach(e => { e.helpBusy = false; });
+  }
+  function learningHelp(){
+    const cfg = tutorConfig(), key = JSON.stringify(cfg);
+    if(key !== tutorKey || !tutorService){
+      if(tutorService) tutorService.cancel();
+      tutorProvider=cfg.provider === "openai" ? TB_OPENAI.createProvider() : cfg.provider === "ollama" ? TB_OLLAMA.createProvider({ model:cfg.model || "",execution:cfg.execution || "cpu" }) : null;
+      tutorService = TB_TUTOR.createTutor({ provider:tutorProvider,allowOnline:cfg.provider==="openai" });
+      tutorKey = key;
+    }
+    return tutorService;
+  }
+  async function askLearningHelp(mode){
+    const e = session.current[session.active];
+    if(!e || e.helpBusy || !tutorEnabled()) return;
+    e.helpQuestion = "";
+    const requestText=compose(),mark=currentMark(e,requestText);
+    if(!mark){e.helpError="Die Stelle hat sich stark verändert. Wähle „Nochmal prüfen“, damit ich die passende Stelle finde.";renderResult();return;}
+    if(!e.cloudReview && !TB_TUTOR.relatedSpelling(mark.w,e.w)){e.helpReply=null;e.helpHistory={attempts:[],replies:[]};e.helpError="Das ist inzwischen ein anderes Wort. Wähle „Nochmal prüfen“, damit du einen passenden Hinweis bekommst.";renderResult();return;}
+    warnEl.hidden=true;
+    const history = e.helpHistory || (e.helpHistory = { attempts:[], replies:[] });
+    if(requestText!==session.checkedText){const previous=TB_TUTOR.contextForMark(session.checkedText,e);if(history.attempts.at(-1)!==previous)history.attempts.push(previous);history.attempts=history.attempts.slice(-3);}
+    const epoch = ++helpEpoch, activeSession = session;
+    e.helpBusy = true; e.helpError = ""; e.helpReply=null;renderResult();
+    try{
+      const sentence = TB_TUTOR.contextForMark(requestText, mark);
+      history.replies=history.replies.filter(explanation=>{try{const reply={assessment:"needsChange",explanation,question:"",suggestion:""};if(e.cloudReview)TB_TUTOR.validateReply(reply);else TB_TUTOR.validateReplyForRequest(reply,{mode,sentence,target:mark.w});return true;}catch{return false;}});
+      const safeCase=["Großschreibung","Kleinschreibung"].includes(e.cat) && typeof e.fix==="string" && lower(mark.w)===lower(e.fix);
+      const grounded=!e.cloudReview && (e.reviewVerified || safeCase) && !e.helpQuestion && mode!=="meaning" ? TB_SPELL_REVIEW.groundedHelp({word:mark.w,correction:e.fix,mode}) : null;
+      const reply = grounded || await learningHelp().explain({ mode, sentence, target:mark.w, checkerHint:e.tip,
+        question:e.helpQuestion, previousAttempts:history.attempts.slice(-3), previousReplies:history.replies.slice(-2) });
+      if(epoch !== helpEpoch || activeSession !== session || compose() !== requestText) return;
+      e.helpReply = reply;e.helpReplyTarget=mark.w;session.helped = true;
+      if(history.attempts.at(-1) !== sentence) history.attempts.push(sentence);
+      history.attempts = history.attempts.slice(-3); history.replies.push(reply.explanation); history.replies = history.replies.slice(-2);
+    }catch(error){ if(epoch === helpEpoch && activeSession === session) e.helpError = error.message; }
+    finally{ e.helpBusy = false; if(epoch === helpEpoch && activeSession === session) renderResult(); }
+  }
+  function learningHelpHtml(e){
+    if(!tutorEnabled()) return "";
+    const r = e.helpReplyTarget===currentMark(e)?.w?e.helpReply:null;
+    return '<div class="tutor-box"><h3>'+(tutorConfig().provider==="openai"?'Lernhilfe mit OpenAI':'Lokale Lernhilfe')+'</h3>' +
+      (r ? '<div class="tutor-reply" aria-live="polite"><p>'+esc(r.explanation)+'</p>'+(r.question?'<p>'+esc(r.question)+'</p>':'')+(r.suggestion?'<p>Möglicher Vorschlag: <b>'+esc(r.suggestion)+'</b>. Passt das zu deinem Satz?</p>':'')+'</div>' : '') +
+      '<div class="row">'+[["hint","Erkläre mir die Stelle"],["simpler","Das verstehe ich noch nicht"],["solution","Zeig mir einen Vorschlag"]].map(([mode,label]) => '<button type="button" class="btn-ghost" data-help="'+mode+'"'+(e.helpBusy?' disabled':'')+'>'+label+'</button>').join("")+'</div>' +
+      (e.helpBusy ? '<p role="status">Die Lernhilfe antwortet …</p><button type="button" class="btn-ghost" id="helpCancel">Warten beenden</button>' : '') +
+      (e.helpError ? '<p role="status">'+esc(e.helpError)+'</p>' : '') +
+      '<p class="note">Auch die Lernhilfe kann sich irren. Du entscheidest über deinen Text und darfst die Stelle offenlassen.</p></div>';
+  }
+  allFields().forEach(field => field.addEventListener("input", () => {cancelLearningHelp();if(!resultEl.hidden)renderResult();}));
+
   let checking = false;
+  function validatedCorrection(word,fix){
+    if(!TB_SPELL_REVIEW.isCorrection(fix) || word===fix)return false;
+    const parts=fix.split(" ");
+    if(!parts.every(part=>correct(part)) || (correct(word) && lower(word)!==lower(fix)))return false;
+    const normalize=value=>lower(value).replace(/ß/g,"ss");
+    const edits=TB_SPELL_REVIEW.editSummary(normalize(word),normalize(parts.join("")));
+    const limit=parts.length===1?Math.min(4,Math.max(2,Math.ceil(word.length*.6))):Math.min(3,Math.max(1,Math.floor(word.length*.4)));
+    return !!edits && edits.count<=limit;
+  }
+  function explicitNameContext(text,index){
+    const before=text.slice(Math.max(0,index-90),index);
+    return /(?:\b(?:heißt|heiße|heißen|namens)|\b(?:Freund|Freundin|Bruder|Schwester|Lehrer|Lehrerin|Mama|Papa|Oma|Opa|Herr|Frau|Hund|Katze)\s+(?:namens\s+)?)\s*$/iu.test(before);
+  }
+  function applySpellingReview(text,errs,request,review){
+    const decisions=new Map(review.decisions.map(d=>[d.id,d])),candidateByPosition=new Map(request.candidates.map(c=>[c.start,c]));
+    const next=[];
+    for(const e of errs){
+      const c=candidateByPosition.get(e.i),decision=c && c.word===e.w ? decisions.get(c.id) : null;
+      if(!e.punct && decision){
+        if(decision.verdict==="name" && isUpper1(e.w) && !["Großschreibung","Kleinschreibung"].includes(e.cat) && explicitNameContext(text,e.i))continue;
+        if(decision.verdict==="correct" && correct(e.w) && !["Großschreibung","Kleinschreibung"].includes(e.cat))continue;
+        if(decision.verdict==="error" && validatedCorrection(e.w,decision.correction)){
+          e.fix=decision.correction;e.reviewVerified=true;
+          const classification=classify(e.w,e.fix);e.cat=lower(e.w)===lower(e.fix)?(isUpper1(e.fix)?"Großschreibung":"Kleinschreibung"):classification.cat;
+          const grounded=TB_SPELL_REVIEW.groundedHelp({word:e.w,correction:e.fix,mode:"hint"});
+          e.tip=grounded?.explanation || classification.tip;e.reviewed=true;
+        }
+        if(decision.verdict==="name" || (decision.verdict==="unclear" && e.name)){
+          e.name=isUpper1(e.w);
+          if(!["Großschreibung","Kleinschreibung"].includes(e.cat)){e.cat="Name oder Wort?";e.fix=null;e.reviewVerified=false;}
+          e.tip=e.name?"Ist das hier ein Name? Wenn du die Person oder das Tier so nennst, darf der Name bleiben. Du kannst ihn unter „Weitere Tipps und Entscheidungen“ bestätigen.":"Ist das hier ein Name? Namen schreibt man groß. Schau dir den ersten Buchstaben an.";
+          e.tip2="Wenn du unsicher bist, frage nach der gemeinten Person oder dem Tier. Du darfst diese Stelle auch offenlassen.";
+          e.reviewed=true;
+        }
+      }
+      next.push(e);
+    }
+    for(const additional of review.additional){
+      const {start:i,word:w,correction:fix}=additional;
+      if(knownName(w) || !validatedCorrection(w,fix) || next.some(e=>i<e.i+e.w.length && i+w.length>e.i))continue;
+      const classification=classify(w,fix),grounded=TB_SPELL_REVIEW.groundedHelp({word:w,correction:fix,mode:"hint"});
+      next.push({i,w,fix,cat:lower(w)===lower(fix)?(isUpper1(fix)?"Großschreibung":"Kleinschreibung"):classification.cat,tip:grounded?.explanation || classification.tip,tip2:"Vergleiche die markierte Stelle mit deinem Satz.",name:isUpper1(w),reviewVerified:true,reviewed:true});
+    }
+    return next.sort((a,b)=>a.i-b.i);
+  }
+  $("#reviewCancel").onclick=()=>{if(spellingReviewJob){spellingReviewJob.skipped=true;spellingReviewJob.controller.abort();}};
+  async function reviewWithOpenAI(text,fallback){
+    const owner=state,checkSession=session,cacheKey=state.id+"|openai|"+JSON.stringify(tutorConfig())+"|"+text;
+    const convert=reply=>{
+      session.reviewUncertain=reply.uncertain;
+      const categories={spelling:"Rechtschreibung",capitalization:"Groß-/Kleinschreibung",punctuation:"Satzzeichen",grammar:"Grammatik"};
+      return reply.issues.filter(issue=>!knownName(issue.original)).map(issue=>({
+        i:issue.start,w:issue.original,fix:issue.correction,cat:categories[issue.category],
+        tip:issue.hint,tip2:issue.detail,punct:issue.category==="punctuation" || issue.category==="grammar",
+        name:false,reviewVerified:true,reviewed:true,cloudReview:true
+      }));
+    };
+    if(spellingReviewCache?.key===cacheKey){session.reviewState="ready";return convert(spellingReviewCache.reply);}
+    learningHelp();
+    const job={controller:new AbortController(),skipped:false};spellingReviewJob=job;
+    const timer=setTimeout(()=>job.controller.abort(),120000);$("#reviewCancel").hidden=false;
+    statusEl.textContent="OpenAI schaut sich deinen Text an. Du kannst die Prüfung beenden und Stellen offenlassen …";
+    try{
+      const reply=await tutorProvider.review(text,[],{signal:job.controller.signal});
+      if(job.controller.signal.aborted)throw new DOMException("Die Prüfung wurde beendet.","AbortError");
+      if(state!==owner || session!==checkSession)return fallback;
+      spellingReviewCache={key:cacheKey,reply};session.reviewState="ready";
+      return convert(reply);
+    }catch(error){
+      if(state===owner && session===checkSession){session.reviewState=job.skipped?"skipped":"failed";session.reviewUncertain=true;session.reviewError=error.message;}
+      return fallback;
+    }finally{clearTimeout(timer);if(spellingReviewJob===job){spellingReviewJob=null;$("#reviewCancel").hidden=true;}}
+  }
+  async function reviewSpelling(text,errs){
+    if(tutorConfig().provider==="openai")return reviewWithOpenAI(text,errs);
+    const owner=state,checkSession=session;
+    const candidates=errs.filter(e=>!e.punct).map((e,id)=>({id,start:e.i,word:e.w,correction:e.fix || ""}));
+    const request=TB_SPELL_REVIEW.buildRequest(text,candidates),cacheKey=state.id+"|"+JSON.stringify(tutorConfig())+"|"+JSON.stringify(request);
+    if(spellingReviewCache?.key===cacheKey){session.reviewState="ready";return applySpellingReview(text,errs,request,spellingReviewCache.reply);}
+    learningHelp();
+    const job={controller:new AbortController(),skipped:false};spellingReviewJob=job;
+    const timer=setTimeout(()=>job.controller.abort(),180000);$("#reviewCancel").hidden=false;
+    statusEl.textContent="Die lokale KI schaut sich Rechtschreibung und Namen im Zusammenhang an …";
+    try{
+      const reply=await tutorProvider.review(text,request.candidates,{signal:job.controller.signal});
+      if(job.controller.signal.aborted || state!==owner || session!==checkSession)return errs;
+      spellingReviewCache={key:cacheKey,reply};session.reviewState="ready";
+      return applySpellingReview(text,errs,request,reply);
+    }catch(error){
+      if(state===owner && session===checkSession){
+        session.reviewState=job.skipped?"skipped":"failed";
+        session.reviewError=error.name==="AbortError"?"Die lokale KI hat nicht innerhalb von drei Minuten geantwortet.":String(error.message || "Die Antwort konnte nicht sicher verwendet werden.").slice(0,400);
+        session.reviewErrorCode=error.name==="AbortError"?"timeout":error.code || "failed";
+      }
+      return errs;
+    }
+    finally{clearTimeout(timer);if(spellingReviewJob===job){spellingReviewJob=null;$("#reviewCancel").hidden=true;}}
+  }
   async function runCheck(){
+    cancelLearningHelp();
     warnEl.hidden = true;
-    const text = compose(), labels = SEG.labels;
+    const text = compose(), labels = SEG.labels, spellingText=ta.value.trim();
     if(!goalMet()){ updateCount(); return; }
     if(!hun || checking) return;
     checking = true; checkBtn.disabled = true; allFields().forEach(f => { f.readOnly = true; });
+    const checkOwner=state;
     statusEl.textContent = state.parent.grammar ? "Ich prüfe deinen Text …" : "";
-    const matches = await ltCheck(text);
-    checking = false; checkBtn.disabled = false; allFields().forEach(f => { f.readOnly = false; });
+    const cloud=tutorConfig().provider==="openai";
+    const matches = spellingText && !cloud ? await ltCheck(spellingText) : null;
+    if(state!==checkOwner){checking=false;checkBtn.disabled=false;allFields().forEach(f=>{f.readOnly=false;});return;}
     compose(); // SEG for this text again (LT is async)
-    let errs = check(text, !!matches);
-    if(matches) errs = mergeLT(text, errs, matches);
+    let errs = spellingText ? check(spellingText, !!matches) : [];
+    if(matches) errs = mergeLT(spellingText, errs, matches);
+    session.reviewState="off";session.reviewUncertain=false;session.reviewError="";
+    if(spellingText && tutorEnabled())errs=await reviewSpelling(spellingText,errs);
+    checking = false; checkBtn.disabled = false; allFields().forEach(f => { f.readOnly = false; });
+    if(state!==checkOwner)return;
     statusEl.textContent = "";
-    session.basicOnly = state.parent.grammar && !matches;
+    session.basicOnly = !cloud && !!spellingText && state.parent.grammar && !matches;
     if(text !== SEG.text) return;
     session.checks++;
     if(session.checks === 1) session.firstCount = errs.length;
@@ -667,59 +902,78 @@
     };
     errs.forEach(e => {
       e.fine = errCats(e)[0]; e.trick = TRICK[e.fine] ? TRICK[e.fine][1] : ""; e.often = (tot[e.fine] || 0) >= 3;
-      e.tip = unreveal(e.tip, e.fix) || "Sprich das Wort ganz langsam in Silben. Hör genau auf jeden Laut.";
+      if(!e.cloudReview)e.tip = unreveal(e.tip, e.fix) || "Sprich das Wort ganz langsam in Silben. Hör genau auf jeden Laut.";
       e.trick = unreveal(e.trick, e.fix);
       if(e.trick && lower(e.trick).slice(0, 18) === lower(e.tip).slice(0, 18)) e.trick = ""; // nearly the same as the first tip
     });
     if(session.ignore) errs = errs.filter(e => !session.ignore[e.cat + "|" + e.w]);
+    TB_TUTOR.carryHistory(session.current, session.checkedText, errs, text);
+    session.improved = session.checks > 1 && errs.length < session.current.length;
     session.current = errs; session.checkedText = text; session.labels = labels; session.active = -1; session.more = false;
-    if(errs.length){ renderResult(); if(innerWidth < 1000) resultEl.scrollIntoView({ behavior:"smooth", block:"start" }); }
+    if(errs.length || session.reviewUncertain){ renderResult(); if(innerWidth < 1000) resultEl.scrollIntoView({ behavior:"smooth", block:"start" }); }
     else finish(text);
   }
 
   function renderResult(){
     const errs = session.current, text = session.checkedText;
-    let html = "", pos = 0;
-    errs.forEach((e, idx) => {
-      html += escSeg(text, pos, e.i, session.labels);
-      html += '<button type="button" class="err'+(idx===session.active?" active":"")+'" data-i="'+idx+'">'+esc(e.w)+'</button>';
-      pos = e.i + e.w.length;
-    });
-    html += escSeg(text, pos, text.length, session.labels);
+    const html = errs.map((e,idx)=>{const mark=currentMark(e);return mark?'<button type="button" class="err'+(idx===session.active?' active':'')+'" data-i="'+idx+'" aria-pressed="'+(idx===session.active)+'">'+esc(mark.w)+'</button>':'';}).join(" ");
     const n = errs.length;
-    const msg = (session.checks === 1 || session.basicOnly ? "" : "Schon besser! ") + (n === 1 ? "Eine Stelle ist noch falsch." : n + " Stellen sind noch falsch.");
+    const msg = compose()!==text?"Dein Text wurde verändert. „Nochmal prüfen“ aktualisiert alle Hinweise.":!n?"Die Prüfung konnte nicht alle Stellen sicher beurteilen. Du darfst deinen Text für heute speichern.":(session.improved ? "Es sind weniger Hinweise geworden. " : "") + (n === 1 ? "Eine Stelle schauen wir uns noch an." : n + " Stellen schauen wir uns noch an.");
     let hint = "";
     if(session.active >= 0){
       const e = errs[session.active];
-      hint = '<div class="hint"><p class="cat">'+esc(e.cat)+'</p><p>'+esc(e.tip)+'</p>' +
+      const mark=currentMark(e),changes=e.reviewVerified && mark?.w===e.w ? TB_SPELL_REVIEW.editSummary?.(e.w,e.fix) : null;
+      const multiple=changes && changes.count>=2 && changes.count<=3 ? '<p class="word-change-count">In diesem Wort sind <b>'+changes.count+' Stellen</b> zu ändern. Wir schauen sie uns nacheinander an.</p>' : '';
+      hint = '<div class="hint"><p class="note">'+(e.cloudReview?'Prüfhinweis · OpenAI':e.reviewed?'Im Zusammenhang geprüft · Wörterbuch / lokale KI':'Prüfhinweis · Wörterbuch / Regeln'+(state.parent.grammar?' / LanguageTool':''))+'</p><p class="cat">'+esc(e.cat)+'</p>'+(multiple?multiple:'')+'<p>'+esc(e.tip)+'</p>' +
         (session.more ? '<p>'+esc(e.tip2)+'</p>' + (e.trick && e.trick !== e.tip ? '<p class="trick">💡 '+esc(e.trick)+'</p>' : '') : '') +
-        (e.often ? '<p class="often">🎯 Darauf achtest du gerade besonders. Gut, dass du es selbst verbesserst!</p>' : '') +
-        '<div class="row">' + (session.more ? '' : '<button type="button" class="btn-ghost" id="moreBtn">Noch ein Tipp</button>') +
+        (e.often ? '<p class="often">🎯 Das übst du gerade. Du darfst dir dabei helfen lassen.</p>' : '') +
+        '<details class="correction-options"><summary>Weitere Tipps und Entscheidungen</summary><div class="row">' + (session.more ? '' : '<button type="button" class="btn-ghost" id="moreBtn">Noch ein Tipp</button>') +
         (e.name ? '<button type="button" class="btn-ghost" id="nameBtn">Das ist ein Name</button>' : '') +
-        ((e.punct || /Großschreibung|Kleinschreibung/.test(e.cat)) ? '<button type="button" class="btn-ghost" id="okBtn">🤔 Ich finde, das stimmt so</button>' : '') + '</div></div>';
+        '<button type="button" class="btn-ghost" id="okBtn">🤔 Ich finde, das stimmt so</button><button type="button" class="btn-ghost" id="deferBtn">Für heute offenlassen</button></div></details>' + learningHelpHtml(e) + '</div>';
+      if(!mark)hint='<p class="note">Diese Stelle hat sich verändert. Wähle „Nochmal prüfen“, um einen passenden Hinweis zu bekommen.</p>';
     }
     resultEl.innerHTML = '<p class="result-msg">'+msg+'</p>' +
-      (session.basicOnly ? '<p class="note">Gerade ohne Internet: Ich prüfe nur Rechtschreibung und einfache Satzzeichen, keine Grammatik.</p>' : '') +
-      '<p class="note">Tippe auf eine rot markierte Stelle für einen Tipp. Verbessere es dann in deinem Text und drück nochmal auf Prüfen.</p>' +
-      '<div class="sheet checked"><div class="lined">'+html+'</div></div>' + hint +
-      '<p class="stale" hidden>Du hast etwas verändert. Drück auf Prüfen, um es zu testen.</p>';
+      '<div class="finish-open" data-help-topic="spelling" data-help-text="Du darfst den Tag mit offenen Hinweisen abschließen. Dein aktueller Text wird gespeichert; falls eingeschaltet, wählst du vorher deine Gefühle. Deine Belohnung bleibt erhalten."><p class="note">Ich kann nicht jede Stelle sicher prüfen. Meine Hinweise können sich irren. Du darfst deinen Text auch mit offenen Stellen speichern.</p><button type="button" class="btn" id="finishToday" title="Speichert deinen aktuellen Text. Offene Hinweise dürfen bleiben." data-tooltip="Speichert deinen aktuellen Text. Offene Hinweise dürfen bleiben.">Für heute abschließen</button></div>'+
+      (session.reviewState==="failed"?'<p class="note">'+(tutorConfig().provider==="openai"?'OpenAI konnte die Prüfung nicht abschließen. '+esc(session.reviewError || '')+' ':'Die lokale KI-Prüfung konnte nicht abgeschlossen werden. '+esc(session.reviewError || '')+' ')+'Die Hinweise stammen deshalb aus Wörterbuch und Regeln.</p>':'')+
+      (tutorConfig().provider==="openai" && session.reviewState==="skipped"?'<p class="note">Die OpenAI-Prüfung wurde beendet. Du darfst deinen Eintrag mit offenen Stellen abschließen.</p>':'')+
+      (tutorConfig().provider==="openai" && session.reviewState==="ready" && session.reviewUncertain?'<p class="note">Einige Stellen konnte OpenAI nicht sicher beurteilen. Weitere Fehler können unentdeckt bleiben.</p>':'')+
+      (session.basicOnly ? '<p class="note">Die Online-Prüfung ist gerade nicht verfügbar. Ich prüfe nur Rechtschreibung und einfache Satzzeichen, keine Grammatik.</p>' : '') +
+      '<p class="note">Bearbeite die markierte Stelle direkt links im Schreibblock. Wähle sie dort oder hier aus.</p>' +
+      '<nav class="mark-list" aria-label="Markierte Stellen">'+html+'</nav>' + hint +
+      '<p class="stale" hidden>Dein Text wurde verändert. Die Lernhilfe sieht deinen aktuellen Satz. „Nochmal prüfen“ oben aktualisiert alle Markierungen.</p>';
     resultEl.hidden = false;
+    $("#finishToday").onclick=()=>{if(checking || !contentText().trim())return;cancelLearningHelp();finish(compose(),{leaveOpen:true});};
+    reflectionDetails.open=false;
     checkBtn.textContent = "Nochmal prüfen";
     resultEl.querySelectorAll(".err").forEach(b => b.onclick = () => {
+      cancelLearningHelp();
       const i = Number(b.dataset.i);
       session.active = session.active === i ? -1 : i; session.more = false; renderResult();
-      const nb = resultEl.querySelector('.err[data-i="'+i+'"]'); if(nb) nb.focus();
-      const hb = resultEl.querySelector(".hint"); if(hb && innerWidth >= 1000) hb.scrollIntoView({ block:"nearest" });
+      const mark=currentMark(errs[i]);
+      if(mark){const leading=ta.value.length-ta.value.trimStart().length;ta.focus({preventScroll:true});ta.setSelectionRange(mark.i+leading,mark.i+leading+mark.w.length);}
     });
     const more = $("#moreBtn"); if(more) more.onclick = () => { session.more = true; renderResult(); };
-    const okBtn = $("#okBtn");
-    if(okBtn) okBtn.onclick = () => {
-      const e = errs[session.active];
-      session.ignore = session.ignore || {}; session.ignore[e.cat + "|" + e.w] = 1; session.overrides = (session.overrides || 0) + 1;
-      for(const c of errCats(e)) if(session.cats[c]) session.cats[c] = Math.max(0, session.cats[c] - 1);   // not counted as a mistake any more
-      session.current = errs.filter(x => x !== e); session.active = -1; session.more = false;
+    resultEl.querySelectorAll("[data-help]").forEach(b => { b.onclick = () => askLearningHelp(b.dataset.help); });
+    const stop = $("#helpCancel"); if(stop) stop.onclick = () => { cancelLearningHelp(); renderResult(); };
+    const dismiss = async deferred => {
+      if(compose() !== session.checkedText){
+        const selected=currentMark(session.current[session.active]);
+        await runCheck();
+        if(!session.current.length) return;
+        session.active=selected ? session.current.findIndex(e=>e.i===selected.i && e.w===selected.w) : -1;
+        if(session.active<0) return;
+      }
+      cancelLearningHelp();
+      const e = session.current[session.active];if(!e)return;
+      session.ignore = session.ignore || {}; session.ignore[e.cat + "|" + e.w] = 1;
+      if(deferred) session.deferred++;
+      else { session.overrides = (session.overrides || 0) + 1; for(const c of errCats(e)) if(session.cats[c]) session.cats[c] = Math.max(0, session.cats[c] - 1); }
+      delete session.found[lower(e.w)];
+      session.current = session.current.filter(x => x !== e); session.active = -1; session.more = false;
       if(session.current.length) renderResult(); else finish(session.checkedText);
     };
+    const okBtn = $("#okBtn"); if(okBtn) okBtn.onclick = () => dismiss(false);
+    const defer = $("#deferBtn"); if(defer) defer.onclick = () => dismiss(true);
     const nameBtn = $("#nameBtn");
     if(nameBtn) nameBtn.onclick = () => {
       const w = errs[session.active].w;
@@ -730,8 +984,19 @@
     updateCount();
   }
 
-  function finish(text){
+  function finish(text,{moodConfirmed=false,leaveOpen=false}={}){
+    text=compose();
+    if(!contentText().trim() || !doneEl.hidden)return;
+    if(moodEnabled() && (!moodConfirmed || !moodReady())){
+      pendingFinish={owner:state,session,text,leaveOpen};renderMoodPicker();
+      resultEl.hidden=true;resultEl.replaceChildren();syncEditorMarks();checkBtn.textContent="Eintrag abschließen";
+      $("#moodFinishGreeting").textContent=(state.name || "").trim()?"Klasse gemacht, "+childName()+"!":"Klasse gemacht!";
+      if(!moodDialog.open)moodDialog.showModal();
+      return;
+    }
     const date = todayKey();
+    const changedSinceCheck=text!==session.checkedText;
+    const openHints=session.deferred+(leaveOpen?session.current.length:0);
     const finalWords = new Set(tokens(text).map(t => lower(t.w)));
     const fixed = Object.values(session.found).filter(f => f.fix && finalWords.has(lower(f.fix)));
     const v = fieldValues(), content = contentText(v);
@@ -743,37 +1008,50 @@
     const earned = coinsFor(v);
     const already = R().cfg.firstOnly && state.entries.some(e => e.date === date);   // only the first entry of the day earns coins
     const coins = already ? 0 : earned.coins;
-    state.entries.unshift({ id, date, text: v.free, answers, firstErrors: Math.max(0, session.firstCount - (session.overrides || 0)), words: wc, sentences: scount, pic: hasPic, errCats: session.cats, coins, coinDetail: earned, overrides: session.overrides || 0 });
+    const mood=moodEnabled()?{self:TB_MOOD.validateSelf(moodPicker.get()),ai:{status:moodConfig().ai && tutorConfig().provider==="ollama" && v.free ? "pending":"off",moods:[],unclear:true}}:undefined;
+    const entry={ id, date, text: v.free, answers, answerLabels:TB_REFLECTION.labels, firstErrors: Math.max(0, session.firstCount - (session.overrides || 0)), words: wc, sentences: scount, pic: hasPic, errCats: session.cats, coins, coinDetail: earned, overrides: session.overrides || 0, helped:session.helped, deferred:openHints,checkCompletion:{openHints,changedSinceCheck,reviewState:session.reviewState || "off"},...(mood?{mood}:{}) };
+    state.entries.unshift(entry);
     if(state.entries.length > 5000) state.entries.length = 5000;
     for(const f of fixed){
       const k = lower(f.fix), prev = state.words[k];
       state.words[k] = { richtig:f.fix, kategorie:f.cat, fine: errCats({ cat:f.cat, w:f.wrong, fix:f.fix })[0], count:(prev ? prev.count : 0) + 1, last:date };
     }
-    state.draft = ""; state.draftQ = {}; save();
+    state.draft = ""; state.draftQ = {};state.draftMood=[]; save();
+    if(entry.mood?.ai.status==="pending")void analyseEntryMood(entry,state.id);
     renderStreak();
     const streakN = streakOf() || 1;
+    const supported = session.helped || openHints || session.overrides;
     notify("✏️ Tagebuch geschrieben: " + wc + " Wörter, " + scount + " Sätze. " +
-      (session.firstCount === 0 ? "Auf Anhieb fehlerfrei!" : session.firstCount + (session.firstCount === 1 ? " Fehler" : " Fehler") + " selbst verbessert.") +
+      (!v.free ? "Freiwilliger Tagesrückblick gespeichert." : openHints ? "Mit offenen Hinweisen gespeichert." : "Dein Eintrag ist gespeichert.") +
       " Serie: " + streakN + (streakN === 1 ? " Tag." : " Tage.") + (hasPic ? " 🎨 Mit Bild." : ""));
     const first = session.firstCount;
-    const headline = first === 0 ? "Fehlerfrei beim ersten Versuch!" : "Geschafft! Alles richtig.";
-    const sub = first === 0 ? "Stark. Dein Tagebucheintrag für heute ist gespeichert."
-      : (first === 1 ? "Du hast einen Fehler selbst gefunden und verbessert." : "Du hast " + first + " Fehler selbst gefunden und verbessert.");
+    const headline = !v.free ? "Dein Tagesrückblick ist gespeichert." : "Geschafft! Dein Eintrag ist gespeichert.";
+    const sub = changedSinceCheck ? "Du hast an deinem Text gearbeitet. Deine letzten Änderungen sind noch nicht geprüft. Das ist für heute okay."
+      : openHints ? "Du hast an deinem Text gearbeitet. Einige Stellen bleiben heute offen. Du darfst dir beim Lernen helfen lassen."
+      : supported ? "Du hast deinen Text mit Hilfe oder eigenen Entscheidungen überarbeitet. Dein Tagebucheintrag ist gespeichert."
+      : first === 0 ? "Stark. Dein Tagebucheintrag für heute ist gespeichert."
+      : "Du hast deinen Text überarbeitet. Toll, dass du drangeblieben bist!";
     resultEl.hidden = true; resultEl.innerHTML = "";
     $("#writeArea").hidden = true;
+    writingSidebar.hidden=true;
     settleWeeks(); weeklyReport();
     const wp = weekPending(), cfgD = R().cfg.days;
     const coinMsg = '<div class="coinwin">' + (coins
       ? '🪙 <b>+' + fmtC(coins) + ' Coins</b> für diesen Eintrag (' + earned.sentences + ' ganze Sätze' + (earned.commas ? ', ' + earned.commas + '× Komma-Bonus' : '') + '). Diese Woche gesammelt: ' + fmtC(wp.sum) + '. ' + (wp.days.size >= cfgD ? 'Am Sonntag kommen sie auf dein Konto!' : 'Schreib an ' + cfgD + ' Tagen, dann gibt es sie am Sonntag.')
-      : '🪙 Für heute hast du deine Coins schon gesammelt. Toll, dass du noch mehr schreibst!') + (R().cfg.gameBase ? '<br>🎮 Das Spiel ist für heute freigeschaltet!' : '') + '</div>';
-    doneEl.innerHTML = '<div class="done-box"><strong>'+headline+'</strong><p>'+sub+'</p><div class="sheet checked"><div class="lined">'+entryHtml(state.entries[0])+'</div></div>'+(picUrl ? '<img class="pic" alt="Dein Bild" src="'+picUrl+'">' : '')+coinMsg+'<div class="below"><button class="btn-ghost" id="againBtn">Noch etwas ins Tagebuch schreiben</button></div></div>';
+      : already ? '🪙 Für heute hast du deine Coins schon gesammelt. Toll, dass du noch mehr schreibst!' : 'Dein Eintrag zählt. Satz-Coins sammelst du mit ganzen Sätzen.') + (R().cfg.gameBase ? '<br>🎮 Das Spiel ist für heute freigeschaltet!' : '') + '</div>';
+    doneEl.innerHTML = '<div class="done-box"><strong>'+headline+'</strong><p>'+sub+'</p><div class="sheet checked"><div class="lined">'+entryHtml(state.entries[0])+'</div></div>'+(picUrl ? '<img class="pic" alt="Dein Bild" src="'+picUrl+'">' : '')+coinMsg+'<div class="below"><button type="button" class="btn" id="readFinished">Deinen Text nochmal lesen</button><button type="button" class="btn" id="playFinished">Spielen</button><a href="#schreiben" id="againBtn">Noch etwas ins Tagebuch schreiben</a></div></div>';
     doneEl.hidden = false;
-    $("#againBtn").onclick = reset;
-    renderStreak(); renderWords(); renderEntries();
+    $("#againBtn").onclick = event=>{event.preventDefault();reset();};
+    $("#readFinished").onclick=()=>{readMode="day";showView(true);$("#readPage").querySelector('[data-key="'+entry.id+'"]')?.scrollIntoView({block:"start"});};
+    $("#playFinished").onclick=()=>setTab("game");
+    renderStreak();
+    $("#readFinished").focus({preventScroll:true});
   }
   function reset(){
+    cancelMoodFinish();
+    cancelLearningHelp();
     session = newSession(); allFields().forEach(f => { f.value = ""; }); doneEl.hidden = true; doneEl.innerHTML = "";
-    $("#writeArea").hidden = false; checkBtn.textContent = "Prüfen"; updateCount(); ta.focus();
+    $("#writeArea").hidden = false;writingSidebar.hidden=false;reflectionDetails.open=true;renderMoodPicker(); checkBtn.textContent = "Prüfen"; updateCount(); ta.focus();
     $("#drawPanel").hidden = true; $("#drawBtn").setAttribute("aria-expanded", "false"); updateDrawBtn();
   }
   checkBtn.addEventListener("click", runCheck);
@@ -988,7 +1266,6 @@
   $("#prefsBtn").onclick = () => { $("#ideaPanel").hidden = true; $("#emojiPanel").hidden = true; renderPrefs(); };
   $("#printBtn").onclick = printBook;
   $("#readAloud").onclick = readAloud;
-  $("#readAll").onclick = () => { showView(true); window.scrollTo(0,0); };
   document.querySelectorAll("#readView .tab").forEach(b => b.onclick = () => { readMode = b.dataset.mode; readIdx = -1; renderRead(); });
   $("#fromDate").onchange = renderRead; $("#toDate").onchange = renderRead;
   $("#prevDay").onclick = () => { readIdx--; renderRead(); };
@@ -1075,10 +1352,10 @@
       document.querySelector('[data-buy="' + id + '"]').disabled = tot > avail;
     };
     r.items.forEach(it => { upd(it.id); document.querySelector('[data-qty="' + it.id + '"]').oninput = () => upd(it.id); });
-    document.querySelectorAll("[data-buy]").forEach(b => b.onclick = () => {
+    document.querySelectorAll("[data-buy]").forEach(b => b.onclick = async () => {
       const it = r.items.find(x => x.id === b.dataset.buy), q = Math.max(1, Math.floor(Number(document.querySelector('[data-qty="' + it.id + '"]').value) || 1)), tot = q * it.price;
       if(tot > balance() - reserved()) return;
-      if(!confirm(q + " × " + it.name + " für " + fmtC(tot) + " Coins einlösen? Mama oder Papa müssen das noch bestätigen.")) return;
+      if(!await confirmAction("Belohnung wünschen",q + " × " + it.name + " für " + fmtC(tot) + " Coins einlösen? Mama oder Papa müssen das noch bestätigen.","rewards")) return;
       r.orders.push({ id:"o" + Date.now(), at:Date.now(), itemId:it.id, name:it.name, icon:it.icon, qty:q, price:it.price, total:tot, status:"open" });
       save(); notify("🛒 " + childName() + " möchte einlösen: " + q + " × " + it.name + " (" + fmtC(tot) + " Coins). Bitte im Elternbereich bestätigen.");
       renderShop();
@@ -1274,6 +1551,8 @@
     $("#notifyRead").checked = !!state.parent.notifyRead;
     $("#readMin").value = String(state.parent.readMin || 2);
     $("#grammarOn").checked = !!state.parent.grammar;
+    $("#moodShareOn").checked=moodEnabled();$("#moodAiOn").checked=moodConfig().ai!==false;
+    renderTutorSettings();
     const rows = [];
     for(let i=0;i<14;i++){
       const d = new Date(); d.setDate(d.getDate()-i); const k = keyOf(d);
@@ -1282,7 +1561,7 @@
       const fixed = es.reduce((n,e) => n + (e.firstErrors || 0), 0);
       const label = d.toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"numeric"});
       rows.push(es.length
-        ? '<tr><td>'+esc(label)+'</td><td>✓ '+es.length+(es.length===1?' Eintrag':' Einträge')+'</td><td>'+words+' Wörter</td><td>'+fixed+' Fehler verbessert</td>'+readCell(k)+'</tr>'
+        ? '<tr><td>'+esc(label)+'</td><td>✓ '+es.length+(es.length===1?' Eintrag':' Einträge')+'</td><td>'+words+' Wörter</td><td>'+(es.some(e => e.helped || e.deferred || e.overrides) ? 'Mit Hilfe, eigenen Entscheidungen oder offenen Stellen' : fixed+' Fehler verbessert')+'</td>'+readCell(k)+'</tr>'
         : '<tr><td>'+esc(label)+'</td><td class="no" colspan="3">nichts geschrieben</td>'+readCell(k)+'</tr>');
     }
     $("#stats").innerHTML = '<thead><tr><th>Tag</th><th>Geschrieben</th><th>Umfang</th><th>Rechtschreibung</th><th>Gelesen</th></tr></thead><tbody>'+rows.join("")+'</tbody>';
@@ -1306,21 +1585,26 @@
     const open = R().orders.filter(o => o.status === "open");
     const rd = state.readLog[today];
     const wp = weekPending();
-    const card = (big, label, go, alert) => (go ? '<button type="button" class="pcard' + (alert ? ' alert' : '') + '" data-goto="' + go + '">' : '<div class="pcard">') +
+    const card = (big, label, go, alert, subsection) => (go ? '<button type="button" class="pcard' + (alert ? ' alert' : '') + '" data-goto="' + go + '"'+(subsection?' data-subsection="'+subsection+'"':'')+'>' : '<div class="pcard">') +
       '<span class="big">' + big + '</span><span class="lbl2">' + label + '</span>' + (go ? '</button>' : '</div>');
     $("#pcards").innerHTML =
       card(wrote.length ? "✓" : "–", wrote.length ? "Heute geschrieben (" + wrote.reduce((s, e) => s + (e.words || 0), 0) + " Wörter)" : "Heute noch nichts geschrieben") +
       card("🔥 " + streak, streak === 1 ? "Tag am Stück" : "Tage am Stück") +
       card(wp.days.size + "/" + R().cfg.days, "Tage diese Woche geschrieben") +
       card(rd && rd.sec >= 60 ? Math.round(rd.sec / 60) + " Min." : "–", "Heute gelesen") +
-      card("🪙 " + fmtC(balance()), "Coins auf " + genitive(n) + " Konto", "rewards") +
-      card(open.length, open.length === 1 ? "offener Einkauf wartet" : "offene Einkäufe warten", "rewards", open.length > 0) +
+      card("🪙 " + fmtC(balance()), "Coins auf " + genitive(n) + " Konto", "rewards", false,"coins") +
+      card(open.length, open.length === 1 ? "offener Einkauf wartet" : "offene Einkäufe warten", "rewards", open.length > 0,"orders") +
       card("🎯 " + todaysTasks(), "Zusatzaufgaben heute", "spelling") +
       (folderReady()
         ? card("📁 ✓", "Im Tagebuch-Ordner gespeichert" + (STORE().lastSave ? ", " + ago(STORE().lastSave) : ""), "settings")
         : card("📁 !", STORE().mode === "browser" || !canFolder() ? "Nur im Browser gespeichert" : (dirHandle ? "Tagebuch-Ordner: Zugriff pausiert" : "Tagebuch-Ordner noch nicht gewählt"), "settings", true));
-    document.querySelectorAll("[data-goto]").forEach(b => b.onclick = () => goSection(b.dataset.goto));
+    document.querySelectorAll("[data-goto]").forEach(b => b.onclick = () => {
+      goSection(b.dataset.goto);
+      if(b.dataset.goto==="rewards" && b.dataset.subsection)window.TB_REWARDS_NAV?.goTo(b.dataset.subsection);
+      if(b.dataset.goto==="settings")window.TB_SETTINGS_WIZARD?.goTo("storage");
+    });
     const badge = $("#orderBadge"); badge.hidden = !open.length; badge.textContent = open.length;
+    renderMoodOverview();
   }
   function renderPracticeStats(){
     const since = addDays(todayKey(), -29), log = (state.practice ? state.practice.log : []).filter(l => l.date >= since && l.done);
@@ -1408,6 +1692,181 @@
     }catch(e){ $("#parentStatus").textContent = "Keine Verbindung zum Internet. Ohne Internet werden Nachrichten gesammelt und später verschickt."; }
   };
   $("#grammarOn").onchange = () => { state.parent.grammar = $("#grammarOn").checked; save(); $("#ltStatus").textContent = state.parent.grammar ? "Eingeschaltet." : "Ausgeschaltet."; };
+  for(const id of ["moodShareOn","moodAiOn"])$("#"+id).onchange=()=>{
+    state.parent.moodSharing={enabled:$("#moodShareOn").checked,ai:$("#moodAiOn").checked};save();renderMoodPicker();updateCount();renderMoodOverview();
+    $("#moodSettingsStatus").textContent="Gespeichert. Gilt für neue Einträge; vorhandene Texte werden nicht nachträglich ausgewertet.";
+  };
+  let tutorInstalled = new Set(), tutorSetupBusy = false, tutorPollTask = null, tutorSelectionJob = null;
+  const testedGraphics = new Set();
+  function cancelTutorSelection(){tutorSelectionJob?.controller.abort();}
+  function tutorModelInfo(){
+    const name = $("#tutorModel").value, model = TB_MODELS.find(m=>m.id === name), out = $("#tutorModelInfo");
+    out.replaceChildren();
+    if(model){
+      out.append(document.createTextNode(model.note + " Download: " + model.size + ". "));
+      const link = document.createElement("a");link.href = model.url;link.target = "_blank";link.rel = "noopener";link.textContent = "Modell und Lizenz: " + model.license;out.append(link);
+    }else if(name) out.textContent = "Weiteres lokales Textmodell. Bitte Verständlichkeit und Richtigkeit mit dem Beispiel prüfen.";
+    const busy=tutorSetupBusy || !!tutorSelectionJob;
+    $("#tutorSetup").disabled = busy || !model;
+    $("#tutorModel").disabled = busy;
+    $("#tutorExecution").disabled = busy;
+    $("#tutorProvider").disabled = busy;
+    $("#tutorFind").disabled = busy;
+    $("#tutorSelect").disabled = busy;
+    $("#tutorTest").disabled = busy || !name;
+    $("#tutorSave").disabled = busy;
+    $("#tutorSelectCancel").hidden=!tutorSelectionJob;
+  }
+  function tutorModelOptions(selected){
+    const select = $("#tutorModel");select.replaceChildren();
+    const add = (value,label)=>{const option=document.createElement("option");option.value=value;option.textContent=label;select.append(option);};
+    add("","Bitte Modell auswählen");
+    for(const m of TB_MODELS) add(m.id,m.label + " · " + m.size + (tutorInstalled.has(m.id) ? " · heruntergeladen" : " · Download verfügbar"));
+    for(const name of tutorInstalled) if(!TB_MODELS.some(m=>m.id===name)) add(name,name + " · heruntergeladenes Textmodell");
+    if(selected && ![...select.options].some(o=>o.value===selected)) add(selected,selected + " · gespeicherte Auswahl, noch nicht geprüft");
+    select.value=selected || "";tutorModelInfo();
+  }
+  async function refreshTutorModels(signal){
+    const models = await TB_OLLAMA.createProvider().listModels({signal:signal ? AbortSignal.any([signal,AbortSignal.timeout(45000)]) : AbortSignal.timeout(45000)});
+    tutorInstalled = new Set(models);
+    tutorModelOptions($("#tutorModel").value || (models.length === 1 ? models[0] : ""));
+    return models;
+  }
+  function pollTutorSetup(){
+    if(!tutorPollTask) tutorPollTask = watchTutorSetup().finally(()=>{tutorPollTask=null;});
+    return tutorPollTask;
+  }
+  async function watchTutorSetup(){
+    try {
+      do {
+        const job=await TB_LOCAL_AI.request("status",undefined,AbortSignal.timeout(5000));
+        if(job.model && !$("#tutorModel").value) tutorModelOptions(job.model);
+        tutorSetupBusy=job.busy;tutorModelInfo();
+        const progress=$("#tutorProgress");progress.hidden=!job.busy;
+        if(job.total){progress.max=job.total;progress.value=job.completed;}else progress.removeAttribute("value");
+        if(job.phase !== "idle" && !tutorSelectionJob){
+          const labels={runtime:"Lade KI-Laufzeit herunter …",extract:"Entpacke die KI-Laufzeit …",start:"Starte die lokale KI …",model:"Lade das gewählte Modell herunter …"};
+          $("#tutorStatus").textContent=job.busy ? (labels[job.phase] || "Richte die KI ein …") + (job.total ? " " + Math.round(job.completed/job.total*100) + " %" : "") : job.message;
+        }
+        if(!job.busy){if(job.phase === "ready") await refreshTutorModels();break;}
+        await new Promise(resolve=>setTimeout(resolve,1000));
+      }while(true);
+    }catch(e){$("#tutorStatus").textContent=e.message;tutorSetupBusy=false;$("#tutorProgress").hidden=true;tutorModelInfo();}
+  }
+  function renderTutorSettings(){
+    const cfg = tutorConfig(); $("#tutorProvider").value = ["ollama","openai"].includes(cfg.provider) ? cfg.provider : "off";
+    $("#tutorExecution").value=cfg.execution === "auto"?"auto":"cpu";
+    tutorModelOptions(cfg.model || "");
+    $("#tutorStatus").textContent = cfg.provider==="openai"?"OpenAI ausgewählt. Schlüssel, Verbindung und Freigaben findet ihr unten.":tutorEnabled() ? "Lokale Lernhilfe ausgewählt. Mit „Beispiel testen“ könnt ihr sie prüfen." : TB_TUTOR.STATUS_TEXT.disabled;
+    $("#tutorExample").hidden = true;
+    if(TB_LOCAL_AI.supportedOrigin && cfg.provider!=="openai") void pollTutorSetup();
+    void TB_OPENAI_SETTINGS.render(cfg);
+  }
+  function showSelectionResults(results){
+    const out=$("#tutorSelectionResults");out.replaceChildren();out.hidden=!results.length;
+    if(!results.length)return;
+    const table=document.createElement("table");table.className="stats";
+    const head=document.createElement("thead"),heading=document.createElement("tr");
+    for(const label of ["Modell","Verarbeitung","Ergebnis"]){const th=document.createElement("th");th.textContent=label;heading.append(th);}head.append(heading);table.append(head);
+    const body=document.createElement("tbody");
+    for(const result of results){
+      const row=document.createElement("tr");
+      for(const text of [result.model,result.execution==="auto"?"Grafik":"Prozessor",result.ok?"2 passende Antworten · Ø "+(result.averageMs/1000).toLocaleString("de-DE",{maximumFractionDigits:1})+" s":result.message || "Test fehlgeschlagen"]){const cell=document.createElement("td");cell.textContent=text;row.append(cell);}body.append(row);
+    }table.append(body);out.append(table);
+  }
+  async function selectLocalModel({models,executions=["auto","cpu"],applyWinner=true}={}){
+    if(tutorSelectionJob || tutorSetupBusy)return null;
+    const job={controller:new AbortController(),owner:family};tutorSelectionJob=job;tutorModelInfo();
+    $("#tutorExample").hidden=true;showSelectionResults([]);$("#tutorStatus").textContent="Suche geeignete heruntergeladene Modelle …";
+    try {
+      const names=models || await refreshTutorModels(job.controller.signal);
+      if(!names.length)throw new Error("Noch kein geeignetes Modell heruntergeladen. Bitte zuerst ein Modell einrichten.");
+      const report=await TB_AI_SELECTION.compare({models:names,executions,signal:job.controller.signal,onProgress:event=>{
+        if(job!==tutorSelectionJob)return;
+        const mode=event.execution==="auto"?"Grafikbeschleunigung":"Prozessor";
+        if(event.phase==="probe")$("#tutorStatus").textContent="Teste "+event.model+" · "+mode+" · Frage "+(event.probeIndex+1)+" von 2 (Variante "+(event.index+1)+" von "+event.total+") …";
+      }});
+      if(job.controller.signal.aborted || job.owner!==family)return null;
+      for(const result of report.results)if(result.ok && result.execution==="auto")testedGraphics.add(result.model);
+      showSelectionResults(report.results);
+      if(report.winner){
+        if(applyWinner){tutorModelOptions(report.winner.model);$("#tutorExecution").value=report.winner.execution;}
+        const label=report.winner.execution==="auto"?"Grafikbeschleunigung":"Prozessor";
+        $("#tutorStatus").textContent="Erfolgreich getestet: "+report.winner.model+" mit "+label+" · Ø "+(report.winner.averageMs/1000).toLocaleString("de-DE",{maximumFractionDigits:1})+" s ohne Modellladezeit. "+(applyWinner?"Ausgewählt. Bitte die gewünschte Lernhilfe speichern.":"Grafikbeschleunigung ist für dieses Modell verfügbar.");
+      }else{
+        if(executions.length===1 && executions[0]==="auto"){$("#tutorExecution").value="cpu";testedGraphics.delete(names[0]);}
+        $("#tutorStatus").textContent=executions.length===1 && executions[0]==="auto"?"Grafikbeschleunigung funktioniert hier mit diesem Modell nicht zuverlässig oder ist nicht verfügbar. Kompatibler Modus ausgewählt.":"Keine Variante hat beide Testfragen bestanden. Bitte ein anderes Modell ausprobieren. Die gespeicherte Lernhilfe wurde nicht geändert.";
+      }
+      return report;
+    }catch(error){
+      if(job.owner===family){
+        if(executions.length===1 && executions[0]==="auto")$("#tutorExecution").value="cpu";
+        $("#tutorStatus").textContent=job.controller.signal.aborted?"Test abgebrochen. Die gespeicherte Lernhilfe wurde nicht geändert.":error.message;
+      }return null;
+    }finally{if(tutorSelectionJob===job){tutorSelectionJob=null;tutorModelInfo();}}
+  }
+  $("#tutorSelect").onclick=()=>selectLocalModel();
+  $("#tutorSelectCancel").onclick=cancelTutorSelection;
+  $("#tutorExecution").onchange=()=>{
+    if($("#tutorExecution").value==="auto"){
+      const model=$("#tutorModel").value;
+      if(!model){$("#tutorExecution").value="cpu";$("#tutorStatus").textContent="Bitte zuerst ein Modell auswählen.";return;}
+      void selectLocalModel({models:[model],executions:["auto"],applyWinner:false});
+    }
+  };
+  $("#tutorModel").onchange=()=>{tutorModelInfo();$("#tutorExecution").onchange();};
+  $("#tutorSetup").onclick = async () => {
+    tutorSetupBusy=true;tutorModelInfo();
+    try {
+      await TB_LOCAL_AI.request("setup",{model:$("#tutorModel").value},AbortSignal.timeout(5000));
+      if(tutorPollTask) await tutorPollTask;
+      await pollTutorSetup();
+    }catch(e){$("#tutorStatus").textContent=e.message;tutorSetupBusy=false;tutorModelInfo();}
+  };
+  $("#tutorSave").onclick = async () => {
+    if($("#tutorProvider").value==="openai"){
+      const button=$("#tutorSave");button.disabled=true;
+      try{
+        const cfg=await TB_OPENAI_SETTINGS.save();cancelLearningHelp();spellingReviewCache=null;
+        state.parent.learningHelp={provider:cfg.ready?"openai":"off",model:cfg.model};save();renderMoodPicker();updateCount();
+        $("#tutorStatus").textContent=cfg.ready?"Gespeichert. OpenAI prüft den Haupttext und hilft bei den markierten Stellen. Antworten auf Tagesfragen und Gefühlsauswahl werden nicht gesendet.":"OpenAI ist für Kindertexte ausgeschaltet. Die Freigabe wurde zurückgenommen.";
+      }catch(error){$("#tutorStatus").textContent=error.message;}
+      finally{button.disabled=false;}
+      return;
+    }
+    const provider = $("#tutorProvider").value, model = $("#tutorModel").value.trim();
+    if(provider === "ollama" && (!model || model.length > 120)){ $("#tutorStatus").textContent = "Bitte zuerst ein Sprachmodell auswählen und herunterladen."; return; }
+    if(provider==="ollama" && $("#tutorExecution").value==="auto" && !testedGraphics.has(model)){
+      const report=await selectLocalModel({models:[model],executions:["auto"],applyWinner:false});if(!report?.winner)return;
+    }
+    cancelLearningHelp();spellingReviewCache=null; state.parent.learningHelp = { provider:provider === "ollama" ? "ollama" : "off", model,execution:$("#tutorExecution").value === "auto"?"auto":"cpu" }; save();renderMoodPicker();
+    $("#tutorStatus").textContent = "Gespeichert. " + (tutorEnabled() ? "Die zusätzliche Lernhilfe ist lokal auf diesem PC eingerichtet." : "Die zusätzliche Lernhilfe ist ausgeschaltet.");
+  };
+  $("#tutorFind").onclick = async () => {
+    const button = $("#tutorFind"), out = $("#tutorStatus"); button.disabled = true; out.textContent = "Suche installierte Modelle …";
+    try{
+      const models = await refreshTutorModels();
+      out.textContent = models.length ? "Gefundene lokale Textmodelle: " + models.join(", ") : "Noch kein lokales Textmodell gefunden. Modell auswählen und „Lokale KI und Modell herunterladen“ wählen.";
+    }catch(e){ out.textContent = e.message || TB_TUTOR.STATUS_TEXT.unreachable; }
+    finally{ button.disabled = false; }
+  };
+  $("#tutorTest").onclick = async () => {
+    if($("#tutorProvider").value==="openai"){
+      const button=$("#tutorTest");button.disabled=true;
+      try{await TB_OPENAI_SETTINGS.test();}catch(error){$("#tutorStatus").textContent=error.message;}
+      finally{button.disabled=false;}
+      return;
+    }
+    const button = $("#tutorTest"), out = $("#tutorStatus"), box = $("#tutorExample");
+    const service = TB_TUTOR.createTutor({ provider:TB_OLLAMA.createProvider({ model:$("#tutorModel").value.trim(),execution:$("#tutorExecution").value }) });
+    button.disabled = true; box.hidden = true; out.textContent = "Teste mit einem erfundenen Satz …";
+    try{
+      const reply = await service.explain({ sentence:"Ich spiele mit meinem Hunt.", target:"Hunt", checkerHint:"Harte und weiche Laute", mode:"solution" });
+      box.textContent = reply.explanation + (reply.question ? "\n" + reply.question : "") + (reply.suggestion ? "\nMöglicher Vorschlag: " + reply.suggestion : ""); box.hidden = false;
+      out.textContent = "Die Verbindung funktioniert. Bitte prüft, ob die Erklärung richtig und verständlich ist. Anschließend die gewünschte Lernhilfe speichern.";
+    }catch(e){ out.textContent = e.message; }
+    finally{ button.disabled = false; }
+  };
   $("#testLT").onclick = async () => {
     const out = $("#ltStatus"); out.textContent = "Teste …";
     const where = location.protocol === "file:" ? "als Datei geöffnet" : "über " + location.host;
@@ -1432,10 +1891,10 @@
     pinForm(box, { mode:"set", intro:"Neue Eltern-PIN eingeben:", button:"Speichern", cancel: () => { box.innerHTML = ""; },
       onOk: async v => { state.parent.pinHash = await hashPin(v); state.parent.pin = ""; save(); box.innerHTML = '<p class="note">Neue Eltern-PIN gespeichert.</p>'; } });
   };
-  $("#resetKidPin").onclick = () => {
+  $("#resetKidPin").onclick = async () => {
     const n = childName();
     if(!state.kidPinHash){ $("#kidPinMsg").textContent = n + " hat noch keine PIN."; return; }
-    if(!confirm(n + "s PIN wirklich zurücksetzen? " + n + " legt dann beim nächsten Öffnen eine neue PIN fest und sieht einen Hinweis, dass ihr sie zurückgesetzt habt.")) return;
+    if(!await confirmAction("Kinder-PIN zurücksetzen",n + "s PIN wirklich zurücksetzen? " + n + " legt dann beim nächsten Öffnen eine neue PIN fest und sieht einen Hinweis, dass ihr sie zurückgesetzt habt.","security")) return;
     state.kidPinHash = ""; state.kidPinReset = true; save(); renderParent();
     $("#kidPinMsg").textContent = "Zurückgesetzt.";
   };
@@ -1459,13 +1918,18 @@
     document.title = "Mein Tagebuch";
   }
   function enterChild(id){
+    cancelMoodFinish();
+    cancelTutorSelection();
+    spellingReviewCache=null;
+    cancelLearningHelp();
     useChild(id); save();
     // reset everything that belongs to the previous child
-    session = newSession(); resultEl.hidden = true; resultEl.innerHTML = ""; doneEl.hidden = true; doneEl.innerHTML = ""; $("#writeArea").hidden = false; checkBtn.textContent = "Prüfen";
+    session = newSession(); resultEl.hidden = true; resultEl.innerHTML = ""; doneEl.hidden = true; doneEl.innerHTML = ""; $("#writeArea").hidden = false;writingSidebar.hidden=false;reflectionDetails.open=true; checkBtn.textContent = "Prüfen";
     ta.value = state.draft || ""; QUESTIONS.forEach(([k]) => { qa[k].value = (state.draftQ || {})[k] || ""; });
+    renderMoodPicker();
     $("#ideaPanel").hidden = true; $("#kidTitle").textContent = diaryTitle(); document.title = diaryTitle();
     if(typeof GM !== "undefined" && GM){ GM.over = true; GM = null; }
-    applyPrefs(); updateCount(); renderStreak(); renderWords(); renderEntries(); renderNames(); renderCoinBadge(); restoreDraftPic();
+    applyPrefs(); updateCount(); renderStreak(); renderNames(); renderCoinBadge(); restoreDraftPic();
   }
   function show(view){
     if(typeof arcadeTimer !== "undefined" && arcadeTimer) closeArcade();
@@ -1474,7 +1938,7 @@
     ["homeView","kidView","kidLockView","parentView"].forEach(v => { $("#" + v).hidden = v !== view; });
     window.scrollTo(0, 0);
   }
-  function goHome(){ parentOpen = false; renderPinBox(); renderStreak(); renderHome(); show("homeView"); }
+  function goHome(){ cancelMoodFinish();cancelTutorSelection();cancelLearningHelp(); parentOpen = false; renderPinBox(); renderStreak(); renderHome(); show("homeView"); }
   document.querySelectorAll("[data-home]").forEach(b => b.onclick = goHome);
   function openKid(){ settleWeeks(); renderCoinBadge(); showView(false); show("kidView"); }
   function renderKidLock(change){
@@ -1525,7 +1989,7 @@
   }
   $("#childSel").onchange = () => { useChild($("#childSel").value); save(); renderParent(); };
   $("#addKid").onclick = () => { if(addChild($("#newKidName").value)){ $("#newKidName").value = ""; $("#kidMsg").textContent = "Angelegt."; renderParent(); renderHome(); } else $("#kidMsg").textContent = "Bitte einen Namen eingeben."; };
-  $("#addKidTop").onclick = () => { goSection("settings"); $("#newKidName").focus(); };
+  $("#addKidTop").onclick = () => { goSection("settings");window.TB_SETTINGS_WIZARD?.goTo("children",{focus:false}); $("#newKidName").focus(); };
 
   // =====================================================================
   // 🎯 PRACTICE: word dictation + short dictation (texts: MiniKlexikon/Klexikon, CC BY-SA 4.0)
@@ -1633,7 +2097,7 @@
     const p = P(), n = WD.items.length;
     p.log.push({ date: todayKey(), type: "words", n, right: WD.right, cats: WD.cats, done: true });
     if(p.log.length > 400) p.log.splice(0, p.log.length - 400);
-    save(); renderWords();
+    save();
     $("#practiceBox").innerHTML = '<div class="pcardx done"><div class="bigok">' + (WD.right === n ? "🏆" : "✅") + '</div><h3>' + WD.right + ' von ' + n + ' Wörtern richtig!</h3>' +
       '<p>' + (WD.right === n ? "Perfekt! " : "Die falschen Wörter kommen in den nächsten Tagen wieder, bis sie sitzen. ") + 'Das war eine Zusatzaufgabe' + gameBonusText() + '.</p>' +
       '<div class="below"><button type="button" class="btn-ghost" id="pBack">Zurück zur Übersicht</button></div></div>';
@@ -1730,7 +2194,7 @@
     });
     const p = P(); p.usedDict.push(DT.id);
     p.log.push({ date: todayKey(), type: "dict", id: DT.id, topic: DT.topic, words, errors, cats, done: true });
-    save(); renderWords();
+    save();
     const grade = errors === 0 ? "🏆 Fehlerfrei!" : errors <= 2 ? "⭐ Sehr gut!" : errors <= 5 ? "👍 Gut gemacht!" : "💪 Weiter üben, du schaffst das!";
     $("#practiceBox").innerHTML = '<div class="pcardx"><h3>' + grade + ' ' + errors + (errors === 1 ? ' Fehler' : ' Fehler') + ' bei ' + words + ' Wörtern</h3>' +
       '<div class="cmpgrid"><div><b>Dein Diktat</b><p class="cmp">' + typedHtml.join("").trim() + '</p></div><div><b>So ist es richtig</b><p class="cmp">' + origHtml.join("").trim() + '</p></div></div>' +
@@ -1748,7 +2212,7 @@
     box.innerHTML = (speech ? '' : '<div class="warn">Dein Browser hat keine deutsche Vorlesestimme. Unter Windows: Einstellungen → Zeit und Sprache → Sprache → Deutsch → Sprachausgabe installieren. Oder Chrome bzw. Edge verwenden.</div>') +
       '<p class="note">Freiwillige Zusatzaufgaben. Heute erledigt: <b>' + n + '</b>.' + (R().cfg.gamePerTask ? ' Jede bringt +' + R().cfg.gamePerTask + ' Minuten Spielzeit 🎮.' : '') + '</p>' +
       '<div class="tasks">' +
-      '<button type="button" class="task" id="tWords" ' + (speech ? '' : 'disabled') + '><span class="ti">🔤</span><b>Wort-Diktat</b><span>10 Wörter, passend zu deinen Fehler-Detektiven' + (due ? ' (' + due + ' Wiederholungen fällig)' : '') + '. Ca. 5 Minuten.</span></button>' +
+      '<button type="button" class="task" id="tWords" ' + (speech ? '' : 'disabled') + '><span class="ti">🔤</span><b>Wort-Diktat</b><span>10 Wörter, passend zu den Wörtern, die du übst' + (due ? ' (' + due + ' Wiederholungen fällig)' : '') + '. Ca. 5 Minuten.</span></button>' +
       '<button type="button" class="task" id="tDict" ' + (speech ? '' : 'disabled') + '><span class="ti">📝</span><b>Kurz-Diktat</b><span>Ein kurzer Text aus dem Kinderlexikon, immer ein anderes Thema. Ca. 10 Minuten.</span></button>' +
       '</div>' +
       (p.log.length ? '<h3>Zuletzt geübt</h3><ul class="orders">' + p.log.slice(-6).reverse().map(l => '<li><span>' + (l.type === "words" ? "🔤" : "📝") + '</span><b>' + (l.type === "words" ? l.right + "/" + l.n + " Wörter richtig" : l.errors + " Fehler bei " + l.words + " Wörtern") + '</b>' + (l.topic ? '<span>' + esc(l.topic) + '</span>' : '') + '<span class="when">' + fmtShort(l.date) + '</span></li>').join("") + '</ul>' : '');
@@ -1989,7 +2453,8 @@
   //    kinder/<Name>/files/bilder/<id>.bild     drawings (encrypted)
   //    kinder/<Name>/files/sicherungen/…        daily copies, last 14 days
   // =====================================================================
-  const canFolder = () => typeof window.showDirectoryPicker === "function";
+  let managedStore = null, storeConnecting = false, storeConnectError = "";
+  const canFolder = () => !!managedStore || typeof window.showDirectoryPicker === "function";
   const hdb = { open(){ return new Promise((res, rej) => { const r = indexedDB.open("tagebuch-ordner", 1); r.onupgradeneeded = () => r.result.createObjectStore("h"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); },
     async get(){ try{ const db = await this.open(); return await new Promise(res => { const q = db.transaction("h").objectStore("h").get("dir"); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); }); }catch(e){ return null; } },
     async set(v){ try{ const db = await this.open(); return await new Promise(res => { const tx = db.transaction("h", "readwrite"); v ? tx.objectStore("h").put(v, "dir") : tx.objectStore("h").delete("dir"); tx.oncomplete = res; tx.onerror = res; }); }catch(e){ return null; } } };
@@ -2008,8 +2473,8 @@
   async function dec(text){ const f = JSON.parse(text); if(!f || !f.tagebuch) return text; return new TextDecoder().decode(await crypto.subtle.decrypt({ name:"AES-GCM", iv: b64d(f.iv) }, await famKey(), b64d(f.data))); }
   // --- file helpers ---
   async function dirAt(path, create){ let d = dirHandle; for(const p of path.split("/").filter(Boolean)) d = await d.getDirectoryHandle(p, { create: create !== false }); return d; }
-  async function writeText(path, text){ const parts = path.split("/"), name = parts.pop(); const d = await dirAt(parts.join("/")); const fh = await d.getFileHandle(name, { create:true }); const w = await fh.createWritable(); await w.write(text); await w.close(); }
-  async function readText(path){ try{ const parts = path.split("/"), name = parts.pop(); const d = await dirAt(parts.join("/"), false); return await (await (await d.getFileHandle(name)).getFile()).text(); }catch(e){ return null; } }
+  async function writeText(path, text){ if(managedStore) return managedStore.write(path,text); const parts = path.split("/"), name = parts.pop(); const d = await dirAt(parts.join("/")); const fh = await d.getFileHandle(name, { create:true }); const w = await fh.createWritable(); await w.write(text); await w.close(); }
+  async function readText(path){ if(managedStore) return managedStore.read(path); try{ const parts = path.split("/"), name = parts.pop(); const d = await dirAt(parts.join("/"), false); return await (await (await d.getFileHandle(name)).getFile()).text(); }catch(e){ return null; } }
   function safeFolder(name){
     let base = (name || "kind").normalize("NFC").replace(/[\\/:*?"<>|.]+/g, "").replace(/\s+/g, " ").trim().slice(0, 40) || "kind";
     const used = new Set(family.children.map(id => family.data[id].folder).filter(Boolean));
@@ -2020,6 +2485,7 @@
   function childJSON(c){ return JSON.stringify(c, function(k, v){ return k === "parent" && this !== family ? undefined : v; }); }
   // --- permission / connect ---
   async function folderPermission(ask){
+    if(managedStore) return dirOk;
     if(!dirHandle) return false;
     try{ let p = await dirHandle.queryPermission({ mode:"readwrite" }); if(p !== "granted" && ask) p = await dirHandle.requestPermission({ mode:"readwrite" }); dirOk = p === "granted"; }
     catch(e){ dirOk = false; }
@@ -2028,21 +2494,27 @@
   async function connectFolder(){
     // newer data wins: folder config vs. this browser
     const cfgText = await readText("config/familie.json");
-    const cfg = cfgText ? JSON.parse(cfgText) : null;
+    const cfg = cfgText !== null ? JSON.parse(cfgText) : null;
+    if(cfg && (!Array.isArray(cfg.children) || !cfg.parent || typeof cfg.parent !== "object" || typeof cfg.key !== "string" ||
+      !cfg.children.every(c => c && typeof c.id === "string" && typeof c.folder === "string"))){
+      throw new Error("Die vorhandenen Familiendaten sind unvollständig. Es werden keine Daten überschrieben.");
+    }
     const localHasData = family.children.length > 0;
     if(cfg && cfg.children && (!localHasData || (cfg.savedAt || 0) >= (family.savedAt || 0))){
       const fam = { v:2, parent: cfg.parent || {}, salt: cfg.salt || "", key: cfg.key, savedAt: cfg.savedAt, children: [], data: {}, active: cfg.active };
       const prevKey = family.key; family.key = cfg.key; keyCache = null;
-      for(const c of cfg.children){
-        const t = await readText("kinder/" + c.folder + "/files/tagebuch.json"); if(!t) continue;
-        try{ const d = JSON.parse(await dec(t)); Object.assign(d, { id: c.id, name: c.name, folder: c.folder }); fam.children.push(c.id); fam.data[c.id] = d; written[c.id] = childJSON(d); }catch(e){}
-      }
-      if(cfg.children.length && !fam.children.length){ family.key = prevKey; keyCache = null; throw new Error("Die Tagebuch-Dateien konnten nicht gelesen werden."); }
+      try{
+        for(const c of cfg.children){
+          const t = await readText("kinder/" + c.folder + "/files/tagebuch.json"); if(!t) continue;
+          try{ const d = JSON.parse(await dec(t)); Object.assign(d, { id: c.id, name: c.name, folder: c.folder }); fam.children.push(c.id); fam.data[c.id] = d; written[c.id] = childJSON(d); }catch(e){}
+        }
+        if(cfg.children.length !== fam.children.length) throw new Error("Die Tagebuch-Dateien konnten nicht vollständig gelesen werden. Es werden keine vorhandenen Daten überschrieben.");
+      }catch(error){ family.key = prevKey; keyCache = null; throw error; }
       family = fam; family.parent = Object.assign({ pin:"", topic:"", notifyRead:false, lastReadPing:"", readMin:2, queue:[], grammar:true }, family.parent || {}); family.parent.queue = family.parent.queue || [];
       useChild(family.data[family.active] ? family.active : family.children[0]);
       try{ localStorage.setItem(KEY, childJSON(family)); }catch(e){}
     } else {
-      if(!cfg && family.children.length){
+      if(!cfg && family.children.length && !managedStore){
         const names = family.children.map(id => family.data[id].name || "ohne Namen").join(", ");
         const n = family.children.reduce((s, id) => s + family.data[id].entries.length, 0);
         const pick = await choiceDialog({ title: "📔 Vorhandenes Tagebuch gefunden",
@@ -2058,6 +2530,21 @@
     }
   }
   async function initFolder(){
+    if(window.TB_LOCAL_STORE && location.protocol === "http:" && ["127.0.0.1","localhost"].includes(location.hostname)){
+      storeConnecting = true; storeConnectError = ""; renderGate();
+      try{
+        const local = await TB_LOCAL_STORE.connect();
+        if(local){
+          managedStore = local; dirHandle = {name:"Tagebuch-Daten"}; dirOk = true; STORE().mode = "folder";
+          await connectFolder(); STORE().mode = "folder";
+        }
+      }catch(e){ storeConnectError = e instanceof SyntaxError ? "Die vorhandenen Speicherdaten sind nicht lesbar. Es werden keine Daten überschrieben." : e.message || "Die lokale Speicherung ist nicht verfügbar."; dirOk = false; }
+      finally{ storeConnecting = false; }
+      if(managedStore || storeConnectError){
+        if(managedStore && !storeConnectError) save();
+        renderGate(); afterDataChange(); return;
+      }
+    }
     if(STORE().mode !== "folder" || !canFolder()){ renderGate(); return; }
     dirHandle = await hdb.get();
     if(dirHandle && await folderPermission(false)){ try{ await connectFolder(); }catch(e){} }
@@ -2068,7 +2555,9 @@
   function renderGate(){
     const g = $("#folderGate"), st = STORE();
     let html = "";
-    if(st.mode === "folder" && canFolder()){
+    if(storeConnecting) html = '<h2>Lokale Speicherung wird verbunden …</h2><p>Der Datenordner wird automatisch eingerichtet.</p>';
+    else if(storeConnectError) html = '<h2>Lokale Speicherung nicht verfügbar</h2><p>'+esc(storeConnectError)+'</p><p>Bitte prüfe, ob der Dev-Server läuft.</p><button type="button" class="btn" id="gateRetry">Erneut verbinden</button>';
+    else if(!managedStore && st.mode === "folder" && canFolder()){
       if(!dirHandle) html = '<div class="gatebig">📁</div><h2>Willkommen!</h2><p>Wähle einmalig den Ordner <b>„Tagebuch“</b> aus, in dem die Datei „Tagebuch.html“ liegt. Dort werden alle Einträge gespeichert.</p><div class="below center"><button type="button" class="btn" id="gatePick">Tagebuch-Ordner wählen</button></div><p class="note">Ohne Ordner geht es auch: <button type="button" class="linkbtn" id="gateBrowser">nur im Browser speichern</button></p>';
       else if(!dirOk) html = '<div class="gatebig">📁</div><h2>Ordner „' + esc(dirHandle.name) + '“ freigeben</h2><p>Der Browser fragt nach einem Neustart nach der Erlaubnis. Wähle <b>„Bei jedem Besuch zulassen“</b>, dann kommt die Frage nicht wieder.</p><div class="below center"><button type="button" class="btn" id="gateAllow">Zugriff erlauben</button></div>';
     }
@@ -2078,21 +2567,23 @@
     if(html) $("#noKids").hidden = true; else renderHome();
     const on = (id, fn) => { const b = document.getElementById(id); if(b) b.onclick = fn; };
     on("gatePick", pickFolder);
-    on("gateAllow", async () => { if(await folderPermission(true)){ try{ await connectFolder(); }catch(e){ alert(e.message); } renderGate(); afterDataChange(); } });
-    on("gateBrowser", () => { if(!confirm("Nur im Browser speichern? Werden die Browserdaten gelöscht, ist dann alles weg. Ihr könnt das später im Elternbereich ändern.")) return; STORE().mode = "browser"; save(); renderGate(); });
+    on("gateRetry", initFolder);
+    on("gateAllow", async () => { if(await folderPermission(true)){ try{ await connectFolder(); }catch(e){ await informationDialog("Speicherfehler",e.message); } renderGate(); afterDataChange(); } });
+    on("gateBrowser", async () => { if(!await confirmAction("Browserspeicher verwenden","Nur im Browser speichern? Werden die Browserdaten gelöscht, ist dann alles weg. Ihr könnt das später im Elternbereich ändern.","storage")) return; STORE().mode = "browser"; save(); renderGate(); });
   }
   async function pickFolder(){
+    if(managedStore) return;
     try{
       const h = await window.showDirectoryPicker({ id:"tagebuch", mode:"readwrite", startIn:"documents" });
       dirHandle = h; await hdb.set(h); await folderPermission(true);
       let hasApp = false; try{ await h.getFileHandle("Tagebuch.html"); hasApp = true; }catch(e){}
-      if(!hasApp && !confirm("In diesem Ordner liegt keine „Tagebuch.html“. Trotzdem hier speichern?")){ dirHandle = null; await hdb.set(null); return; }
+      if(!hasApp && !await confirmAction("Speicherordner auswählen","In diesem Ordner liegt keine „Tagebuch.html“. Trotzdem hier speichern?","storage")){ dirHandle = null; await hdb.set(null); return; }
       STORE().mode = "folder"; await connectFolder(); save();
-    }catch(e){ if(e && e.name !== "AbortError") alert("Der Ordner konnte nicht verwendet werden. " + (e.message || "")); }
+    }catch(e){ if(e && e.name !== "AbortError") await informationDialog("Speicherfehler","Der Ordner konnte nicht verwendet werden. " + (e.message || "")); }
     renderGate(); afterDataChange(); if(!$("#parentArea").hidden) renderStore();
   }
   // --- writing ---
-  function scheduleAutoSave(ms){ if(!folderReady()) return; clearTimeout(flushTimer); flushTimer = setTimeout(() => flushFolder(), ms == null ? 1500 : ms); }
+  function scheduleAutoSave(ms){ if(storeConnecting || storeConnectError || !folderReady()) return; clearTimeout(flushTimer); flushTimer = setTimeout(() => flushFolder(), ms == null ? 1500 : ms); }
   async function flushFolder(force){
     if(!dirHandle || !dirOk) return;
     if(flushing2){ flushAgain = true; return; }
@@ -2111,7 +2602,10 @@
         await writeText(childDir(c) + "tagebuch.json", data);
         await writeText(childDir(c) + "sicherungen/tagebuch-" + todayKey() + ".json", data);
         const cut = addDays(todayKey(), -14);
-        try{ const sd = await dirAt(childDir(c) + "sicherungen"); for await (const [name] of sd.entries()){ const m = /^tagebuch-(\d{4}-\d{2}-\d{2})\.json$/.exec(name); if(m && m[1] < cut) await sd.removeEntry(name).catch(() => {}); } }catch(e){}
+        try{
+          if(managedStore){ const path = childDir(c) + "sicherungen"; for(const name of await managedStore.list(path)){ const m = /^tagebuch-(\d{4}-\d{2}-\d{2})\.json$/.exec(name); if(m && m[1] < cut) await managedStore.remove(path + "/" + name); } }
+          else {const sd = await dirAt(childDir(c) + "sicherungen"); for await (const [name] of sd.entries()){ const m = /^tagebuch-(\d{4}-\d{2}-\d{2})\.json$/.exec(name); if(m && m[1] < cut) await sd.removeEntry(name).catch(() => {}); }}
+        }catch(e){}
         written[id] = json;
       }
       STORE().lastSave = Date.now(); STORE().lastError = "";
@@ -2151,13 +2645,26 @@
   function choiceDialog(o){   // two harmless choices; closing the dialog picks the safe default
     return new Promise(res => {
       const d = $("#dangerDlg");
-      d.innerHTML = '<div class="modalbox choicebox" role="dialog" aria-modal="true"><h3>' + esc(o.title) + '</h3>' + o.html +
+      d.innerHTML = '<div class="modalbox choicebox" role="dialog" aria-modal="true" data-help-topic="'+esc(o.topic || "general")+'"><h3>' + esc(o.title) + '</h3>' + o.html +
         '<div class="below"><button type="button" class="btn-ghost" id="chB">' + esc(o.b) + '</button><button type="button" class="btn" id="chA">' + esc(o.a) + '</button></div></div>';
       d.hidden = false;
       const done = v => { d.hidden = true; d.innerHTML = ""; res(v); };
       $("#chA").onclick = () => done("a"); $("#chB").onclick = () => done("b"); $("#chA").focus();
       d.onclick = e => { if(e.target === d) done("a"); };
       d.onkeydown = e => { if(e.key === "Escape") done("a"); };
+    });
+  }
+  async function confirmAction(title,text,topic){
+    return (await choiceDialog({title,html:'<p>'+esc(text)+'</p>',a:"Abbrechen",b:"Bestätigen",topic})) === "b";
+  }
+  function informationDialog(title,text){
+    return new Promise(resolve=>{
+      const dialog=$("#dangerDlg");
+      dialog.innerHTML='<div class="modalbox" role="dialog" aria-modal="true" data-help-topic="storage"><h3>'+esc(title)+'</h3><p>'+esc(text)+'</p><button type="button" class="btn" id="infoClose">Schließen</button></div>';
+      dialog.hidden=false;
+      const done=()=>{dialog.hidden=true;dialog.replaceChildren();resolve();};
+      $("#infoClose").onclick=done;$("#infoClose").focus();
+      dialog.onclick=event=>{if(event.target===dialog)done();};dialog.onkeydown=event=>{if(event.key==="Escape")done();};
     });
   }
   async function wipeBrowserData(keepFolder){
@@ -2171,12 +2678,17 @@
     family = { v:2, parent, salt:"", children:[], data:{}, active:null };
     useChild(null);
   }
-  async function removeChildFolder(c){ if(!folderReady() || !c.folder) return; try{ const k = await dirAt("kinder"); await k.removeEntry(c.folder, { recursive:true }); }catch(e){} }
+  async function removeChildFolder(c){ if(!folderReady() || !c.folder) return; try{ if(managedStore) await managedStore.remove("kinder/" + c.folder); else {const k = await dirAt("kinder"); await k.removeEntry(c.folder, { recursive:true });} }catch(e){} }
   function ago(ts){ const s = Math.round((Date.now() - ts) / 1000); return s < 60 ? "gerade eben" : s < 3600 ? "vor " + Math.round(s / 60) + " Min." : s < 86400 ? "vor " + Math.round(s / 3600) + " Std." : "vor " + Math.round(s / 86400) + " Tagen"; }
   function renderStore(){
     const st = STORE(), card = $("#storeCard");
     let html, cls;
-    if(st.mode === "browser"){
+    if(managedStore){
+      cls = st.lastError || storeConnectError ? "warn" : "ok";
+      html = '<div class="big">💾 Automatisch auf diesem PC</div><p>Speicherort: <code>'+esc(managedStore.directory)+'</code></p><p class="note">Es ist keine Ordnerauswahl nötig. Einstellungen, verschlüsselte Tagebücher, Bilder und Tagesstände werden hier gespeichert'+(st.lastSave?', zuletzt '+ago(st.lastSave):'')+'.</p>' +
+        (st.lastError || storeConnectError ? '<p class="alerttext">'+esc(st.lastError || storeConnectError)+'</p>' : '') +
+        '<div class="below"><button type="button" class="btn-ghost" id="stNow">Jetzt speichern</button><button type="button" class="btn-ghost" id="stRetry">Verbindung erneuern</button></div><p class="note">Vorhandene Daten aus der bisherigen Datei-Version könnt ihr über eine verschlüsselte Sicherung übernehmen.</p>';
+    } else if(st.mode === "browser"){
       cls = "warn"; html = '<div class="big">🌐 Nur im Browser</div><p class="note">Die Daten liegen nur im Speicher dieses Browsers. Werden die Browserdaten gelöscht, ist alles weg. Ladet dann bitte regelmäßig eine Sicherung herunter.</p>' + (canFolder() ? '<div class="below"><button type="button" class="btn" id="stToFolder">Im Tagebuch-Ordner speichern</button></div>' : '');
     } else if(!canFolder()){
       cls = "warn"; html = '<div class="big">📁 In diesem Browser nicht möglich</div><p class="note">Das Speichern im Tagebuch-Ordner geht nur in Chrome oder Edge am PC. Hier wird im Browser gespeichert. Ladet bitte regelmäßig eine Sicherung herunter.</p>';
@@ -2191,10 +2703,11 @@
     card.className = "storecard " + cls; card.innerHTML = html;
     const on = (id, fn) => { const b = document.getElementById(id); if(b) b.onclick = fn; };
     on("stToFolder", () => { st.mode = "folder"; save(); renderStore(); initFolder(); });
-    on("stToBrowser", () => { if(!confirm("Wirklich nur im Browser speichern? Dann wird nicht mehr in den Tagebuch-Ordner geschrieben.")) return; st.mode = "browser"; save(); renderStore(); renderGate(); });
+    on("stToBrowser", async () => { if(!await confirmAction("Browserspeicher verwenden","Wirklich nur im Browser speichern? Dann wird nicht mehr in den Tagebuch-Ordner geschrieben.","storage")) return; st.mode = "browser"; save(); renderStore(); renderGate(); });
     on("stReconnect", async () => { if(await folderPermission(true)){ try{ await connectFolder(); }catch(e){} } renderStore(); renderGate(); });
     on("stNow", async () => { await flushFolder(true); renderStore(); });
     on("stPick", pickFolder);
+    on("stRetry", initFolder);
   }
   function saveQuiet(){ try{ localStorage.setItem(KEY, childJSON(family)); }catch(e){} }
 
@@ -2226,7 +2739,7 @@
   $("#rsDo").onclick = async () => {
     const f = $("#rsFile").files[0], pw = $("#rsPw").value, m = $("#rsMsg");
     if(!f || !pw){ m.textContent = "Bitte Datei auswählen und Kennwort eingeben."; return; }
-    if(!confirm("Achtung: Alles, was jetzt im Tagebuch steht, wird durch die Sicherung ersetzt. Fortfahren?")) return;
+    if(!await confirmAction("Sicherung wiederherstellen","Achtung: Alles, was jetzt im Tagebuch steht, wird durch die Sicherung ersetzt. Fortfahren?","backup")) return;
     m.textContent = "Wird wiederhergestellt …";
     try{ await restoreBackup(f, pw); m.textContent = "Wiederhergestellt. Das Tagebuch lädt neu …"; setTimeout(() => location.reload(), 900); }
     catch(e){ m.textContent = e.message || "Das hat nicht geklappt."; }
@@ -2262,13 +2775,13 @@
       (bank.bal ? '<div class="formrow"><label class="field">Tag<input type="date" id="jokerDay" min="' + minDay + '" max="' + maxDay + '"></label><button type="button" class="btn" id="jokerUse">Joker einsetzen</button></div><p class="status" id="jokerMsg" role="status"></p>' : '') +
       (mine.length ? '<ul class="orders">' + mine.map(j => '<li><span>🃏</span><b>' + fmtD(j.date) + '</b><span class="when">' + (j.date > today ? 'eingeplant' : 'eingesetzt') + '</span>' + (j.date > today ? '<button type="button" class="btn-ghost" data-unjoker="' + j.date + '">Zurücknehmen</button>' : '') + '</li>').join("") + '</ul>' : '');
     const use = $("#jokerUse");
-    if(use) use.onclick = () => {
+    if(use) use.onclick = async () => {
       const d = $("#jokerDay").value, msg = $("#jokerMsg");
       if(!d){ msg.textContent = "Bitte zuerst einen Tag auswählen."; return; }
       if(d < minDay){ msg.textContent = "Joker gehen nur für Tage ab dem Montag dieser Woche."; return; }
       if(d > maxDay){ msg.textContent = "So weit im Voraus geht es noch nicht."; return; }
       if(cov.has(d)){ msg.textContent = "Dieser Tag zählt schon als geschafft."; return; }
-      if(!confirm("Joker für " + fmtD(d) + " einsetzen?")) return;
+      if(!await confirmAction("Joker einsetzen","Joker für " + fmtD(d) + " einsetzen?","rewards")) return;
       bank.bal--; (state.jokers = state.jokers || []).push({ date: d, used: today }); save();
       notify("🃏 " + childName() + " hat einen Joker für " + fmtShort(d) + (d > today ? " eingeplant." : " eingesetzt."));
       renderShop(); renderJoker(); renderStreak();
@@ -2372,7 +2885,7 @@
   $("#dateLabel").textContent = fmtDate(todayKey());
   if(state.draft) ta.value = state.draft;
   QUESTIONS.forEach(([k]) => { if(state.draftQ[k]) qa[k].value = state.draftQ[k]; });
-  renderStreak(); renderWords(); renderEntries(); renderNames(); updateCount(); renderPinBox(); flushQueue();
+  renderStreak(); renderNames(); updateCount(); renderPinBox(); flushQueue();
   family.children.forEach(id => withChild(id, () => { settleWeeks(); weeklyReport(); }));
   initFolder();
   if(state.id && family.data[state.id]) enterChild(state.id);

@@ -1,0 +1,53 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const {spawnSync} = require('node:child_process');
+const base = path.resolve(__dirname, 'benchmark-artifacts/brillmoore');
+const manifestPath = path.join(base, 'build-manifest.json');
+const available = fs.existsSync(manifestPath);
+
+test('restricted BM wrapper preserves global-prior scores and rejects unsafe inputs', {skip: !available}, () => {
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  const directory = fs.mkdtempSync(path.join(base, 'wrapper-check-'));
+  const write = (name, text) => {const file = path.join(directory, name); fs.writeFileSync(file, text); return file;};
+  const train = write('train.tsv', 'Hunt\tHund\t3\nKaze\tKatze\t2\nFarat\tFahrrad\t1\nHond\tHund\t2\n');
+  const dict = write('dictionary.tsv', 'Hund\t0.4\nKatze\t0.3\nFahrrad\t0.2\nHase\t0.1\n');
+  const inputs = write('inputs.tsv', 'p1\tHunt\np2\tKaze\np3\tFarat\n');
+  const invoke = (input, pool, scoreInput = false) => spawnSync(manifest.java, ['-Dfile.encoding=UTF-8', ...(scoreInput ? ['-Dbenchmark.inputScore=true'] : []), '-cp', manifest.classpath, manifest.benchmarkMainClass, train, dict, input, ...(pool ? [pool] : [])], {encoding: 'utf8', windowsHide: true, timeout: 30000});
+  const full = invoke(inputs);
+  assert.equal(full.status, 0, full.stderr);
+  const rows = full.stdout.trim().split('\n').map(JSON.parse);
+  const pool = write('pools.tsv', rows.map(row => row.id + '\t' + row.candidates.slice(0, 2).map(c => c.word).join('\t')).join('\n') + '\n');
+  const restricted = invoke(inputs, pool);
+  assert.equal(restricted.status, 0, restricted.stderr);
+  const subset = restricted.stdout.trim().split('\n').map(JSON.parse);
+  assert.equal(subset.length, 3);
+  rows.forEach((row, index) => {
+    assert.ok(row.candidates.length > 0, 'fixture must have finite candidates');
+    assert.deepEqual(subset[index].candidates, row.candidates.slice(0, 2));
+  });
+  const scored = invoke(inputs, pool, true);
+  assert.equal(scored.status, 0, scored.stderr);
+  const scoredRows = scored.stdout.trim().split('\n').map(JSON.parse);
+  scoredRows.forEach((row, i) => {
+    assert.deepEqual(row.candidates, subset[i].candidates);
+    assert.equal(row.inputInDictionary, false);
+    assert.equal(row.inputPrior, 0.1);
+    assert.ok(row.inputCost === null || (Number.isFinite(row.inputCost) && row.inputCost >= 0));
+  });
+  const known = invoke(write('known.tsv', 'known\tHund\n'), null, true);
+  assert.equal(known.status, 0, known.stderr);
+  const knownRow = JSON.parse(known.stdout.trim());
+  assert.equal(knownRow.inputInDictionary, true);
+  assert.equal(knownRow.inputPrior, 0.4);
+  assert.equal(knownRow.inputCost, knownRow.candidates.find(c => c.word === 'Hund').cost);
+  const missingPool = write('missing-pool.tsv', 'p1\tHund\n');
+  const missing = invoke(inputs, missingPool);
+  assert.notEqual(missing.status, 0);
+  assert.match(missing.stderr, /Missing pool/);
+  const goldInput = write('gold-input.tsv', 'p1\tHunt\tHund\n');
+  const unsafe = invoke(goldInput);
+  assert.notEqual(unsafe.status, 0);
+  assert.match(unsafe.stderr, /no gold/);
+});

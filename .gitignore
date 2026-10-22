@@ -22,3 +22,12 @@ node_modules/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Lokale Artefakte des verworfenen Mobil-Vorversuchs, keine Projektquelle.
+Mobile/
+test-results/
+data/
+lernhilfe-testbericht*.json
+tests/benchmark-artifacts/
+__pycache__/
+*.py[cod]

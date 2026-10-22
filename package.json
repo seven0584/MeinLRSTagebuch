@@ -1,0 +1,22 @@
+{
+  "name": "lrs-tagebuch-dev",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Entwicklungsprüfungen für das im Browser ausführbare Tagebuch",
+  "scripts": {
+    "predev": "node scripts/build-help.cjs",
+    "dev": "node scripts/dev-server.cjs",
+    "test": "node --test tests/lernhilfe.test.cjs",
+    "test:browser": "node --test tests/browser.test.cjs",
+    "test:storage": "node --test tests/storage.test.cjs",
+    "test:ai": "node --test tests/ai-runtime.test.cjs",
+    "test:mood": "node --test tests/mood.test.cjs tests/mood-ollama.test.cjs",
+    "test:selection": "node --test tests/ai-selection.test.cjs",
+    "test:review": "node --test tests/spell-review.test.cjs tests/spell-review-ollama.test.cjs",
+    "test:help": "node --test tests/ui-help.test.cjs",
+    "test:openai": "node --test tests/openai.test.cjs tests/openai-runtime.test.cjs tests/openai-browser.test.cjs",
+    "build:help": "node scripts/build-help.cjs"
+  },
+  "engines": { "node": ">=22" },
+  "devDependencies": { "playwright": "1.64.1" }
+}

@@ -1,0 +1,63 @@
+.mood-picker,.mood-overview{border:1px solid var(--border);border-radius:12px;padding:.9rem;background:var(--card);margin-bottom:1rem;min-width:0}
+.mood-finish-dialog{box-sizing:border-box;width:min(38rem,calc(100vw - 2rem));max-height:calc(100dvh - 2rem);overflow-y:auto;border:1px solid var(--border);border-radius:16px;padding:1.3rem;background:var(--card);color:var(--text);box-shadow:0 15px 60px #14244955}
+.mood-finish-dialog::backdrop{background:#16223f77}.mood-finish-dialog h2{margin:0 0 .5rem;color:var(--ink);font-size:1.3rem}.mood-encouragement{margin:.4rem 0 1rem}.mood-finish-dialog .mood-picker{margin-bottom:.6rem}.mood-finish-dialog>.below{justify-content:space-between;flex-wrap:wrap}
+.mood-summary{margin-bottom:1rem;padding:.9rem;border:1px solid var(--border);border-radius:12px;background:var(--card)}
+.mood-summary .btn-ghost{font-size:.85rem;padding:.3rem .7rem}
+.mood-summary-periods{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin-top:.6rem}
+.mood-summary-period{min-width:0}
+.mood-summary-period h4{margin:0 0 .4rem;color:var(--ink)}
+.mood-summary-source{margin:.45rem 0;font-size:.82rem}
+.mood-summary-label{display:block;font-weight:bold;margin-bottom:.2rem}
+.mood-summary-chips{display:flex;flex-wrap:wrap;gap:.25rem}
+.mood-summary-chip{padding:.2rem .4rem;background:var(--bg);border-radius:6px}
+.mood-summary-more{padding:.2rem;color:var(--muted)}
+.mood-summary .note{font-size:.78rem;margin:.25rem 0;line-height:1.35}
+@media(max-width:620px){.mood-summary-periods{grid-template-columns:1fr}}
+.mood-heading{font-size:1.1rem;margin:0 0 .5rem}
+.mood-picker .note{font-size:.84rem;line-height:1.4;margin:.45rem 0}
+.mood-privacy{padding:.5rem .6rem;border-left:3px solid var(--ink);background:var(--bg)}
+.mood-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.35rem;margin:.7rem 0}
+.mood-choice{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;min-width:0;min-height:3rem;text-align:center;padding:.35rem .2rem;font:inherit;font-size:.78rem;border:1px solid var(--border);border-radius:9px;background:var(--paper);color:var(--text);cursor:pointer}
+.mood-choice[aria-pressed="true"]{background:var(--btn);color:var(--btntext);border-color:var(--btn);box-shadow:inset 0 0 0 1px currentColor}
+.mood-choice:disabled{opacity:.5;cursor:default}
+.mood-choice[aria-pressed="true"]:disabled{opacity:.8}
+.mood-choice:focus-visible,.mood-period select:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.mood-emoji{font-size:1.3rem;flex-shrink:0}
+.mood-label{overflow-wrap:anywhere;line-height:1.25}
+.mood-picker-status{font-size:.83rem;line-height:1.4;margin:.5rem 0 0;color:var(--muted)}
+.mood-overview-head{display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap}
+.mood-period{min-width:9rem;font-size:.8rem}
+.mood-period select{font:inherit}
+.mood-overview .note{font-size:.85rem;line-height:1.45}
+.mood-total{margin:.7rem 0}
+.mood-sources{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}
+.mood-source{min-width:0;padding:.7rem;border:1px solid var(--border);border-radius:9px}
+.mood-source h4{margin:0 0 .4rem;font-size:.97rem}
+.mood-source>.note{margin:.4rem 0}
+.mood-counts{list-style:none;margin:.5rem 0 0;padding:0}
+.mood-counts li{display:grid;grid-template-columns:1.5rem minmax(0,1fr) auto;align-items:center;gap:.35rem;margin:.35rem 0;font-size:.88rem}
+.mood-count-emoji{font-size:1.1rem}
+.mood-counts li>span:nth-child(2){overflow-wrap:anywhere}
+.mood-count-value{color:var(--muted);font-size:.82rem;max-width:9rem;text-align:right}
+.mood-availability{padding:.6rem .7rem;background:var(--bg);border-radius:8px}
+.mood-range{font-weight:bold}
+.mood-overview-note{margin:.75rem 0 0}
+.mood-calendar{margin:1rem 0 0;border-top:1px solid var(--border);padding-top:.8rem;min-width:0}
+.mood-calendar>summary{cursor:pointer;font-weight:bold}
+.mood-calendar-scroll{overflow-x:auto;max-width:100%;border:1px solid var(--border);border-radius:8px}
+.mood-calendar-scroll:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.mood-calendar-table{width:100%;min-width:58rem;border-collapse:collapse;table-layout:fixed;font-size:.8rem;margin:0}
+.mood-calendar-table caption{text-align:left;padding:.5rem;color:var(--muted)}
+.mood-calendar-table th,.mood-calendar-table td{padding:.45rem;vertical-align:top;border:1px solid var(--border);text-align:left}
+.mood-calendar-table thead th{background:var(--bg)}
+.mood-calendar-table th:first-child{width:7.5rem}
+.mood-calendar-table tbody th{font-weight:normal;color:var(--muted)}
+.mood-calendar-date{display:block;font-size:.73rem;margin-bottom:.35rem;white-space:nowrap}
+.mood-calendar-today{background:var(--greensoft)}
+.mood-calendar-future{background:var(--bg);color:var(--muted)}
+.mood-calendar-source{display:flex;flex-direction:column;gap:.12rem;margin-top:.35rem}
+.mood-calendar-source-label{font-size:.69rem;color:var(--muted)}
+.mood-calendar-value{font-size:1rem;line-height:1.45;white-space:nowrap}
+.mood-calendar-empty{font-size:.72rem;color:var(--muted);white-space:normal;overflow-wrap:anywhere}
+@media(max-width:620px){.mood-sources{grid-template-columns:1fr}.mood-overview-head{align-items:flex-start}.mood-period{width:100%}.mood-picker,.mood-overview{padding:.75rem}}
+@media(max-width:349px){.mood-options{grid-template-columns:repeat(3,minmax(0,1fr))}}

@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mein Tagebuch</title>
 <link rel="stylesheet" href="app/app.css">
+<link rel="stylesheet" href="app/reflection.css">
+<link rel="stylesheet" href="app/settings-wizard.css">
+<link rel="stylesheet" href="app/mood-ui.css">
+<link rel="stylesheet" href="app/ui-help.css">
 
 </head>
 <body>
@@ -46,6 +50,7 @@
     <div class="pwrap">
       <nav class="pmenu" aria-label="Elternbereich">
         <button type="button" class="pm active" data-go="overview">📊 <span>Übersicht</span></button>
+        <button type="button" class="pm" data-go="moods">🙂 <span>Gefühle</span></button>
         <button type="button" class="pm" data-go="spelling">🔤 <span>Rechtschreibung</span></button>
         <button type="button" class="pm" data-go="rewards">🪙 <span>Belohnungen</span><em class="pbadge" id="orderBadge" hidden></em></button>
         <button type="button" class="pm" data-go="notify">🔔 <span>Benachrichtigungen</span></button>
@@ -58,10 +63,16 @@
       <section class="psec" data-sec="overview" hidden>
         <h2 class="psec-title">📊 Übersicht</h2>
       <div class="pcards" id="pcards"></div>
+      <div id="moodSummary"></div>
       <h3>Übersicht der letzten 14 Tage</h3>
       <p class="note">Hier steht nur, wann und wie viel geschrieben wurde, nie der Text selbst.</p>
       <div class="tablewrap"><table class="stats" id="stats"></table></div>
 
+      </section>
+      <section class="psec" data-sec="moods" hidden>
+        <h2 class="psec-title">🙂 Gefühle</h2>
+        <p class="note" id="moodDisabledMessage" hidden>Die Gefühlsübersicht ist ausgeschaltet. Ihr könnt sie unter Einstellungen → Prüfung &amp; Lernhilfe einschalten.</p>
+        <div id="moodOverview"></div>
       </section>
       <section class="psec" data-sec="spelling" hidden>
         <h2 class="psec-title">🔤 Rechtschreibung</h2>
@@ -81,7 +92,7 @@
       <label class="field">Schwierigkeit der Kurz-Diktate
         <select id="cfgDictLevel"><option value="auto">automatisch (startet leicht, wird schwerer)</option><option value="leicht">leicht (MiniKlexikon)</option><option value="mittel">mittel (Klexikon)</option></select>
       </label>
-      <p class="note">Die Diktattexte stammen aus dem Kinderlexikon Klexikon und MiniKlexikon (klexikon.zum.de, Lizenz CC BY-SA 4.0). Jedes Wort wurde mit dem Rechtschreibwörterbuch geprüft. Mit Internet wird jeder Text vor dem Diktat zusätzlich von LanguageTool kontrolliert. Bewusst nicht verwendet werden Texte aus LRS-Tests: Wer sie übt, verfälscht eine spätere Diagnose.</p>
+      <p class="note" data-help-topic="writing" data-help-text="Die Diktattexte stammen aus dem Kinderlexikon Klexikon und MiniKlexikon (klexikon.zum.de, Lizenz CC BY-SA 4.0). Jedes Wort wurde mit dem Rechtschreibwörterbuch geprüft. Mit Internet wird jeder Text vor dem Diktat zusätzlich von LanguageTool kontrolliert. Bewusst nicht verwendet werden Texte aus LRS-Tests: Wer sie übt, verfälscht eine spätere Diagnose.">Diktate nutzen geprüfte Lexikontexte. Offizielle LRS-Testtexte werden nicht zum Üben verwendet.</p>
 
       <h3>Übungswörter</h3>
       <p class="note">Diese Wörter hat er falsch geschrieben und selbst verbessert, hier in richtiger Schreibweise. Gut geeignet für ein kurzes Mini-Diktat.</p>
@@ -117,7 +128,7 @@
       <div class="below"><button type="button" class="btn" id="saveGame">Spielzeit speichern</button><span class="status" id="gameMsg" role="status"></span></div>
 
       <h3>🏖️ Pausentage und Joker</h3>
-      <p class="note">Pausentage (Urlaub, krank, Klassenfahrt) zählen für die Wochenwertung und die Serie als geschafft. Joker bekommt euer Kind jeden Monat. Es kann sie sparen und selbst im Shop für einen Tag seiner Wahl einsetzen, auch im Voraus (zum Beispiel für ein Turnier am Wochenende).</p>
+      <p class="note" data-help-topic="rewards" data-help-text="Pausentage (Urlaub, krank, Klassenfahrt) zählen für die Wochenwertung und die Serie als geschafft. Joker bekommt euer Kind jeden Monat. Es kann sie sparen und selbst im Shop für einen Tag seiner Wahl einsetzen, auch im Voraus (zum Beispiel für ein Turnier am Wochenende).">Pausentage zählen als geschafft. Monatliche Joker kann das Kind sparen und für einen Tag seiner Wahl einsetzen.</p>
       <div class="formrow">
         <label class="field">Von<input type="date" id="pauseFrom"></label>
         <label class="field">Bis<input type="date" id="pauseTo"></label>
@@ -148,7 +159,7 @@
       <section class="psec" data-sec="notify" hidden>
         <h2 class="psec-title">🔔 Benachrichtigungen</h2>
       <h3>Nachrichten aufs Handy</h3>
-      <p class="note">Nach jedem fertigen Eintrag schickt das Tagebuch eine kurze Nachricht an euer Handy, zum Beispiel „Tagebuch geschrieben: 48 Wörter, 2 Fehler selbst verbessert“. Der Text des Eintrags wird nie verschickt. Dafür braucht ihr die kostenlose App <b>ntfy</b> (Android und iPhone): Dort einen Kanal mit genau dem Namen von hier abonnieren. Der Name wirkt wie ein Passwort, also nicht weitergeben.</p>
+      <p class="note" data-help-topic="notify" data-help-text="Nach jedem fertigen Eintrag schickt das Tagebuch eine kurze Nachricht an euer Handy, zum Beispiel „Tagebuch geschrieben: 48 Wörter, 2 Fehler selbst verbessert“. Der Text des Eintrags wird nie verschickt. Dafür braucht ihr die kostenlose App ntfy (Android und iPhone): Dort einen Kanal mit genau dem Namen von hier abonnieren. Der Name wirkt wie ein Passwort, also nicht weitergeben.">ntfy sendet eine kurze Aktivitätsmeldung, niemals den Tagebuchtext. Abonniert den Kanal in der ntfy-App und haltet seinen Namen geheim.</p>
       <label class="field">Kanalname
         <span class="fieldrow"><input type="text" id="topic" autocomplete="off" spellcheck="false"><button type="button" class="btn-ghost" id="genTopic">Neuen Namen erzeugen</button></span>
       </label>
@@ -157,7 +168,7 @@
       <label class="check">Als „gelesen“ zählt mindestens
         <select id="readMin"><option value="1">1 Minute</option><option value="2">2 Minuten</option><option value="3">3 Minuten</option><option value="5">5 Minuten</option></select>
         aktives Lesen</label>
-      <p class="note">Gezählt wird nur Zeit, in der das Tagebuch im Vordergrund ist und sich etwas tut (Blättern, Scrollen, Maus, Tastatur). Ein Eintrag zählt erst als gelesen, wenn er so lange zu sehen war, wie man ungefähr zum Lesen braucht. Nur kurz auf- und wieder zumachen löst keine Nachricht aus. Ganz sicher ist das nicht, aber es zeigt euch, ob ernsthaft gelesen wurde.</p>
+      <p class="note" data-help-topic="notify" data-help-text="Gezählt wird nur Zeit, in der das Tagebuch im Vordergrund ist und sich etwas tut (Blättern, Scrollen, Maus, Tastatur). Ein Eintrag zählt erst als gelesen, wenn er so lange zu sehen war, wie man ungefähr zum Lesen braucht. Nur kurz auf- und wieder zumachen löst keine Nachricht aus. Ganz sicher ist das nicht, aber es zeigt euch, ob ernsthaft gelesen wurde.">Lesezeit zählt nur bei aktiver Nutzung. Die Lesemeldung ist ein Anhaltspunkt und kein sicherer Nachweis.</p>
       <div class="below"><button type="button" class="btn" id="saveParent">Speichern</button><button type="button" class="btn-ghost" id="testNotify">Testnachricht senden</button><span class="status" id="parentStatus" role="status"></span></div>
 
       </section>
@@ -184,7 +195,7 @@
         <details><summary>✏️ Schreiben und Prüfen</summary>
           <p>Das Kind schreibt frei oder beantwortet die drei Fragen. Alles zählt zusammen für den Tagesauftrag. Erst wenn genug geschrieben ist, lässt sich prüfen.</p>
           <p><b>Ohne Internet</b> prüft das Tagebuch Rechtschreibung (Wörterbuch igerman98), Groß- und Kleinschreibung bei Begleitern und am Satzanfang sowie einfache Satzzeichen. <b>Mit Internet</b> kommt LanguageTool für Grammatik, das/dass und Kommas dazu.</p>
-          <p>Markiert wird nur die Stelle, nie die Lösung. Das Kind bekommt einen Tipp und auf Wunsch einen zweiten mit einem Trick. Hält es eine Markierung bei Satzzeichen, Grammatik oder Groß- und Kleinschreibung für falsch, kann es „🤔 Ich finde, das stimmt so“ wählen. Wie oft das passiert, seht ihr unter 🔤 Rechtschreibung. Unbekannte Namen markiert es mit „Das ist ein Name“. Die Liste dieser Wörter seht ihr ebenfalls dort.</p>
+          <p>Markierte Stellen zeigen einen Tipp und auf Wunsch einen zweiten Hinweis. Die zusätzliche lokale Lernhilfe kann Hinweise konkreter erklären oder einen Vorschlag zeigen, wenn ihr sie eingerichtet habt. Bei jeder Markierung kann das Kind „🤔 Ich finde, das stimmt so“ oder „Für heute offenlassen“ wählen und trotzdem fertig werden. Hilfe und offene Stellen werden beim Abschluss kenntlich gemacht. Unbekannte Namen markiert es mit „Das ist ein Name“.</p>
         </details>
         <details><summary>🔤 Fehlerstatistik und Übungen</summary>
           <p>Unter 🔤 Rechtschreibung seht ihr die Fehlerarten der letzten 30 Tage, ohne Texte, und die Übungswörter in richtiger Schreibweise für ein Mini-Diktat.</p>
@@ -200,7 +211,7 @@
           <p>Die kostenlose App ntfy zeigt euch fertige Einträge, Einkaufswünsche, Joker, den Wochenbericht und auf Wunsch das Lesen an. Der Tagebuchtext wird nie verschickt. Kommt nichts an: den Link <code>https://ntfy.sh/&lt;Kanal&gt;</code> im Handy-Browser öffnen. Steht die Nachricht dort, liegt es an der App (Kanalname, Benachrichtigungen erlauben, Akku-Sparmodus).</p>
         </details>
         <details><summary>🔒 Was ihr seht und was nicht</summary>
-          <p>Im Elternbereich seht ihr Zahlen und Fehlerarten, aber keine Texte. Das Kind sieht seine Einträge nur mit seiner PIN. Ehrlich gesagt ist das ein Sichtschutz und kein Tresor: Wer am PC sitzt und die PIN zurücksetzt, käme an die Einträge. Das Kind würde das aber bemerken.</p>
+          <p>Im Elternbereich seht ihr Zahlen und Fehlerarten, aber keine Tagebuchtexte. Bei eingeschalteter Gefühlsübersicht seht ihr zusätzlich die vom Kind ausgewählten Gefühle und getrennt die unsicheren KI-Hinweise aus dem Freitext. Das wird dem Kind vor dem Schreiben angezeigt. Die Antworten auf die Tagesfragen bleiben privat. Das Kind sieht seine Einträge nur mit seiner PIN. Die PIN ist ein Sichtschutz: Wer sie am PC zurücksetzt, könnte an die Einträge gelangen. Das Kind würde das bemerken.</p>
         </details>
         <details class="lrs"><summary>🧩 LRS: Wie das Tagebuch unterstützt</summary>
           <p>Das Tagebuch stellt <b>keine Diagnose</b>. Es hilft beim täglichen Üben und zeigt euch Muster, die ihr mit der Schule besprechen könnt.</p>
@@ -215,7 +226,7 @@
           <h4>So wird geübt</h4>
           <ul><li><b>Selbst korrigieren statt abschreiben:</b> Markiert wird nur die Stelle, der Tipp nennt eine Strategie (z. B. Verlängern, Ableiten, Silben schwingen, Artikelprobe), nicht die Lösung.</li>
           <li><b>Gezielte Tricks</b> für jedes Muster, z. B. „Das kleine b hat den Bauch rechts, das kleine d links“ oder „Zähl die Bögen: m hat zwei, n hat einen“.</li>
-          <li><b>Fehler-Detektive:</b> Das Kind sieht seine häufigsten Fehlerarten mit Trick und eigenen Beispielwörtern, und ob sie seltener werden.</li>
+          <li><b>Passende Übungen:</b> Unter „Üben“ findet das Kind freiwillige Zusatzaufgaben. Die Fehlerübersicht für Eltern bleibt unter „Rechtschreibung“.</li>
           <li><b>Wort-Diktat mit Wiederholung in wachsenden Abständen:</b> falsch geschriebene Wörter kommen nach 1, 3, 7, 14 und 30 Tagen wieder, bis sie sitzen. Nach einem Fehler wird das Wort einmal richtig abgeschrieben.</li>
           <li><b>Kurz-Diktate</b> werden nach den Schwächen des Kindes ausgewählt und hören und schreiben verbinden.</li>
           <li><b>Vorlesen</b> von Fragen und eigenen Einträgen sowie <b>größere Schrift und mehr Abstand</b> (Knopf „Aa“) erleichtern das Lesen.</li>
@@ -247,12 +258,12 @@
       <div class="storecard" id="storeCard"></div>
 
       <h3>🧹 Neu anfangen</h3>
-      <p class="note">Löscht alles, was dieser Browser vom Tagebuch gespeichert hat: Kinder, Einträge, Bilder, PINs und Einstellungen. Die Dateien im Tagebuch-Ordner bleiben erhalten. Wollt ihr auch die löschen, entfernt danach die Ordner <code>config</code> und <code>kinder</code> im Datei-Explorer.</p>
+      <p class="note" data-help-topic="storage" data-help-text="Löscht den lokalen Zwischenspeicher dieses Browsers: Kinder, Einträge, Bilder, PINs und Einstellungen. Dateien am oben angezeigten Speicherort bleiben erhalten und können beim nächsten Start erneut geladen werden. Zum vollständigen Neubeginn zuerst eine Sicherung erstellen und die Daten am angezeigten Speicherort gesondert verwalten.">Löscht nur den Browser-Zwischenspeicher. Dateien am Speicherort bleiben erhalten und werden erneut geladen. Vor einem vollständigen Neustart sichern.</p>
       <div class="below"><button type="button" class="btn-ghost danger" id="wipeAll">Alles in diesem Browser löschen</button></div>
 
       <h3>💾 Datensicherung</h3>
       <p class="note" id="backupInfo"></p>
-      <p class="note">Zusätzlich zum Speicherort könnt ihr jederzeit eine Sicherung herunterladen, zum Beispiel für einen USB-Stick. Sie schützt vor Datenverlust (Browserdaten gelöscht, neuer PC). Die Datei wird mit einem Kennwort verschlüsselt. Ohne dieses Kennwort ist sie nicht lesbar, also gut merken!</p>
+      <p class="note" data-help-topic="backup" data-help-text="Zusätzlich zum Speicherort könnt ihr jederzeit eine Sicherung herunterladen, zum Beispiel für einen USB-Stick. Sie schützt vor Datenverlust (Browserdaten gelöscht, neuer PC). Die Datei wird mit einem Kennwort verschlüsselt. Ohne dieses Kennwort ist sie nicht lesbar, also gut merken!">Eine verschlüsselte Sicherung schützt bei Datenverlust oder einem neuen PC. Ohne euer Sicherungskennwort ist sie nicht lesbar.</p>
       <div class="below">
         <input type="password" id="bkPw1" class="txt" placeholder="Kennwort für die Sicherung" autocomplete="new-password" aria-label="Kennwort">
         <input type="password" id="bkPw2" class="txt" placeholder="Kennwort wiederholen" autocomplete="new-password" aria-label="Kennwort wiederholen">
@@ -271,7 +282,7 @@
       <div class="below"><input type="text" id="newKidName" class="txt" placeholder="Name des Kindes" maxlength="30" aria-label="Name des neuen Kindes"><button type="button" class="btn" id="addKid">Kind anlegen</button><span class="status" id="kidMsg" role="status"></span></div>
 
       <h3>✏️ Tagesauftrag</h3>
-      <p class="note">So viel muss das ausgewählte Kind mindestens schreiben, bevor es prüfen kann. Freier Text und Antworten auf die Fragen zählen zusammen. Was als Satz zählt, stellt ihr unter „🔤 Rechtschreibung“ ein.</p>
+      <p class="note" data-help-topic="goals" data-help-text="So viel muss das ausgewählte Kind mindestens schreiben, bevor es prüfen kann. Freier Text und Antworten auf die Fragen zählen zusammen. Was als Satz zählt, stellt ihr unter „🔤 Rechtschreibung“ ein.">Legt den Mindestumfang vor dem Prüfen fest. Freitext und Tagesantworten zählen zusammen; Satzregeln stehen unter Rechtschreibung.</p>
       <div class="rulegrid">
         <label class="field">Mindestens Wörter<input type="number" id="cfgEntryWords" min="5" max="400" class="num"></label>
         <label class="field">Mindestens Sätze<input type="number" id="cfgEntrySent" min="1" max="30" class="num"></label>
@@ -279,9 +290,46 @@
       <div class="below"><button type="button" class="btn" id="saveEntryCfg">Speichern</button><span class="status" id="entryCfgMsg" role="status"></span></div>
 
       <h3>Grammatikprüfung</h3>
-      <p class="note">Mit Internet prüft das Tagebuch zusätzlich Grammatik und Kommas mit <a href="https://languagetool.org" target="_blank" rel="noopener">LanguageTool</a>, einem freien Prüfprogramm aus Deutschland. Dafür wird der Eintrag beim Drücken auf „Prüfen“ verschlüsselt an LanguageTool geschickt. Laut deren Datenschutzerklärung werden geprüfte Texte nicht gespeichert. Ohne Haken bleibt alles auf dem Gerät, dann gibt es nur die einfache Prüfung.</p>
+      <p class="note" data-help-topic="grammar" data-help-text="Mit Internet prüft das Tagebuch zusätzlich Grammatik und Kommas mit LanguageTool, einem freien Prüfprogramm aus Deutschland. Dafür wird der Eintrag beim Drücken auf „Prüfen“ verschlüsselt an LanguageTool geschickt. Laut deren Datenschutzerklärung werden geprüfte Texte nicht gespeichert. Ohne Haken bleibt alles auf dem Gerät, dann gibt es nur die einfache Prüfung.">Die optionale Grammatikprüfung sendet den Haupttext beim Prüfen verschlüsselt an LanguageTool. Ohne Haken wird dafür kein Text übertragen.</p>
       <label class="check"><input type="checkbox" id="grammarOn"> Grammatikprüfung mit LanguageTool verwenden</label>
       <div class="below"><button type="button" class="btn-ghost" id="testLT">Verbindung testen</button><span class="status" id="ltStatus" role="status"></span></div>
+
+      <h3>Zusätzliche Lernhilfe</h3>
+      <p class="note" data-help-topic="tutor" data-help-text="Wählt lokale Ollama-Verarbeitung oder OpenAI über das Internet. Die OpenAI-API ist unabhängig von einem ChatGPT-Abonnement und wird nach Nutzung abgerechnet. Tagebuchtext wird nur nach ausdrücklicher Freigabe für OpenAI übertragen. Rückblickantworten und gewählte Gefühle werden nicht angehängt.">Lokal mit Ollama oder online mit OpenAI. Online-Verarbeitung benötigt einen API-Schlüssel und eine ausdrückliche Freigabe.</p>
+      <label class="field">Lernhilfe auswählen<select id="tutorProvider" data-help-topic="tutor" data-help-text="Ausgeschaltet, lokal auf diesem PC oder online über OpenAI. Erst Lernhilfe speichern übernimmt die Auswahl."><option value="off">Ausgeschaltet</option><option value="ollama">Lokal auf diesem PC mit Ollama</option><option value="openai">Online mit OpenAI (ChatGPT-Modelle)</option></select></label>
+      <div id="openaiSettings" hidden>
+        <h4>OpenAI in drei Schritten</h4>
+        <p class="note" data-help-topic="tutor" data-help-text="1. API-Schlüssel und Modell speichern. 2. Das erfundene Beispiel testen; dabei wird kein Tagebucheintrag verwendet. 3. Erst nach Klärung der Voraussetzungen Kindertexte freigeben und Lernhilfe speichern. Der Schlüssel bleibt beim lokalen App-Server und wird nie zurück in dieses Feld geschrieben.">1. Schlüssel speichern · 2. Beispiel testen · 3. Kindertexte freigeben</p>
+        <label class="field">API-Schlüssel<input id="openaiApiKey" type="password" autocomplete="new-password" spellcheck="false" autocapitalize="off" placeholder="Neuen Schlüssel einfügen; leer lässt den gespeicherten unverändert" data-help-topic="tutor" data-help-text="Der OpenAI-API-Schlüssel wird nur beim lokalen App-Server gespeichert. Leer lassen erhält den vorhandenen Schlüssel. Der gespeicherte Schlüssel wird weder angezeigt noch in die Tagebuch-Sicherung aufgenommen."></label>
+        <p id="openaiKeyStatus" class="status" role="status"></p>
+        <label class="field">OpenAI-Modell<select id="openaiModel" data-help-topic="tutor" data-help-text="Wählt ein verfügbares API-Modell. Verfügbarkeit und Kosten hängen vom API-Konto ab. Ein ChatGPT-Abo stellt kein API-Guthaben bereit."><option value="gpt-5.4">GPT-5.4</option><option value="gpt-5.4-mini">GPT-5.4 mini</option><option value="gpt-4.1">GPT-4.1</option></select></label>
+        <div class="below"><button type="button" class="btn-ghost" id="openaiSaveKey" data-tooltip="Speichert Schlüssel und Modell beim lokalen App-Server. Aktiviert noch keine Kindertexte.">Schlüssel und Modell speichern</button><button type="button" class="btn-ghost" id="openaiTest" data-tooltip="Testet den gespeicherten Zugang mit einem erfundenen Satz. Dabei können API-Kosten entstehen.">OpenAI-Beispiel testen</button><button type="button" class="btn-ghost danger" id="openaiRemoveKey" data-tooltip="Entfernt den gespeicherten API-Schlüssel und schaltet die OpenAI-Lernhilfe aus.">Schlüssel entfernen</button></div>
+        <p id="openaiTestStatus" class="status" role="status"></p>
+        <label class="check"><input type="checkbox" id="openaiAllowChildData" data-help-topic="tutor" data-help-text="Mit dieser Freigabe dürfen der Haupttext und ein begrenzter Verlauf der Lernhilfe an OpenAI übertragen werden. Rückblickantworten, Gefühlsauswahl und andere Einträge werden nicht angehängt."> Ich erlaube, dass Tagebuchtexte zur Prüfung und Lernhilfe an OpenAI gesendet werden.</label>
+        <label class="check"><input type="checkbox" id="openaiZdrConfirmed" data-help-topic="tutor" data-help-text="OpenAI verlangt für personenbezogene Daten von Kindern unter 13 beziehungsweise unter dem geltenden digitalen Einwilligungsalter Zero Data Retention. Das muss OpenAI für das API-Konto freischalten. Dieser Haken ist nur eure Bestätigung und aktiviert oder überprüft keine Freischaltung."> Ich bestätige: Für unser API-Konto ist Zero Data Retention bereits von OpenAI freigeschaltet.</label>
+        <p class="note">Der Haken aktiviert oder überprüft keine Freischaltung. <a href="https://developers.openai.com/api/docs/guides/safety-checks/under-18-api-guidance" target="_blank" rel="noopener noreferrer">OpenAI-Voraussetzungen für Kindertexte</a></p>
+        <p class="note" data-help-topic="tutor" data-help-text="Kindertexte bleiben gesperrt, solange nicht beide Freigaben gespeichert wurden. Der Beispieltest benötigt diese Freigaben nicht. Die Cloud-Anbindung erstellt keine Gefühlsauswertung für Eltern.">Zum Aktivieren beide Freigaben setzen und unten „Lernhilfe speichern“ wählen. Ohne Freigabe ist nur der Beispieltest möglich.</p>
+      </div>
+      <div id="ollamaSettings">
+      <label class="field">Sprachmodell auswählen<select id="tutorModel"></select></label>
+      <label class="field">Verarbeitung auf diesem PC<select id="tutorExecution"><option value="cpu">Kompatibel · Prozessor verwenden</option><option value="auto">Grafikbeschleunigung · zuerst testen</option></select></label>
+      <p class="note" data-help-topic="graphics" data-help-text="Beim Einschalten der Grafikbeschleunigung prüft die App zwei Testfragen und die tatsächliche Nutzung von Grafikspeicher. Mit „Modell automatisch auswählen“ vergleicht sie die bereits heruntergeladenen Modelle mit und ohne Grafikbeschleunigung. Es gewinnt die schnellste Variante mit zwei passenden Antworten; Modellladezeit wird herausgerechnet. Der Vergleich kann mehrere Minuten dauern und lädt keine neuen Modelle herunter. Die Erklärung solltet ihr anschließend selbst auf Verständlichkeit prüfen.">Grafikbeschleunigung wird vorab getestet. Die automatische Auswahl vergleicht installierte Modelle mit zwei Fragen; der schnellste bestandene Versuch gewinnt.</p>
+      <p id="tutorModelInfo" class="note"></p>
+      <p class="note" data-help-topic="tutor" data-help-text="Dies sind mehrsprachige Modelle zum Ausprobieren. Bitte prüft die Erklärungen mit dem Beispiel. Die Downloadgröße ist kein Maß für den benötigten Arbeitsspeicher. Beim ersten Einrichten kommt die KI-Laufzeit hinzu (Windows x64 ca. 1,6 GB Download; mehrere GB freier Speicher zum Entpacken).">Modelle zum Ausprobieren: Erklärungen selbst prüfen. Zur Modellgröße kommt die Laufzeit hinzu (x64 ca. 1,6 GB); mehrere GB Platz freihalten.</p>
+      </div>
+      <div class="below"><button type="button" class="btn-ghost" id="tutorSetup">Lokale KI und Modell herunterladen</button><button type="button" class="btn-ghost" id="tutorFind">Installierte Modelle suchen</button><button type="button" class="btn-ghost" id="tutorSelect">Modell automatisch auswählen</button><button type="button" class="btn-ghost" id="tutorTest">Beispiel testen</button><button type="button" class="btn" id="tutorSave">Lernhilfe speichern</button><button type="button" class="btn-ghost" id="tutorSelectCancel" hidden>Test abbrechen</button></div>
+      <progress id="tutorProgress" hidden aria-label="Fortschritt der KI-Einrichtung"></progress>
+      <p id="tutorStatus" class="status" role="status"></p>
+      <div id="tutorExample" class="tutor-reply" hidden></div>
+      <div id="tutorSelectionResults" class="tablewrap" hidden></div>
+      <details id="ollamaInstructions"><summary>So richtet ihr die lokale Lernhilfe ein</summary><p>1. Ein Modell auswählen und dessen Lizenzbedingungen im Link beachten. 2. „Lokale KI und Modell herunterladen“ wählen. Dafür braucht ihr Internet, freien Speicher und etwas Geduld. Lasst die App bis zum Abschluss geöffnet. Die Dateien bleiben für spätere Starts gespeichert. 3. „Beispiel testen“ wählen und die Erklärung auf Richtigkeit und Verständlichkeit prüfen. 4. „Lokal auf diesem PC“ auswählen und speichern. Danach ist für die Lernhilfe kein Internet nötig.</p><p>Die App verwendet eine eigene Ollama-Laufzeit ohne separaten Installer. Eine schon vorhandene Ollama-Installation wird nicht verändert. Modelle und Laufzeit liegen im Datenordner der App. Bei „Prüfen“ verarbeitet die lokale KI bis zu 1.800 Zeichen des Freitexts. Beim Erklären wird der betroffene Satzausschnitt mit bisherigen Versuchen auf diesem PC verarbeitet. Cloud-KI ist für diese Laufzeit abgeschaltet. Der erste Start eines Modells kann etwas dauern.</p><p>Die automatische Einrichtung ist derzeit im Windows-Dev über den lokalen App-Server verfügbar. Eine direkt geöffnete HTML-Datei kann keine Programme einrichten oder starten.</p></details>
+
+      <h4>Gefühlsübersicht für Eltern</h4>
+      <label class="check"><input type="checkbox" id="moodShareOn"> Gefühlsübersicht verwenden: Das Kind wählt vor dem Speichern ein bis drei Gefühle.</label>
+      <label class="check"><input type="checkbox" id="moodAiOn"> Zusätzlich lokale KI-Hinweise aus dem Freitext anzeigen.</label>
+      <p class="note" data-help-topic="moods" data-help-text="Das Kind sieht vor dem Schreiben, welche Hinweise ihr erhaltet. Die KI nutzt nur den Freitext, keine privaten Antworten auf die Tagesfragen. Sie kann falsch liegen und stellt keine Diagnose. Bei fehlender KI bleibt die Selbstauswahl nutzbar. Frühere Einträge werden nicht nachträglich ausgewertet. Änderungen an diesen Schaltern gelten für neue Einträge.">Das Kind sieht, welche Hinweise ihr erhaltet. Die KI nutzt nur Freitext und stellt keine Diagnose. Änderungen gelten für neue Einträge.</p>
+      <p class="status" id="moodSettingsStatus" role="status"></p>
+      <details class="rules"><summary>Hinweis für Erwachsene zum Tagesrückblick</summary><p class="note" data-help-topic="reflection" data-help-text="Die Fragen können ein Gespräch eröffnen. Zuhören zählt mehr als vollständige Antworten. Weder ein schöner Moment noch eine Antwort auf die Tagesfragen ist Pflicht. Wählt einen ruhigen Zeitpunkt, der zum Kind passt; schwierige Themen dürfen auch tagsüber Raum bekommen. Diese Fragen sind kein Test und keine Therapie.">Tagesfragen sind freiwillig. Hört zu und wählt einen ruhigen Zeitpunkt; sie sind kein Test und keine Therapie.</p></details>
 
       <h3 id="kidPinHead">PIN des Kindes</h3>
       <p class="note" id="kidPinState"></p>
@@ -290,7 +338,7 @@
       <h3>Eltern-PIN</h3>
       <div class="below"><button type="button" class="btn-ghost" id="changePin">Eltern-PIN ändern</button></div>
       <div id="changePinBox"></div>
-      <p class="note">Gut zu wissen: Ohne Internet prüft das Tagebuch Rechtschreibung und einfache Satzzeichen. Grammatik, das/dass und schwierige Kommas findet nur die Grammatikprüfung mit Internet. Wo die Einträge gespeichert werden, stellt ihr oben unter „Speicherort“ ein.</p>
+      <p class="note" data-help-topic="grammar" data-help-text="Gut zu wissen: Ohne Internet prüft das Tagebuch Rechtschreibung und einfache Satzzeichen. Grammatik, das/dass und schwierige Kommas findet nur die Grammatikprüfung mit Internet. Wo die Einträge gespeichert werden, stellt ihr oben unter „Speicherort“ ein.">Offline gibt es Rechtschreibung und einfache Satzzeichen. Für zusätzliche Grammatikprüfung lässt sich LanguageTool einschalten.</p>
       </section>
       </div>
     </div>
@@ -319,7 +367,7 @@
   <div id="writeArea">
     <div class="q mainlabel"><span>✏️ Mein Tagebuch:</span></div>
     <div class="sheet">
-      <div class="sheet-head"><span id="dateLabel"></span><span id="sentenceCount"></span></div>
+      <div class="sheet-head"><span id="dateLabel"></span><span id="sentenceCount"></span><button class="btn" id="checkBtn" disabled>Prüfen</button><button type="button" class="btn-ghost" id="reviewCancel" hidden>Ohne KI weiter</button><span class="status" id="status" role="status">Wörterbuch wird geladen …</span></div>
       <div id="ideaPanel" class="ideastrip" hidden></div>
       <textarea id="ta" class="lined" spellcheck="false" autocorrect="off" autocomplete="off" autocapitalize="off" data-gramm="false"
         aria-label="Dein Tagebucheintrag für heute" placeholder="Liebes Tagebuch, heute …"></textarea>
@@ -355,28 +403,12 @@
       <p class="note">Dein Bild wird zusammen mit deinem Eintrag gespeichert. Malen ist freiwillig.</p>
      </div>
     </div>
-    <div class="below">
-      <button class="btn" id="checkBtn" disabled>Prüfen</button>
-      <span class="status" id="status" role="status">Wörterbuch wird geladen …</span>
-    </div>
   </div>
 
   <div id="result" class="result" hidden></div>
   </div>
   <div id="doneArea" hidden></div>
   <div id="warn" class="warn" hidden></div>
-
-  <section class="panel" aria-labelledby="patHead">
-    <h2 id="patHead">🎯 Meine Fehler-Detektive</h2>
-    <p class="note">Hier siehst du, welche Fehler dir manchmal passieren und mit welchem Trick du sie knackst. Je seltener ein Fehler wird, desto besser bist du geworden.</p>
-    <div id="patterns"></div>
-  </section>
-
-  <section class="panel" aria-labelledby="entriesHead">
-    <h2 id="entriesHead">Meine Tagebucheinträge</h2>
-    <ul class="entries" id="entries"></ul>
-    <div class="below"><button type="button" class="btn-ghost" id="readAll" hidden>Ganzes Tagebuch lesen</button></div>
-  </section>
 
   <p class="note credit">Grammatikprüfung mit Internet: <a href="https://languagetool.org" target="_blank" rel="noopener">LanguageTool</a>. Rechtschreibwörterbuch: igerman98 (Hunspell).</p>
   </div>
@@ -437,12 +469,12 @@
     <div class="modalhead"><b>❓ So funktioniert dein Tagebuch</b><button type="button" class="btn" id="kidHelpClose">Alles klar ✓</button></div>
     <div class="help">
     <details open><summary>✏️ Schreiben</summary>
-      <p>Schreib in dein Heft, was du heute erlebt hast, oder beantworte die Fragen rechts. Oben siehst du, wie viele Wörter und Sätze noch fehlen.</p>
+      <p>Schreib in dein Heft, was du heute erlebt hast, oder beantworte die freiwilligen Fragen rechts. Bei diesen Fragen reicht auch ein Wort oder Emoji. Deine Antworten bleiben privat. Wenn die Gefühlsübersicht eingeschaltet ist, wählst du vor dem Speichern zusätzlich ein bis drei Gefühle aus. Diese Auswahl sehen deine Eltern.</p>
       <p>💡 <b>Frage</b> gibt dir eine Idee, wenn dir nichts einfällt. 😀 <b>Emojis</b> und 🎨 <b>Malen</b> machen deinen Eintrag bunt. <b>Aa</b> macht die Schrift größer.</p>
     </details>
     <details><summary>🔍 Prüfen und verbessern</summary>
-      <p>Drück auf <b>Prüfen</b>. Rot markiert sind Stellen, die noch nicht stimmen. Tippe darauf: Du bekommst einen Tipp, aber nicht die Lösung. So lernst du am meisten!</p>
-      <p>Verbessere die Stelle in deinem Text und drück nochmal auf Prüfen. Ist ein Wort ein Name, wähle „Das ist ein Name“. Bist du dir sicher, dass ein Satzzeichen oder ein großer Buchstabe richtig ist, wähle „🤔 Ich finde, das stimmt so“.</p>
+      <p>Drück auf <b>Prüfen</b>. Tippe auf eine rot markierte Stelle für einen Tipp. Wenn deine Eltern die zusätzliche Lernhilfe eingerichtet haben, kannst du nachfragen, eine einfachere Erklärung bekommen oder einen Vorschlag ansehen.</p>
+      <p>Verbessere die Stelle direkt im Schreibblock. „Nochmal prüfen“ oben aktualisiert alle Markierungen. Für die Hilfe berücksichtigt die KI deinen geänderten Satz direkt. Unter „Weitere Tipps und Entscheidungen“ kannst du Namen bestätigen, selbst entscheiden, dass die Stelle stimmt, oder sie für heute offenlassen. Auch die Prüfung kann sich irren.</p>
     </details>
     <details><summary>📖 Lesen</summary>
       <p>Hier blätterst du durch dein Tagebuch, Tag für Tag oder alles am Stück. 🔊 liest dir vor. Mit „Von – bis“ kannst du dein Tagebuch als Buch drucken.</p>
@@ -458,7 +490,7 @@
       <p>🃏 Mit einem <b>Joker</b> zählt ein Tag als geschafft. Du bekommst jeden Monat neue und kannst sie sparen. Du darfst ihn auch schon vorher einplanen.</p>
     </details>
     <details><summary>🔐 Deine PIN und dein Geheimnis</summary>
-      <p>Nur du kennst deine PIN. Mama und Papa sehen in ihrem Bereich nicht, was du schreibst, nur wie viel. Hast du die PIN vergessen, können sie sie zurücksetzen. Dann siehst du einen Hinweis und legst eine neue fest.</p>
+      <p>Nur du kennst deine PIN. Wenn deine Eltern die Online-Lernhilfe mit OpenAI eingeschaltet haben, wird dein Text beim Prüfen und beim Anfordern von KI-Hilfe an OpenAI geschickt. Mama und Papa sehen in ihrem Bereich deinen Umfang und deine Lernaktivitäten, aber nicht deinen Tagebuchtext. Wenn die Gefühlsübersicht eingeschaltet ist, sehen sie deine ausgewählten Gefühle. Die lokale KI kann zusätzlich Gefühle aus dem Freitext vermuten und als unsichere Hinweise anzeigen. Deine Antworten auf die Tagesfragen werden dafür nicht verwendet. Hast du die PIN vergessen, können deine Eltern sie zurücksetzen. Das wird dir angezeigt.</p>
     </details>
     </div>
    </div>
@@ -471,6 +503,22 @@
 <script src="app/hunspell.js"></script>
 <script src="app/woerterbuch.js"></script>
 <script src="app/uebungen.js"></script>
+<script src="app/lernhilfe.js"></script>
+<script src="app/model-catalog.js"></script>
+<script src="app/mood.js"></script>
+<script src="app/mood-ui.js"></script>
+<script src="app/spell-review.js"></script>
+<script src="app/local-ai.js"></script>
+<script src="app/ollama.js"></script>
+<script src="app/openai.js"></script>
+<script src="app/openai-settings.js"></script>
+<script src="app/ai-selection.js"></script>
+<script src="app/local-store.js"></script>
+<script src="app/reflection.js"></script>
 <script src="app/app.js"></script>
+<script src="app/settings-wizard.js"></script>
+<script src="app/rewards-nav.js"></script>
+<script src="app/help-content.js"></script>
+<script src="app/ui-help.js"></script>
 </body>
 </html>
