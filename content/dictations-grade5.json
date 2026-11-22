@@ -1,0 +1,826 @@
+{
+  "version": "grade5-v1",
+  "source": "Eigene Übungstexte für das Tagebuch, ab Klasse 5",
+  "editorialReview": {
+    "reviewer": "Codex, redaktionelle Sichtung",
+    "date": "2026-11-22",
+    "externalValidation": false
+  },
+  "goals": {
+    "gross": "Achte auf die Großschreibung der Nomen.",
+    "klein": "Achte auf die Kleinschreibung von Verben und Adjektiven im Satz.",
+    "ss": "Achte auf s, ss und ß.",
+    "ie": "Achte auf Wörter mit ie.",
+    "dehnung": "Achte auf das stumme h.",
+    "dopp": "Achte auf doppelte Konsonanten sowie ck und tz.",
+    "ae": "Achte auf ä und e in verwandten Wörtern.",
+    "aeu": "Achte auf äu und eu in verwandten Wörtern.",
+    "hartweich": "Achte auf die letzten Buchstaben. Ein verwandtes Wort kann dir helfen.",
+    "fvw": "Achte auf f, v und w.",
+    "spiegel": "Achte auf die Richtung der Buchstaben b, d, p und q.",
+    "formaehnlich": "Achte auf die Buchstaben m, n und u.",
+    "eiie": "Achte auf die Reihenfolge bei ei und ie.",
+    "umstellung": "Achte auf die Reihenfolge aller Buchstaben.",
+    "auslassung": "Schreibe die Wörter mit allen ihren Buchstaben.",
+    "zusatz": "Schreibe die Wörter ohne zusätzliche Buchstaben.",
+    "komma": "Achte auf die Kommas zwischen den Teilsätzen.",
+    "satzende": "Achte auf das Ende jedes Satzes.",
+    "leer": "Achte darauf, wo ein Wort endet und das nächste beginnt.",
+    "satzz": "Achte auf Fragezeichen und Ausrufezeichen.",
+    "fall": "Achte auf die Endungen nach den Verhältniswörtern.",
+    "verb": "Achte darauf, dass die Verbform zur Person passt.",
+    "grammatik": "Achte auf die Reihenfolge der Wörter im Satz.",
+    "doppelwort": "Schreibe jedes Wort an seiner Stelle einmal.",
+    "verwechselt": "Achte darauf, welches Wort in den Zusammenhang passt.",
+    "dassdas": "Achte darauf, ob das oder dass in den Satz passt.",
+    "getrennt": "Achte darauf, welche Wörter getrennt und welche zusammen geschrieben werden."
+  },
+  "entries": [
+    {
+      "id": "g5-gross-1",
+      "focus": "gross",
+      "level": 1,
+      "topic": "Ein Plan für den Schulhof",
+      "text": "Unsere Klasse sammelt Ideen für den Schulhof. Auf einem Plakat stehen Wünsche für eine Bank und einen Tisch. Die Gruppe bespricht den Plan gemeinsam.",
+      "targets": [
+        "Klasse",
+        "Ideen",
+        "Schulhof",
+        "Plakat",
+        "Wünsche",
+        "Plan"
+      ],
+      "reviewHash": "7bc0f86abce31dfb1c5c22221998a319b38d8cf1f16338368682e80656ec70c4"
+    },
+    {
+      "id": "g5-gross-2",
+      "focus": "gross",
+      "level": 2,
+      "topic": "Ein kleiner Film",
+      "text": "Für einen Film braucht unsere Gruppe eine Geschichte und einen Plan. Während der Pause sammeln wir Vorschläge. Nach der Abstimmung beginnt die Arbeit an der ersten Szene.",
+      "targets": [
+        "Film",
+        "Gruppe",
+        "Geschichte",
+        "Plan",
+        "Pause",
+        "Abstimmung",
+        "Arbeit",
+        "Szene"
+      ],
+      "reviewHash": "b78fc73d04d22dd59f07a3145ca2681a02a95d5d1c412e4dbe83048730b66600"
+    },
+    {
+      "id": "g5-klein-1",
+      "focus": "klein",
+      "level": 1,
+      "topic": "Auf dem Sportplatz",
+      "text": "Die Jugendlichen laufen langsam über den Sportplatz. Danach werfen sie einen kleinen Ball. Alle bleiben ruhig und hören auf das gemeinsame Zeichen.",
+      "targets": [
+        "laufen",
+        "langsam",
+        "werfen",
+        "kleinen",
+        "bleiben",
+        "ruhig",
+        "hören"
+      ],
+      "reviewHash": "d7cb83bcc310e467129b1ab6f8d842f5daaf08809022d8e4b61c2689f8f79c93"
+    },
+    {
+      "id": "g5-klein-2",
+      "focus": "klein",
+      "level": 2,
+      "topic": "Ein neues Rätsel",
+      "text": "Unsere Gruppe sucht eine passende Lösung für ein kniffliges Rätsel. Wir lesen aufmerksam und prüfen jeden Hinweis. Eine gute Idee hilft uns weiter. Am Ende erklären wir den Lösungsweg.",
+      "targets": [
+        "sucht",
+        "passende",
+        "kniffliges",
+        "lesen",
+        "aufmerksam",
+        "prüfen",
+        "gute",
+        "erklären"
+      ],
+      "reviewHash": "f36afcbd6df0b4536d46f82a4d0a8c6ddda08c759b5817556cd504719c5cf1be"
+    },
+    {
+      "id": "g5-ss-1",
+      "focus": "ss",
+      "level": 1,
+      "topic": "Nach dem Training",
+      "text": "Nach dem Training füllen wir Wasser in unsere Flaschen. Draußen ist es heiß. Wir setzen uns in den Schatten und lassen uns Zeit.",
+      "targets": [
+        "Wasser",
+        "Draußen",
+        "heiß",
+        "lassen"
+      ],
+      "reviewHash": "e2549fc0b093c0b46f617195693f4d63284076e99be43be793776f42da415ed9"
+    },
+    {
+      "id": "g5-ss-2",
+      "focus": "ss",
+      "level": 2,
+      "topic": "Ein Weg am Fluss",
+      "text": "Unsere Klasse geht am Fluss entlang. Auf der anderen Seite liegt eine große Wiese. Wir müssen über eine Brücke gehen. Anschließend essen wir unser Brot und genießen die Pause.",
+      "targets": [
+        "Klasse",
+        "Fluss",
+        "große",
+        "müssen",
+        "Anschließend",
+        "essen",
+        "genießen"
+      ],
+      "reviewHash": "3f0e164e5c61b762bb4e43128031a92b7152a5b3a90ffd63a77de8fbed60b5cf"
+    },
+    {
+      "id": "g5-ie-1",
+      "focus": "ie",
+      "level": 1,
+      "topic": "Ein Brief an eine Freundin",
+      "text": "Eine Schülerin schreibt einen Brief an ihre Freundin. Sie berichtet von einem Spiel im Garten. Zum Schluss zeichnet sie eine Biene neben ihren Namen.",
+      "targets": [
+        "Brief",
+        "Spiel",
+        "Biene"
+      ],
+      "reviewHash": "557a2a226f72d39af47949b243aee21a1998cb71ca6bc076f456885532745eaa"
+    },
+    {
+      "id": "g5-ie-2",
+      "focus": "ie",
+      "level": 2,
+      "topic": "Musik für die Pause",
+      "text": "Unsere Gruppe sucht ein Lied für die nächste Pause. Wir spielen verschiedene Stücke ab und schreiben die Titel auf. Ein Schüler liest die Liste vor. Gemeinsam entscheiden wir uns für einen Favoriten.",
+      "targets": [
+        "Lied",
+        "spielen",
+        "verschiedene",
+        "liest"
+      ],
+      "reviewHash": "2f7f01a41c4f14db253b2f2aaee93948f446dffc8a920cb6594575f7831d2375"
+    },
+    {
+      "id": "g5-dehnung-1",
+      "focus": "dehnung",
+      "level": 1,
+      "topic": "Mit dem Rad unterwegs",
+      "text": "Wir fahren mit dem Rad zum Bahnhof. Vor der Abfahrt nehmen wir uns Zeit für eine kurze Pause. Ein Freund zählt die Räder unserer Gruppe.",
+      "targets": [
+        "fahren",
+        "Bahnhof",
+        "Abfahrt",
+        "nehmen"
+      ],
+      "reviewHash": "16754a24c22017c73189140440fab934388f629900be3533766403f5e00077bf"
+    },
+    {
+      "id": "g5-dehnung-2",
+      "focus": "dehnung",
+      "level": 2,
+      "topic": "Eine Bühne für die Klasse",
+      "text": "Für unser Schulfest planen wir eine kleine Bühne. Wir nehmen Maß und schreiben jede Zahl auf. Nach einer kurzen Probe holen wir die Stühle aus dem Nebenraum. Ein Lehrer hilft beim Tragen.",
+      "targets": [
+        "Bühne",
+        "nehmen",
+        "Zahl",
+        "Stühle",
+        "Lehrer"
+      ],
+      "reviewHash": "3f60a43a8fe98424cb0cdd6848d5a2fb6264062164106fb0bb4a9e9b80a1433f"
+    },
+    {
+      "id": "g5-dopp-1",
+      "focus": "dopp",
+      "level": 1,
+      "topic": "Ein Spiel im Hof",
+      "text": "Im Hof liegt ein Ball neben einer Kiste. Unsere Gruppe stellt sich im Kreis auf. Alle passen gut auf und laufen erst nach dem Zeichen los.",
+      "targets": [
+        "Ball",
+        "stellt",
+        "Alle",
+        "passen"
+      ],
+      "reviewHash": "54f5d40b91bb1751abd9bd431b7738b78633da8c85bb8058da566fe36757cf84"
+    },
+    {
+      "id": "g5-dopp-2",
+      "focus": "dopp",
+      "level": 2,
+      "topic": "Ein Platz zum Lesen",
+      "text": "Unsere Klasse richtet eine Leseecke ein. Wir stellen einen Sessel an die Wand und legen ein Kissen darauf. Neben dem Sessel steht eine Kiste mit Büchern. Ein Schild zeigt den neuen Platz.",
+      "targets": [
+        "Klasse",
+        "Leseecke",
+        "stellen",
+        "Sessel",
+        "Kissen",
+        "Platz"
+      ],
+      "reviewHash": "167b351d30b9e3d94bbff944e6aef4c0e0cfef8dd0577c23204809467e19f8ba"
+    },
+    {
+      "id": "g5-ae-1",
+      "focus": "ae",
+      "level": 1,
+      "topic": "Im Schulgarten",
+      "text": "Im Schulgarten tragen wir Blätter und Äste zusammen. Danach waschen wir die Hände. In einem Heft halten wir fest, welche Pflanzen im Garten wachsen.",
+      "targets": [
+        "Blätter",
+        "Äste",
+        "Hände"
+      ],
+      "reviewHash": "88cd152def74670d615428d9b2bb9040c1755aab6c0eaf54d2fa76b7fc928011"
+    },
+    {
+      "id": "g5-ae-2",
+      "focus": "ae",
+      "level": 2,
+      "topic": "Eine Ausstellung im Flur",
+      "text": "Für eine Ausstellung fotografieren wir Blätter und Äste im Schulgarten. Auf dem Plakat stehen passende Wörter. Wir vergleichen die Bilder und wählen die stärksten Farben aus. Zum Schluss hängen wir das Plakat auf.",
+      "targets": [
+        "Blätter",
+        "Äste",
+        "Wörter",
+        "stärksten"
+      ],
+      "reviewHash": "27ee7cbeba46cf3fda78891598f921e10eb629d90da4a4c83e7230781bf1c901"
+    },
+    {
+      "id": "g5-aeu-1",
+      "focus": "aeu",
+      "level": 1,
+      "topic": "Ein Rundgang durch die Schule",
+      "text": "Unsere Gruppe besucht die neuen Räume der Schule. Durch ein Fenster sehen wir Bäume und Sträucher. Zum Schluss betrachten wir die Pläne für die Pausenhalle.",
+      "targets": [
+        "Räume",
+        "Bäume",
+        "Sträucher"
+      ],
+      "reviewHash": "dfc0d8beab22662da529f41d4cdea28dde2b36341952b53942021cc473a8a799"
+    },
+    {
+      "id": "g5-aeu-2",
+      "focus": "aeu",
+      "level": 2,
+      "topic": "Wünsche für die Stadt",
+      "text": "Für ein Projekt sammeln wir Träume von einer freundlichen Stadt. Wir zeichnen Häuser mit hellen Räumen. Zwischen den Häusern stehen Bäume und Sträucher. Auf einem zweiten Bild sind neue Spielplätze zu sehen.",
+      "targets": [
+        "Träume",
+        "Häuser",
+        "Räumen",
+        "Häusern",
+        "Bäume",
+        "Sträucher"
+      ],
+      "reviewHash": "a9cf41119b2a8ca8bca33f5fb67da3140aa7120e33d44c06ec4dbbae0e8de63d"
+    },
+    {
+      "id": "g5-hartweich-1",
+      "focus": "hartweich",
+      "level": 1,
+      "topic": "Ein Spaziergang",
+      "text": "Ein Jugendlicher geht mit seinem Hund einen Weg am Waldrand entlang. Neben einer Bank steht ein Korb. Auf dem Rückweg nimmt er den leeren Korb mit.",
+      "targets": [
+        "Hund",
+        "Weg",
+        "Waldrand",
+        "Korb"
+      ],
+      "reviewHash": "41e702297465135d594007fdbe9f06e1e472a1e186d922112b22c1cac5d3b152"
+    },
+    {
+      "id": "g5-hartweich-2",
+      "focus": "hartweich",
+      "level": 2,
+      "topic": "Ein Modell aus Papier",
+      "text": "Unsere Gruppe baut ein Modell von einem Berg. Ein schmaler Weg führt zu einem Haus am Rand. Wir malen einen Wald auf das Papier. Vor dem Haus steht ein kleiner Hund.",
+      "targets": [
+        "Berg",
+        "Weg",
+        "Rand",
+        "Wald",
+        "Hund"
+      ],
+      "reviewHash": "724083b3c1deca1b544685f7f6719098c71421b48a5187367c64db3ba5d8a9ce"
+    },
+    {
+      "id": "g5-fvw-1",
+      "focus": "fvw",
+      "level": 1,
+      "topic": "Ein Foto am Fenster",
+      "text": "Am Fenster sitzt ein Vogel auf einem Ast. Ein Schüler macht vorsichtig ein Foto. Danach öffnet er sein Heft und schreibt wenige Wörter zu dem Bild.",
+      "targets": [
+        "Fenster",
+        "Vogel",
+        "vorsichtig",
+        "Foto",
+        "wenige",
+        "Wörter"
+      ],
+      "reviewHash": "4f90cf1ce55049e479df0de1e38c28f079b22a503c875e29943fd099ef967656"
+    },
+    {
+      "id": "g5-fvw-2",
+      "focus": "fvw",
+      "level": 2,
+      "topic": "Vorbereitung auf das Fest",
+      "text": "Vor dem Schulfest verteilen wir verschiedene Aufgaben. Eine Gruppe faltet Papier für die Fenster. Andere schreiben eine Einladung für die Familien. Wir vergleichen unsere Vorschläge und wählen gemeinsam ein freundliches Motiv.",
+      "targets": [
+        "Vor",
+        "verteilen",
+        "verschiedene",
+        "faltet",
+        "Fenster",
+        "Familien",
+        "vergleichen",
+        "Vorschläge"
+      ],
+      "reviewHash": "3c3fee975e0209fa12daa737ff8bc9712c6b1e8b4102c236c72b302f4bf95705"
+    },
+    {
+      "id": "g5-spiegel-1",
+      "focus": "spiegel",
+      "level": 1,
+      "topic": "Ein Plan für den Pausenhof",
+      "text": "Auf einem Blatt zeichnen wir eine Bank und einen Baum. Der Plan liegt neben einem Buch. Eine Gruppe prüft den Abstand zwischen den Bänken.",
+      "targets": [
+        "Blatt",
+        "Bank",
+        "Baum",
+        "Plan",
+        "Buch",
+        "Abstand"
+      ],
+      "reviewHash": "e2925162ba3ca6174c192fae5fadbcb6543be6cfa7b4d36a7ae40f1b1a92771e"
+    },
+    {
+      "id": "g5-spiegel-2",
+      "focus": "spiegel",
+      "level": 2,
+      "topic": "Ein bequemes Lesezimmer",
+      "text": "Unsere Gruppe plant ein bequemes Lesezimmer. Auf dem Bild steht ein breiter Sessel neben einem Regal. Ein Schüler legt ein Blatt quer auf den Boden. Danach prüfen wir den Platz für die Bücher.",
+      "targets": [
+        "bequemes",
+        "breiter",
+        "Blatt",
+        "quer",
+        "Boden",
+        "prüfen"
+      ],
+      "reviewHash": "1a88d5ed4c6d0cd44b8d65fd119e296a843a35b470c0609a7670b8475f97dab9"
+    },
+    {
+      "id": "g5-formaehnlich-1",
+      "focus": "formaehnlich",
+      "level": 1,
+      "topic": "Vor dem Unterricht",
+      "text": "Am Morgen nimmt eine Schülerin ihre Mappe und ein Lineal. Im Klassenraum räumt sie den Tisch auf. Neben dem Heft liegt ein neuer Stundenplan.",
+      "targets": [
+        "Morgen",
+        "nimmt",
+        "Lineal",
+        "räumt",
+        "neuer"
+      ],
+      "reviewHash": "5dc256b1b046cfa42c4a970e361d96fc2a8b4f7c0ecfc2371a328ebfe0c74a05"
+    },
+    {
+      "id": "g5-formaehnlich-2",
+      "focus": "formaehnlich",
+      "level": 2,
+      "topic": "Ein gemeinsamer Termin",
+      "text": "Unsere Gruppe sucht einen gemeinsamen Termin für ein Treffen. Wir sammeln Namen und tragen die Wünsche in einen Plan ein. Nach einigen Minuten finden wir eine Lösung. Nun können wir den Raum reservieren.",
+      "targets": [
+        "gemeinsamen",
+        "Termin",
+        "sammeln",
+        "Namen",
+        "Minuten",
+        "Nun",
+        "Raum"
+      ],
+      "reviewHash": "3a0c6014c2c9c6f3b8e62b228dbfb6a2e451628897261e560c1d5ccfce913675"
+    },
+    {
+      "id": "g5-eiie-1",
+      "focus": "eiie",
+      "level": 1,
+      "topic": "Ein Spiel mit Briefen",
+      "text": "Für ein Spiel schreibt unsere Gruppe kleine Briefe. In jedem Brief steht ein Hinweis. Wir legen die Briefe in eine Reihe und suchen gemeinsam die Lösung.",
+      "targets": [
+        "Spiel",
+        "kleine",
+        "Briefe",
+        "Brief",
+        "Hinweis",
+        "Reihe"
+      ],
+      "reviewHash": "cd51c2b4741d2554237704b2a828c977299ac9e8da1474fc7314bf991fca5fef"
+    },
+    {
+      "id": "g5-eiie-2",
+      "focus": "eiie",
+      "level": 2,
+      "topic": "Ein Weg durch den Park",
+      "text": "Auf einem Spaziergang suchen wir Zeichen für ein Geländespiel. Neben einer Wiese liegt ein kleiner Stein. Ein weiterer Hinweis hängt an einem Zweig. Wir schreiben die Reihenfolge auf und vergleichen unsere Ergebnisse.",
+      "targets": [
+        "Zeichen",
+        "Wiese",
+        "kleiner",
+        "Stein",
+        "Hinweis",
+        "Reihenfolge"
+      ],
+      "reviewHash": "0e7f00f4fd553df1542fc35814b1dfd7444cbce9f7f502857c8800d179a7b5f7"
+    },
+    {
+      "id": "g5-umstellung-1",
+      "focus": "umstellung",
+      "level": 1,
+      "topic": "Vor dem Training",
+      "text": "Vor dem Training öffnet ein Freund die Tür zur Halle. Er stellt sein Brot auf den Tisch. Danach legt er die Sportschuhe neben die Bank.",
+      "targets": [
+        "Freund",
+        "Tür",
+        "Brot",
+        "Sportschuhe"
+      ],
+      "reviewHash": "a31b2b79e7f60d4e8cd303a7c5ac8250a31610828a41295bbe6c718af16e1ca6"
+    },
+    {
+      "id": "g5-umstellung-2",
+      "focus": "umstellung",
+      "level": 2,
+      "topic": "Ein Plakat für das Turnier",
+      "text": "Unsere Gruppe gestaltet ein Plakat für ein Turnier. Ein Freund zeichnet den Sportplatz. Neben dem Bild steht ein kurzer Text. Wir prüfen die Schrift und hängen das Plakat an die Tür.",
+      "targets": [
+        "gestaltet",
+        "Plakat",
+        "Turnier",
+        "Freund",
+        "Sportplatz",
+        "Schrift",
+        "Tür"
+      ],
+      "reviewHash": "6e5a0e9e65025160373fdc8ef0d959fa424f1789ebb296ee38f782da410a9fa5"
+    },
+    {
+      "id": "g5-auslassung-1",
+      "focus": "auslassung",
+      "level": 1,
+      "topic": "Ein Geschenk für die Klasse",
+      "text": "Eine Gruppe packt ein Geschenk für die Klasse ein. Auf dem Tisch liegen Papier und eine Schnur. Neben dem Fenster steht eine Kiste mit Büchern.",
+      "targets": [
+        "Geschenk",
+        "Schnur",
+        "Fenster",
+        "Büchern"
+      ],
+      "reviewHash": "32885c6317e8453fbd699cfedfeff96c65cfff06ff54a89121926c6f17d73ae1"
+    },
+    {
+      "id": "g5-auslassung-2",
+      "focus": "auslassung",
+      "level": 2,
+      "topic": "Eine Nachricht im Schulhaus",
+      "text": "Unsere Klasse schreibt eine Nachricht für die Schulzeitung. Ein Schüler berichtet von einem Ausflug. Eine Mitschülerin beschreibt die Fahrt mit dem Bus. Gemeinsam lesen wir den Entwurf und ergänzen einen wichtigen Hinweis.",
+      "targets": [
+        "Nachricht",
+        "Schulzeitung",
+        "beschreibt",
+        "Entwurf",
+        "ergänzen",
+        "wichtigen"
+      ],
+      "reviewHash": "0b9660ae4ed978ff6b13d5a4af14408cc4be532b89aa9c19d192d08dba193266"
+    },
+    {
+      "id": "g5-zusatz-1",
+      "focus": "zusatz",
+      "level": 1,
+      "topic": "Eine Pause im Garten",
+      "text": "In der Pause essen wir einen Apfel im Schulgarten. Neben dem Tisch wächst eine Blume. Danach tragen wir unsere Hefte zurück in den Klassenraum.",
+      "targets": [
+        "Apfel",
+        "Blume",
+        "Hefte",
+        "Klassenraum"
+      ],
+      "reviewHash": "93492a0c61d63e0b946d18de8d03aa678c3aa9a258ec920e47f233c342b33a6b"
+    },
+    {
+      "id": "g5-zusatz-2",
+      "focus": "zusatz",
+      "level": 2,
+      "topic": "Ein Paket für das Projekt",
+      "text": "Für unser Projekt kommt ein Paket in der Schule an. Darin liegen Papier und eine neue Mappe. Wir tragen das Material in den Nebenraum. Nach einer Minute ist der Tisch wieder frei.",
+      "targets": [
+        "Paket",
+        "Schule",
+        "Papier",
+        "Material",
+        "Minute",
+        "Tisch"
+      ],
+      "reviewHash": "e8e1576629f373b4f1e4369240047b99ca4a0d84bc16c14f7128fe4953ed84b1"
+    },
+    {
+      "id": "g5-komma-1",
+      "focus": "komma",
+      "level": 1,
+      "topic": "Training bei Regen",
+      "text": "Wir bleiben in der Halle, weil es draußen regnet. Wenn der Regen aufhört, gehen wir auf den Sportplatz. Bis dahin üben wir mit einem Ball.",
+      "targets": [
+        ",",
+        ","
+      ],
+      "reviewHash": "5f680f788ac8d4e67fa1ed2d803cd4fe299d3fded68920526a06b0bfe438cae8"
+    },
+    {
+      "id": "g5-komma-2",
+      "focus": "komma",
+      "level": 2,
+      "topic": "Eine Nachricht an die Gruppe",
+      "text": "Eine Schülerin schreibt eine Nachricht, weil sich der Treffpunkt geändert hat. Bevor die Gruppe losgeht, lesen alle die neue Adresse. Am Ziel prüfen wir gemeinsam den Plan für den Nachmittag.",
+      "targets": [
+        ",",
+        ","
+      ],
+      "reviewHash": "4dec6f90550c03bb2453440d6c8a4e064918392d16adccaf1b3dbf801f490966"
+    },
+    {
+      "id": "g5-satzende-1",
+      "focus": "satzende",
+      "level": 1,
+      "topic": "Ein Treffen im Hof",
+      "text": "Unsere Gruppe trifft sich am Nachmittag im Hof. Wir bringen einen Ball und ein Seil mit. Nach dem Spiel räumen alle gemeinsam auf.",
+      "targets": [
+        ".",
+        ".",
+        "."
+      ],
+      "reviewHash": "c87b79c07de07cfe004131d536c8da7d9680057ffd2868009e25fd82bea00a95"
+    },
+    {
+      "id": "g5-satzende-2",
+      "focus": "satzende",
+      "level": 2,
+      "topic": "Ein Bericht für die Schulzeitung",
+      "text": "Unsere Klasse schreibt einen Bericht über das Schulfest. Eine Gruppe sammelt die Bilder vom Nachmittag. Eine andere Gruppe beschreibt das gemeinsame Spiel. Am Ende lesen wir den ganzen Bericht noch einmal vor.",
+      "targets": [
+        ".",
+        ".",
+        ".",
+        "."
+      ],
+      "reviewHash": "b4eb6f0221a5e0b18fb98df2df6b8b7aeed6934cd42cd9f66271d79ed05b26c4"
+    },
+    {
+      "id": "g5-leer-1",
+      "focus": "leer",
+      "level": 1,
+      "topic": "Am Bahnhof",
+      "text": "Unsere Gruppe wartet am Bahnsteig auf den Zug. Die Fahrkarten liegen in der Tasche. Vor der Abfahrt zählen wir alle Rucksäcke und lesen den Plan.",
+      "targets": [
+        "am Bahnsteig",
+        "in der Tasche",
+        "Vor der Abfahrt"
+      ],
+      "reviewHash": "440c568be8fcc2c3b3c55d595c1d64134b7cde20ec19b32493007350a6d9cec9"
+    },
+    {
+      "id": "g5-leer-2",
+      "focus": "leer",
+      "level": 2,
+      "topic": "Eine Aufgabe am Computer",
+      "text": "In der Schule arbeiten wir an einem gemeinsamen Text. Auf dem Bildschirm sehen wir die erste Seite. Nach der Pause lesen wir den Text noch einmal. Zum Schluss speichern wir die Datei im richtigen Ordner.",
+      "targets": [
+        "In der Schule",
+        "Auf dem Bildschirm",
+        "Nach der Pause",
+        "Zum Schluss"
+      ],
+      "reviewHash": "d5cd8d5211368b5b1cf07cdbabcfad25575fecbe6bdc9949f6c340f151f9494a"
+    },
+    {
+      "id": "g5-satzz-1",
+      "focus": "satzz",
+      "level": 1,
+      "topic": "Vor dem Spiel",
+      "text": "Wo treffen wir uns heute? Unsere Gruppe wartet vor der Halle auf den Trainer. Passt bitte auf die Fahrräder auf! Danach beginnt das Spiel.",
+      "targets": [
+        "?",
+        "!"
+      ],
+      "reviewHash": "d91d3c022b0b6a71e98967f8dc29b94f2808d5205f2fd603687ffc8472f2fbe2"
+    },
+    {
+      "id": "g5-satzz-2",
+      "focus": "satzz",
+      "level": 2,
+      "topic": "Ein neuer Weg",
+      "text": "Welche Straße führt zur Schule? Unsere Gruppe betrachtet einen Stadtplan und sucht die nächste Kreuzung. Bleibt bitte am Rand des Gehwegs stehen! Gemeinsam prüfen wir den Weg und gehen dann weiter.",
+      "targets": [
+        "?",
+        "!"
+      ],
+      "reviewHash": "148efbf19137892dc48ba3eefbbe0d32ad6c812e283fc1678ca399c82f6241ba"
+    },
+    {
+      "id": "g5-fall-1",
+      "focus": "fall",
+      "level": 1,
+      "topic": "Vor dem Training",
+      "text": "Ein Schüler geht mit dem Ball zum Trainer. Neben der Bank wartet seine Gruppe. Für den neuen Plan braucht der Trainer ein Blatt Papier.",
+      "targets": [
+        "mit dem Ball",
+        "zum Trainer",
+        "Neben der Bank",
+        "Für den neuen Plan"
+      ],
+      "reviewHash": "ea35326bd69b81a5f35b6dbbcb83c62603861dc28c1ac0faf4583a8bca12859f"
+    },
+    {
+      "id": "g5-fall-2",
+      "focus": "fall",
+      "level": 2,
+      "topic": "Ein Modell für den Unterricht",
+      "text": "Unsere Gruppe arbeitet an einem Modell für den Unterricht. Mit einer Schere schneiden wir Papier für die Dächer aus. Zwischen den Häusern bleibt Platz für einen Weg. Danach zeigen wir das Modell unserer Lehrerin.",
+      "targets": [
+        "an einem Modell",
+        "für den Unterricht",
+        "Mit einer Schere",
+        "Zwischen den Häusern",
+        "unserer Lehrerin"
+      ],
+      "reviewHash": "c8b25928e8484d1498800c027726bca28113d026d613369383cd2a85bf8efbde"
+    },
+    {
+      "id": "g5-verb-1",
+      "focus": "verb",
+      "level": 1,
+      "topic": "Ein Spiel in der Pause",
+      "text": "Ich spiele in der Pause mit meiner Gruppe. Du wirfst den Ball zu mir. Ein Schüler fängt ihn auf. Gemeinsam tragen wir die Kiste zurück.",
+      "targets": [
+        "spiele",
+        "wirfst",
+        "fängt",
+        "tragen"
+      ],
+      "reviewHash": "3d92403bc55661a98018d25fcd2b1096157acee587e1f54e087d3453579e0500"
+    },
+    {
+      "id": "g5-verb-2",
+      "focus": "verb",
+      "level": 2,
+      "topic": "Ein Plan für den Nachmittag",
+      "text": "Unsere Gruppe plant einen Nachmittag im Park. Eine Schülerin schreibt die Ideen auf. Zwei Schüler lesen den Plan vor. Ich ergänze den Treffpunkt und du prüfst die Zeit. Gemeinsam entscheiden wir über die Aufgaben.",
+      "targets": [
+        "plant",
+        "schreibt",
+        "lesen",
+        "ergänze",
+        "prüfst",
+        "entscheiden"
+      ],
+      "reviewHash": "54b11c94193a31528f2b022af4edfabf94119595437e59679bc135e6e7021d71"
+    },
+    {
+      "id": "g5-grammatik-1",
+      "focus": "grammatik",
+      "level": 1,
+      "topic": "Eine klare Nachricht",
+      "text": "Ein Schüler schreibt eine Nachricht, weil sich der Treffpunkt ändert. Seine Gruppe wartet, bis alle angekommen sind. Danach gehen wir gemeinsam zur Halle.",
+      "targets": [
+        "weil sich der Treffpunkt ändert",
+        "bis alle angekommen sind"
+      ],
+      "reviewHash": "8703b0c540e8a29f099b3ca8beae8f9c35e2bb14ed3ad40a5edbddee5f9dd565"
+    },
+    {
+      "id": "g5-grammatik-2",
+      "focus": "grammatik",
+      "level": 2,
+      "topic": "Vorbereitung auf die Ausstellung",
+      "text": "Unsere Gruppe prüft den Plan, bevor die Ausstellung beginnt. Wir wissen, dass jeder eine Aufgabe übernimmt. Sobald alle Bilder an der Wand hängen, öffnen wir die Tür für die Besucher.",
+      "targets": [
+        "bevor die Ausstellung beginnt",
+        "dass jeder eine Aufgabe übernimmt",
+        "Sobald alle Bilder an der Wand hängen"
+      ],
+      "reviewHash": "c21dc956d94e73c53a80e6bb24668a20bde006b19611c2c28814d68d680652da"
+    },
+    {
+      "id": "g5-doppelwort-1",
+      "focus": "doppelwort",
+      "level": 1,
+      "topic": "Eine gemeinsame Idee",
+      "text": "Unser Team plant ein Spiel. Alle schreiben einen Vorschlag auf. Am Ende wählen wir gemeinsam eine Idee. Auf einem Blatt halten wir den Plan fest.",
+      "targets": [
+        "Unser Team plant ein Spiel.",
+        "Alle schreiben einen Vorschlag auf."
+      ],
+      "reviewHash": "5c0735937528f78a66354c1f991117459ee5effc6b63eb6450f6ea63318baec3"
+    },
+    {
+      "id": "g5-doppelwort-2",
+      "focus": "doppelwort",
+      "level": 2,
+      "topic": "Ein Bericht für die Gruppe",
+      "text": "Ein Schüler schreibt einen Bericht über den Ausflug. Eine Mitschülerin liest den Text langsam vor. Die Gruppe hört aufmerksam zu. Danach prüfen alle gemeinsam die Reihenfolge der Sätze und ergänzen eine Überschrift.",
+      "targets": [
+        "Ein Schüler schreibt einen Bericht über den Ausflug.",
+        "Eine Mitschülerin liest den Text langsam vor.",
+        "Die Gruppe hört aufmerksam zu."
+      ],
+      "reviewHash": "67bdd4f6ffe2d1ae75600dbe24805cde7bf38f1a800ab9d4bbe01c1e2b9e2eb6"
+    },
+    {
+      "id": "g5-verwechselt-1",
+      "focus": "verwechselt",
+      "level": 1,
+      "topic": "Warten auf die Gruppe",
+      "text": "Unsere Gruppe wartet seit einer Stunde vor der Halle. Ihr seid heute früh gekommen. Morgen treffen wir uns wieder am gleichen Ort und spielen zusammen.",
+      "targets": [
+        "seit",
+        "seid",
+        "wieder"
+      ],
+      "reviewHash": "84c645ee4b1afcbe7963d2d5cdfef2dd147d0df409e2c7220b7bd4b0e9134187"
+    },
+    {
+      "id": "g5-verwechselt-2",
+      "focus": "verwechselt",
+      "level": 2,
+      "topic": "Ein neuer Versuch",
+      "text": "Seit dem letzten Treffen hat unsere Gruppe einen neuen Plan. Ihr seid mit euren Aufgaben schon fertig. Wir wollen die Idee heute wieder ausprobieren. Jede Gruppe bekommt dafür eine eigene Seite im Heft.",
+      "targets": [
+        "Seit",
+        "seid",
+        "wieder",
+        "Seite"
+      ],
+      "reviewHash": "243eae87c4f2c0f716c79c7560e0d46c4ae3641f7425bcb411391f2f24a18922"
+    },
+    {
+      "id": "g5-dassdas-1",
+      "focus": "dassdas",
+      "level": 1,
+      "topic": "Ein Plakat für das Fest",
+      "text": "Wir hoffen, dass das Plakat allen gefällt. Das Bild zeigt unsere Gruppe im Schulgarten. Eine Schülerin erklärt, dass der Text unter dem Bild noch fehlt.",
+      "targets": [
+        "dass",
+        "das",
+        "Das",
+        "dass"
+      ],
+      "reviewHash": "218abe69fbd7e0784661f1e4fdc49b9df0fa4054087e8a88614de29ca2323f34"
+    },
+    {
+      "id": "g5-dassdas-2",
+      "focus": "dassdas",
+      "level": 2,
+      "topic": "Ein Film über die Schule",
+      "text": "Unsere Gruppe weiß, dass das Filmen Zeit braucht. Ein Schüler prüft das Gerät, das auf dem Tisch liegt. Wir freuen uns, dass alle bei der Planung helfen und ihre Ideen aufschreiben.",
+      "targets": [
+        "dass",
+        "das",
+        "das",
+        "das",
+        "dass"
+      ],
+      "reviewHash": "acea96f2a83d80a74ed8c4902274c5c26312c3a4ffec0edd600ec6b3e1b35493"
+    },
+    {
+      "id": "g5-getrennt-1",
+      "focus": "getrennt",
+      "level": 1,
+      "topic": "Ein freier Nachmittag",
+      "text": "Nach der Schule wollen wir spazieren gehen. Vorher möchte ich mein Zimmer aufräumen. Ein Freund möchte später mitkommen. Wir treffen uns vor der Schule und gehen zusammen los.",
+      "targets": [
+        "spazieren gehen",
+        "aufräumen",
+        "mitkommen"
+      ],
+      "reviewHash": "fbe1efcd804db5d29ebb07a3665b19975b129828a83348421ecfc0853bba045d"
+    },
+    {
+      "id": "g5-getrennt-2",
+      "focus": "getrennt",
+      "level": 2,
+      "topic": "Ein Treffen in der Schule",
+      "text": "Unsere Gruppe möchte an einem Treffen teilnehmen. Vorher müssen wir die Aufgabe noch einmal laut vorlesen. Ein Schüler will früher nach Hause gehen. Das Treffen soll im Nebenraum stattfinden.",
+      "targets": [
+        "teilnehmen",
+        "vorlesen",
+        "nach Hause gehen",
+        "stattfinden"
+      ],
+      "reviewHash": "8261d016392b4a0d4a3f41a7964b87e9f7a751b9041874540222a9b815ede681"
+    }
+  ]
+}

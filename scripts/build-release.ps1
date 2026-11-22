@@ -1,9 +1,12 @@
 $ErrorActionPreference = 'Stop'
+Import-Module (Join-Path $PSHOME 'Modules/Microsoft.PowerShell.Archive/Microsoft.PowerShell.Archive.psd1') -ErrorAction Stop
 $projectRoot = Split-Path $PSScriptRoot -Parent
-$nodePath = (Get-Command node -CommandType Application).Source
+$nodePath = (Get-Command node -CommandType Application | Select-Object -First 1).Source
 $nodeInfo = (& $nodePath -p 'JSON.stringify({version:process.version,arch:process.arch,platform:process.platform})') | ConvertFrom-Json
 if ($nodeInfo.platform -ne 'win32' -or $nodeInfo.arch -ne 'x64') { throw 'Für dieses Paket wird Node.js für Windows x64 benötigt.' }
 if ([int]($nodeInfo.version.TrimStart('v').Split('.')[0]) -lt 22) { throw 'Node.js 22 oder neuer ist erforderlich.' }
+& $nodePath (Join-Path $PSScriptRoot 'build-practice.cjs')
+if ($LASTEXITCODE -ne 0) { throw 'Die geprüften Übungstexte konnten nicht erzeugt werden.' }
 & $nodePath (Join-Path $PSScriptRoot 'build-help.cjs')
 if ($LASTEXITCODE -ne 0) { throw 'Die Hilfe konnte nicht erzeugt werden.' }
 $version = (Get-Content (Join-Path $projectRoot 'package.json') -Raw | ConvertFrom-Json).version
@@ -20,7 +23,7 @@ foreach ($file in @('start.cjs','dev-server.cjs','local-store.cjs','ai-runtime.c
 Copy-Item -LiteralPath $nodePath -Destination (Join-Path $releaseApp 'runtime/node.exe')
 Invoke-WebRequest -Uri ('https://raw.githubusercontent.com/nodejs/node/' + $nodeInfo.version + '/LICENSE') -OutFile (Join-Path $releaseApp 'runtime/LICENSE.txt')
 Copy-Item -LiteralPath (Join-Path $projectRoot 'LICENSE') -Destination $releaseApp
-foreach ($file in @('BEDIENUNG.md','DRITTANBIETER.md','DATEN-UND-SPEICHERUNG.md')) {
+foreach ($file in @('BEDIENUNG.md','DRITTANBIETER.md','DATEN-UND-SPEICHERUNG.md','diktatmaterial-klasse-5.md')) {
   Copy-Item -LiteralPath (Join-Path $projectRoot ('docs/' + $file)) -Destination (Join-Path $releaseApp 'docs')
 }
 @'
@@ -58,7 +61,8 @@ Enthaltene Laufzeit: Node.js $($nodeInfo.version) Windows x64.
 Lizenzhinweise: LICENSE, runtime\LICENSE.txt und docs\DRITTANBIETER.md.
 Weitere Bedienhinweise: docs\BEDIENUNG.md und die Hilfe in der App.
 "@ | Set-Content -LiteralPath (Join-Path $releaseApp 'LIESMICH.txt') -Encoding utf8
-@{version=$version;builtAt=(Get-Date -Format o);platform='win32-x64';node=$nodeInfo.version} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $releaseApp 'VERSION.json') -Encoding utf8
+$releaseMetadata = @{version=$version;builtAt=(Get-Date -Format o);platform='win32-x64';node=$nodeInfo.version} | ConvertTo-Json
+[System.IO.File]::WriteAllText((Join-Path $releaseApp 'VERSION.json'), $releaseMetadata, (New-Object System.Text.UTF8Encoding($false)))
 $releaseZip = Join-Path $projectRoot ("Release/Tagebuch-$version-Windows-x64-$stamp.zip")
 Compress-Archive -LiteralPath $releaseApp -DestinationPath $releaseZip -CompressionLevel Optimal
 $hash = (Get-FileHash -LiteralPath $releaseZip -Algorithm SHA256).Hash.ToLowerInvariant()

@@ -4,23 +4,23 @@ Ein deutschsprachiges Tagebuch zum regelmäßigen Schreiben, Lesen und Üben der
 
 Im Windows-Dev kommen ein geführter Elternbereich und eine Gefühlsübersicht hinzu: Das Kind wählt vor dem Speichern ein bis drei Gefühle, darunter 😍 für „geliebt“. Lokale KI-Hinweise aus dem Freitext werden separat gezeigt. Der Kalender ordnet Tageswerte nach KWs; Wochen und Monate werden erst für vollständig erfasste Kalenderzeiträume ausgewertet. Prozentwerte zeigen Häufigkeiten pro erfasstem Tag, keine psychologische Bewertung. Die freiwilligen Tagesfragen bleiben privat.
 
-Die Anwendung läuft direkt im Browser. Es gibt keinen eigenen Server, keine Installation und keinen Build-Schritt. Wörterbuch, Übungstexte und Spiele sind im Download enthalten. Die zusätzliche Online-Grammatikprüfung und Benachrichtigungen benötigen Internet.
+Die Windows-App 2.0 läuft im Browser über einen lokalen Server auf diesem PC. Das portable ZIP enthält die Node.js-Laufzeit, Wörterbuch, Übungstexte und Spiele. Eine separate Node.js-Installation ist dafür nicht nötig. Die optionale Online-Grammatikprüfung und Benachrichtigungen benötigen Internet.
 
-**Aktuelle Entwicklung: Windows-PC.** In `Dev/` ist eine zusätzliche lokale Lernhilfe mit Ollama vorbereitet. Oberfläche, Lernhilfe-Kern und KI-Anbindung sind getrennt, damit spätere mobile Apps oder eine gehostete PWA darauf aufbauen können. Eine mobile App und Hosting werden derzeit nicht implementiert. Der vorhandene ZIP-Release ist davon getrennt. [Entwicklungsstand](docs/ENTWICKLUNG.md#windows-dev-und-spätere-plattformen).
+**Aktuelle Version: Windows 2.0.0.** Die zusätzliche lokale KI mit Ollama kann auf Wunsch eingerichtet werden. Sie liefert Korrekturvorschläge; freie lokale KI-Erklärungen bleiben wegen der nicht erreichten Qualitätsanforderung ausgeschaltet. [Release auf GitHub](https://github.com/seven0584/MeinLRSTagebuch/releases/tag/v2.0.0) · [Entwicklungsstand](docs/ENTWICKLUNG.md#windows-dev-und-spätere-plattformen).
 
 ## Schnell starten
 
-1. [Release/Tagebuch.zip](Release/Tagebuch.zip) herunterladen und vollständig entpacken.
+1. Im [Windows-Release 2.0.0](https://github.com/seven0584/MeinLRSTagebuch/releases/tag/v2.0.0) das Windows-x64-ZIP herunterladen und vollständig entpacken.
 2. Den entpackten Ordner `Tagebuch` an einen festen Platz legen.
-3. `Tagebuch.html` mit Chrome oder Microsoft Edge am PC öffnen.
-4. In der App den Ordner auswählen, in dem `Tagebuch.html` liegt, und Schreibzugriff erlauben.
+3. `Start.cmd` doppelklicken und das Konsolenfenster während der Nutzung offen lassen.
+4. Die App öffnet sich im Browser. Sie speichert automatisch im eigenen Ordner `data/`; der Pfad steht im Elternbereich.
 5. Im Bereich **Eltern** eine Eltern-PIN festlegen und Kinder anlegen. Jedes Kind legt anschließend seine eigene PIN fest.
 
-Zum Ausprobieren des Quellstands stattdessen [Dev/Tagebuch.html](Dev/Tagebuch.html) lokal öffnen und den Ordner `Dev` auswählen. Eine HTML-Datei in der GitHub-Dateiansicht startet die App nicht.
+Vor einem Update die App schließen und den bisherigen Ordner sichern. Die neue Version getrennt entpacken und den bisherigen `data/`-Ordner übernehmen. Alte Datei-/HTML-Versionen können über ihre Sicherungsfunktion in die neue App übertragen werden. Die ältere [Datei-Version](Release/Tagebuch.zip) bleibt als historischer Download erhalten.
 
-Für die Windows-Entwicklung mit installiertem Node.js: `npm run dev` starten und `http://127.0.0.1:8765` öffnen. **Es ist keine Ordnerauswahl nötig:** Der lokale Dev-Server legt die Daten automatisch unter `data/` im Projektordner ab. Der genaue Pfad steht im Elternbereich unter Speicherort. Er bleibt auf diesem PC; `data/` ist von Git ausgeschlossen. Unter **Eltern → Einstellungen → Zusätzliche Lernhilfe** ein Modell auswählen und **Lokale KI und Modell herunterladen** wählen. Die App verwaltet eine eigene Ollama-Laufzeit ohne separaten Installer. Anschließend das Beispiel testen, die Lernhilfe einschalten und speichern. Die bisherige Datei-/ZIP-Version braucht weiterhin weder Node.js noch einen Build und verwendet ihren bisherigen Ordnerdialog. Die neue KI-Einrichtung ist noch nicht im ZIP enthalten.
+Für die Entwicklung mit installiertem Node.js zuerst `npm ci`, dann `npm run dev` starten und `http://127.0.0.1:8765` öffnen. Der Build prüft die Freigaben der Diktattexte. Eine HTML-Datei in der GitHub-Dateiansicht startet die App nicht. Unter **Eltern → Einstellungen → Prüfung & Lernhilfe** kann die optionale lokale KI eingerichtet werden; Modelle und Ollama-Laufzeit werden separat heruntergeladen und sind nicht im ZIP enthalten.
 
-## Tagesabschnitte in der Vorbereitung auf Version 2.0
+## Tagesabschnitte in Version 2.0
 
 Das Kind beendet eine Prüfung selbst mit **Eintrag speichern**. Eine fehlerfreie Prüfung speichert nicht mehr automatisch. Über **Noch etwas ins Tagebuch schreiben** ergänzt es einen weiteren Abschnitt: Bisherige Texte des Tages bleiben darüber unveränderbar lesbar, neue Texte werden geprüft und zählen mit zum Tagesziel. Weitere Abschnitte bringen nach den bisherigen Satz- und Wortregeln zusätzliche Coins; alte Texte werden nicht erneut vergütet. **Erklärung und Merkhilfe** bietet an Markierungen zusätzliche Regeln oder Übungsstrategien.
 
@@ -34,11 +34,11 @@ Textstellen und gibt Lernhinweise; das Kind korrigiert selbst und darf mit
 offenen Stellen abschließen. Die Einrichtung steht in der [Bedienungsanleitung](docs/BEDIENUNG.md).
 
 - Freies Schreiben, Rechtschreibhinweise und ein persönlicher Wortschatz.
-- Im aktuellen Dev-Stand: direkt im Schreibblock korrigieren, Hinweise rechts daneben und **Prüfen** über dem Text. Bei eingeschalteter lokaler Lernhilfe prüft die KI dabei zusätzlich einen begrenzten Freitextausschnitt im Zusammenhang; weitere Erklärungen lassen sich einzeln anfordern. In den Eltern-Einstellungen vergleicht **Modell automatisch auswählen** heruntergeladene Modelle auf Prozessor und Grafikbeschleunigung.
+- Direkt im Schreibblock korrigieren, Hinweise rechts daneben und **Prüfen** über dem Text. Bei eingeschalteter lokaler KI wird ein begrenzter Freitextausschnitt im Zusammenhang geprüft. Für Kinder werden ausschließlich bereits geprüfte Korrekturvorschläge angezeigt. Die normalen Wörterbuch-/Regelhinweise bleiben verfügbar.
 - Freiwilliger Tagesrückblick im Dev-Stand: Ein Wort oder Emoji genügt, Antworten werden ohne Sprachprüfung gespeichert. Auch ein reiner Rückblick ist ohne Mindestumfang des Tagesauftrags möglich.
-- Geführte Eltern-Einstellungen in sechs Schritten im Dev-Stand. Für die lokale KI stehen unter anderem Qwen 3 4B Instruct (`qwen3:4b-instruct-2507-q4_K_M`), Qwen 3 8B, Gemma 3 4B und OpenAI gpt-oss 20B zur Auswahl; die Erklärungsqualität bitte selbst mit dem Beispiel testen.
+- Geführte Eltern-Einstellungen in sechs Schritten. Für die lokale KI stehen unter anderem Qwen 3 4B Instruct, Qwen 3 8B, Gemma 3 4B und OpenAI gpt-oss 20B zur Auswahl. Auch Korrekturvorschläge können falsch sein; die bisherigen Fachtests und Grenzen sind dokumentiert.
 - Tagebucheinträge mit selbst gemalten Bildern und einer Ansicht zum Nachlesen.
-- Rechtschreibübungen, Diktate mit Browser-Sprachausgabe und Auswertung von Fehlermustern.
+- 54 eigene, redaktionell und sprachlich geprüfte Diktattexte ab Klasse 5: alle 27 Schwerpunkte in zwei Stufen, mit konkreten Zielstellen, verbindlicher Auswahl, kenntlich gemachten Wiederholungen und Fortschritt je Schwerpunkt.
 - Mehrere Kinder mit getrennten Einträgen, Übungen, Coins und PINs.
 - Einstellbare Schreib- und Leseziele, Belohnungswünsche, Joker und Pausentage.
 - Spiele mit begrenzter täglicher Spielzeit.
@@ -66,7 +66,7 @@ PINs dienen als Sichtschutz innerhalb der App. Die Ordnerdateien sind verschlüs
 ## Dokumentation
 
 - [GUI-, Backend- und Fachtests für Version 2.0](docs/testplan-version-2.md): Befehle, Testumfang und Grenzen. Ausgeführte Tests und tatsächliche Modellantworten werden im [Prüfbericht](docs/pruefbericht-version-2-tests.md) dokumentiert. Der Fachlauf startet ausschließlich mit ausdrücklichem `--execute`.
-- [Diktatprüfung für Kinder mit LRS ab Klasse 5](docs/pruefbericht-diktate-klasse-5.md): vollständige lokale Sprachprüfung der 2.600 Vorlagen, redaktionelle Stichprobe und Untersuchung der Auswahl nach Fehlerschwerpunkten. Der Bestand benötigt eine Überarbeitung von Texten und Zuordnung.
+- [Neues Diktatmaterial ab Klasse 5](docs/diktatmaterial-klasse-5.md): 54 geprüfte Texte, Zielstellen, Auswahl, Fortschritt und Nachweise. Die [Prüfung der früheren 2.600 Vorlagen](docs/pruefbericht-diktate-klasse-5.md) dokumentiert den Anlass der Überarbeitung.
 
 - [Bedienung und Problemlösung](docs/BEDIENUNG.md)
 - [Daten, Speicherung und Sicherungen](docs/DATEN-UND-SPEICHERUNG.md)

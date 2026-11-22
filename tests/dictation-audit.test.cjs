@@ -25,13 +25,14 @@ test('a context flag is only a review prompt: even an ordinary Es-gibt sentence 
   assert.equal(summarize(data,[entry],[]).automaticPedagogicalApproval,false);
 });
 
-test('the audit detects that the actual selector cannot target a category without tagged texts',()=>{
-  const data={cats:['ie'],s:['Ein Satz.'],t:['Garten'],d:Array.from({length:60},(_,i)=>[0,i<30?1:2,[0],[1]])};
+test('the audit exercises the current reviewed selector and reports an unavailable focus without substituting a different text',async()=>{
+  const data=loadData(readFileSync(require.resolve('../Dev/app/uebungen.js'),'utf8'));data.cats.push('unknown');
   const app=readFileSync(require.resolve('../Dev/app/app.js'),'utf8');
-  const results=selectionAudit(data,app);
+  const results=await selectionAudit(data,app);
   for(const result of results){
-    if(result.focus==='ie')assert.equal(result.selectedWithTaggedFocus,200);
-    else assert.equal(result.selectedWithoutTaggedFocus,200);
+    if(result.focus==='unknown')assert.equal(result.unavailable,200);
+    else assert.equal(result.selectedWithTaggedFocus,200);
+    assert.equal(result.selectedWithoutTaggedFocus,0);
   }
 });
 

@@ -2,6 +2,8 @@
 
 Stand: 22. November 2026. Bezug: Entwicklungsstand `7904df2` und unveränderte Produktionsdateien während der Prüfung.
 
+Dieser Bericht dokumentiert den früheren Lexikonbestand. Windows-Version 2.0.0 verwendet stattdessen die vollständig neu erstellte [geprüfte Sammlung ab Klasse 5](diktatmaterial-klasse-5.md) mit verbindlicher Auswahl. Die historischen Befunde unten bleiben als Nachweis erhalten.
+
 **Ergebnis:** Der Bestand lässt sich derzeit nicht pauschal als verlässliche, auf Fehlerschwerpunkte abgestimmte LRS-Diktatsammlung freigeben. Viele Texte haben eine brauchbare Länge und passende Sachthemen. Es gibt aber eindeutige Sprachfehler, mindestens einen bestätigten Sachfehler, unverständliche Ausschnitte und Lücken in der Auswahl nach Fehlerschwerpunkten.
 
 ## Umfang und Methode

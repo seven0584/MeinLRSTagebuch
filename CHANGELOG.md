@@ -1,5 +1,13 @@
 # Änderungen am Windows-Entwicklungsstand
 
+## 2.0.0 – 22. November 2026
+
+- Die Diktate verwenden 54 vollständig neu verfasste, redaktionell gesichtete und lokal sprachlich geprüfte Texte ab Klasse 5. Alle 27 Schwerpunkte sind auf zwei Stufen mit konkreten Übungsstellen vertreten. Auch die Kontextsätze im Wort-Diktat stammen aus dieser Sammlung.
+- Die Auswahl verlangt den Schwerpunkt, die Stufe und eine unveränderte redaktionelle Freigabe. Bei fehlendem Material wird kein anderer Text untergeschoben. Wiederholungen werden angezeigt. Neue Übungsergebnisse beeinflussen den Schwerpunkt und die automatische Stufenwahl; alte Protokolle bleiben erhalten.
+- Ein Wort-Diktat enthält bis zu zehn geprüfte Wörter derselben Stufe und beachtet die Fälligkeit persönlicher Wörter. Satzbau und Zeichensetzung werden im Kurz-Diktat geübt. Die Diktate benötigen keine KI- oder Internetprüfung während der Nutzung.
+- Neue Kern- und Browserprüfungen untersuchen Materialfreigaben, Auswahl, Auswertung, Fortschritt, Kindertrennung und schmale Fenster. Der Build verweigert ungeprüftes oder nachträglich geändertes Material.
+- Das portable Windows-x64-Release enthält Node.js und wird mit SHA-256-Prüfsumme veröffentlicht. Lokale KI-Modelle werden optional separat eingerichtet. Das selbstbestimmte Speichern und weitere Tagesabschnitte gehören ebenfalls zu Version 2.0. Freie lokale KI-Erklärungen bleiben wegen der nicht erreichten Qualitätsanforderung ausgeschaltet.
+
 ## 22. November 2026 – Tests ausführen und lokale KI auf Korrekturvorschläge begrenzen
 
 - GUI- und Backendprüfungen wurden ausgeführt. Der Speicherknopf ist während einer laufenden Nachprüfung jetzt sichtbar gesperrt; die Navigation passt durch Zeilenumbruch auch in ein 390 Pixel breites Fenster. Zusätzliche Regressionstests prüfen beide Fälle.

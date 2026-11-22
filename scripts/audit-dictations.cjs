@@ -3,6 +3,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
 const {createHash}=require('node:crypto');
+const Dictation=require('../Dev/app/dictation.js');
 const root=path.resolve(__dirname,'..');
 const sourceFile=path.join(root,'Dev/app/uebungen.js');
 const words=text=>text.match(/[\p{L}\p{M}]+(?:[-’'][\p{L}\p{M}]+)*/gu)||[];
@@ -30,27 +31,25 @@ function auditEntry(data,entry,index){
   if(/\s+[,.!?]|[,.!?][\p{L}]|\s{2,}/u.test(text))flags.push('abstaende-pruefen');
   if(!/[.!?]$/u.test(text))flags.push('satzabschluss-pruefen');
   if(/\b(?:Vergewaltigung|Prostitution|Selbstmord|Suizid|Folter|Hinrichtung|Konzentrationslager|Holocaust|ermordet|Geschlechtsverkehr|Völkermord)\b/iu.test(text))flags.push('sensibler-inhalt-kontext-pruefen');
-  return {id:'D'+String(index).padStart(4,'0'),index,topic:data.t[topic],level,source:level===1?'MiniKlexikon':'Klexikon',sentenceIndices:indices,text,wordCount:tokens.length,sentenceCount:sentences.length,maxSentenceWords,longWords,focus:Object.fromEntries(data.cats.map((c,i)=>[c,counts[i]])),flags};
+  return {id:data.entries?.[index]?.id || 'D'+String(index).padStart(4,'0'),index,topic:data.t[topic],level,source:data.source || (level===1?'MiniKlexikon':'Klexikon'),sentenceIndices:indices,text,wordCount:tokens.length,sentenceCount:sentences.length,maxSentenceWords,longWords,focus:Object.fromEntries(data.cats.map((c,i)=>[c,counts[i]])),flags};
 }
 function stats(values){
   const sorted=[...values].sort((a,b)=>a-b),at=p=>sorted[Math.floor((sorted.length-1)*p)];
   return {min:sorted[0],p50:at(.5),p90:at(.9),p95:at(.95),max:sorted.at(-1)};
 }
-function selectionAudit(data,appSource){
-  const start=appSource.indexOf('  function dictLevel(){'),end=appSource.indexOf('  function chunksOf(',start);
-  if(start<0 || end<0)throw new Error('Selection functions not found');
+async function selectionAudit(data,appSource){
+  if(data.version!==Dictation.VERSION || !Array.isArray(data.entries))throw new Error('The current selection audit requires reviewed material; inspect the historical audit with its matching application revision.');
+  const bank=await Dictation.prepare(data);
   const groups=appSource.match(/const CAT_GROUPS = (\[[\s\S]*?\n  \]);/u);
   if(!groups)throw new Error('Application categories not found');
   const applicationCategories=vm.runInNewContext(groups[1],{},{timeout:1000}).flatMap(g=>Object.keys(g[1])).filter(c=>c!=='other');
-  const functions=appSource.slice(start,end),profiles=[],categories=[...new Set([...data.cats,...applicationCategories])];
+  const profiles=[],categories=[...new Set([...data.cats,...applicationCategories])];
   for(const level of [1,2])for(const focus of categories){
-    const practice={usedDict:[],badDict:[],log:[]};let seed=246813579;
-    const math=Object.create(Math);math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
-    const context=vm.createContext({practiceData:()=>data,P:()=>practice,R:()=>({cfg:{dictLevel:level===1?'leicht':'mittel'}}),weakCats:()=>[focus],Math:math});
-    const result=vm.runInContext(functions+`;(()=>{const picks=[];for(let i=0;i<200;i++){const pick=pickDictation([]);picks.push(pick.i);}return picks;})()`,context,{timeout:5000});
-    const category=data.cats.indexOf(focus),positive=result.filter(i=>category>=0 && data.d[i][3][category]>0).length;
-    const available=data.d.filter(d=>d[1]===level && category>=0 && d[3][category]>0).length;
-    profiles.push({level,focus,draws:result.length,availableWithTaggedFocus:available,selectedWithTaggedFocus:positive,selectedWithoutTaggedFocus:result.length-positive,exampleIds:[...new Set(result)].slice(0,3).map(i=>'D'+String(i).padStart(4,'0'))});
+    let seed=246813579;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+    const result=Array.from({length:200},()=>Dictation.choose(bank,{focus,level,random}));
+    const positive=result.filter(r=>r.entry?.focus===focus&&r.entry.level===level).length,unavailable=result.filter(r=>!r.entry).length;
+    const available=bank.entries.filter(e=>e.focus===focus&&e.level===level).length;
+    profiles.push({level,focus,draws:result.length,availableWithTaggedFocus:available,selectedWithTaggedFocus:positive,selectedWithoutTaggedFocus:result.length-positive-unavailable,unavailable,exampleIds:[...new Set(result.flatMap(r=>r.entry?[r.entry.id]:[]))].slice(0,3)});
   }
   return profiles;
 }
@@ -62,10 +61,10 @@ function summarize(data,rows,selection){
   return {automaticPedagogicalApproval:false,dictations:rows.length,sentences:data.s.length,topics:data.t.length,wordBank:data.w.length,byLevel,flagCounts,focusCoverage,duplicateGroups:[...byText.values()].filter(ids=>ids.length>1),selection,limits:['Flags are review prompts, not confirmed errors or unsuitable texts.','Word/sentence lengths are descriptions, not clinical cutoffs or proof of grade suitability.','Focus counts are the existing application metadata, not independently verified learning-word annotations.','Selection draws exercise the actual current selection functions with synthetic profiles; no personal child data.']};
 }
 function csv(value){const text=String(value??'');return '"'+(/^[=+\-@]/.test(text)?"'"+text:text).replaceAll('"','""')+'"';}
-function main(){
+async function main(){
   const raw=fs.readFileSync(sourceFile,'utf8'),data=loadData(raw);
   const rows=data.d.map((entry,index)=>auditEntry(data,entry,index));
-  const app=fs.readFileSync(path.join(root,'Dev/app/app.js'),'utf8'),selection=selectionAudit(data,app);
+  const app=fs.readFileSync(path.join(root,'Dev/app/app.js'),'utf8'),selection=await selectionAudit(data,app);
   const directory=path.join(root,'test-results/dictations',new Date().toISOString().replaceAll(':','-'));
   fs.mkdirSync(directory,{recursive:true});
   const summary=summarize(data,rows,selection);
@@ -82,5 +81,5 @@ function main(){
   fs.writeFileSync(path.join(directory,'samples.json'),JSON.stringify(samples,null,2)+'\n');
   console.log(JSON.stringify({directory,...summary,selection:undefined,duplicateGroups:summary.duplicateGroups.length,manualSamples:samples.length},null,2));
 }
-if(require.main===module)main();
+if(require.main===module)main().catch(e=>{console.error(e.stack);process.exitCode=1;});
 module.exports={loadData,auditEntry,stats,selectionAudit,summarize};

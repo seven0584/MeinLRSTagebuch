@@ -90,9 +90,9 @@
       <h3>🎯 Zusatzaufgaben (letzte 30 Tage)</h3>
       <div id="practiceStats"></div>
       <label class="field">Schwierigkeit der Kurz-Diktate
-        <select id="cfgDictLevel"><option value="auto">automatisch (startet leicht, wird schwerer)</option><option value="leicht">leicht (MiniKlexikon)</option><option value="mittel">mittel (Klexikon)</option></select>
+        <select id="cfgDictLevel"><option value="auto">automatisch nach Übungen im Schwerpunkt</option><option value="leicht">Stufe 1 · kürzer und einfacher</option><option value="mittel">Stufe 2 · etwas umfangreicher</option></select>
       </label>
-      <p class="note" data-help-topic="writing" data-help-text="Die Diktattexte stammen aus dem Kinderlexikon Klexikon und MiniKlexikon (klexikon.zum.de, Lizenz CC BY-SA 4.0). Jedes Wort wurde mit dem Rechtschreibwörterbuch geprüft. Mit Internet wird jeder Text vor dem Diktat zusätzlich von LanguageTool kontrolliert. Bewusst nicht verwendet werden Texte aus LRS-Tests: Wer sie übt, verfälscht eine spätere Diagnose.">Diktate nutzen geprüfte Lexikontexte. Offizielle LRS-Testtexte werden nicht zum Üben verwendet.</p>
+      <p class="note" data-help-topic="writing" data-help-text="Die Sammlung enthält 54 eigene, redaktionell gesichtete und lokal sprachlich geprüfte Texte ab Klasse 5. Alle 27 Fehlerschwerpunkte haben zwei Stufen und ausdrücklich zugeordnete Übungsstellen. Die App verwendet nur unveränderte freigegebene Fassungen. Fehlt passendes Material, wird das angezeigt. Die Prüfung ist keine externe lerntherapeutische Validierung. Für die Diktate werden keine Texte an eine KI oder LanguageTool gesendet.">Geprüfte eigene Texte ab Klasse 5, passend zum Übungsschwerpunkt. Die Stufe lässt sich für das Kind einstellen.</p>
 
       <h3>Übungswörter</h3>
       <p class="note">Diese Wörter hat er falsch geschrieben und selbst verbessert, hier in richtiger Schreibweise. Gut geeignet für ein kurzes Mini-Diktat.</p>
@@ -200,7 +200,7 @@
         </details>
         <details><summary>🔤 Fehlerstatistik und Übungen</summary>
           <p>Unter 🔤 Rechtschreibung seht ihr die Fehlerarten der letzten 30 Tage, ohne Texte, und die Übungswörter in richtiger Schreibweise für ein Mini-Diktat.</p>
-          <p>Unter „🎯 Üben“ gibt es zwei freiwillige Zusatzaufgaben: das <b>Wort-Diktat</b> (10 Wörter, vorgelesen, passend zu den häufigsten Fehlern, Wiederholung nach 1, 3, 7, 14 und 30 Tagen) und das <b>Kurz-Diktat</b> (kurze Texte aus dem Kinderlexikon Klexikon). Dafür braucht der PC eine deutsche Vorlesestimme. Unter Windows ist sie meist vorhanden.</p>
+          <p>Unter „🎯 Üben“ gibt es zwei freiwillige Zusatzaufgaben: das <b>Wort-Diktat</b> mit bis zu zehn geprüften Wörtern zum Schwerpunkt und das <b>Kurz-Diktat</b> mit einem redaktionell geprüften Text ab Klasse 5. Wortgrenzen, Satzbau und Zeichensetzung werden im Satzzusammenhang geübt. Fortschritt aus den neuen Übungen beeinflusst die weitere Auswahl. Dafür braucht der PC eine deutsche Vorlesestimme.</p>
         </details>
         <details><summary>🪙 Coins, Shop, Joker, Pausen, Spielzeit</summary>
           <p><b>Coins</b> gibt es pro ganzem Satz, pro weiterem Wort und für Sätze mit richtigem Komma. Sie werden sonntags gutgeschrieben, wenn an genug Tagen geschrieben wurde. Alle Werte stellt ihr unter 🪙 Belohnungen ein.</p>
@@ -229,7 +229,7 @@
           <li><b>Gezielte Tricks</b> für jedes Muster, z. B. „Das kleine b hat den Bauch rechts, das kleine d links“ oder „Zähl die Bögen: m hat zwei, n hat einen“.</li>
           <li><b>Passende Übungen:</b> Unter „Üben“ findet das Kind freiwillige Zusatzaufgaben. Die Fehlerübersicht für Eltern bleibt unter „Rechtschreibung“.</li>
           <li><b>Wort-Diktat mit Wiederholung in wachsenden Abständen:</b> falsch geschriebene Wörter kommen nach 1, 3, 7, 14 und 30 Tagen wieder, bis sie sitzen. Nach einem Fehler wird das Wort einmal richtig abgeschrieben.</li>
-          <li><b>Kurz-Diktate</b> werden nach den Schwächen des Kindes ausgewählt und hören und schreiben verbinden.</li>
+          <li><b>Kurz-Diktate</b> passen verbindlich zum gewählten oder aus bisherigen Übungen ermittelten Schwerpunkt. Die Texte haben zwei Stufen. Wiederholungen werden kenntlich gemacht.</li>
           <li><b>Vorlesen</b> von Fragen und eigenen Einträgen sowie <b>größere Schrift und mehr Abstand</b> (Knopf „Aa“) erleichtern das Lesen.</li>
           <li><b>Kleine, tägliche Schritte</b> mit positiver Rückmeldung statt langer Übungseinheiten.</li></ul>
           <h4>Was ihr seht</h4>
@@ -249,7 +249,7 @@
           <li><b>Ein Kind sieht ein fremdes Tagebuch:</b> Ein Browser speichert für alle Kopien gemeinsam. Unter Einstellungen „Neu anfangen“ oder beim Ordnerwählen „Leer neu beginnen“.</li></ul>
         </details>
         <details><summary>📚 Quellen und Lizenzen</summary>
-          <p>Rechtschreibwörterbuch igerman98 (GPL), Hunspell (LGPL/MPL), Übungstexte aus Klexikon und MiniKlexikon (klexikon.zum.de, CC BY-SA 4.0), Grammatikprüfung LanguageTool (online), Benachrichtigungen ntfy.sh, QR-Code-Generator von Kazuhiko Arase (MIT), Weltraum-Angriff und Schlange aus „Vintage Arcade“ von Gbolahan Aziz (MIT). Details in <code>app/spiele/LIZENZEN.txt</code>.</p>
+          <p>Rechtschreibwörterbuch igerman98 (GPL), Hunspell (LGPL/MPL), eigene redaktionell geprüfte Übungstexte ab Klasse 5, optionale Grammatikprüfung LanguageTool (online), Benachrichtigungen ntfy.sh, QR-Code-Generator von Kazuhiko Arase (MIT), Weltraum-Angriff und Schlange aus „Vintage Arcade“ von Gbolahan Aziz (MIT). Details in <code>app/spiele/LIZENZEN.txt</code>.</p>
         </details>
         </div>
       </section>
@@ -484,7 +484,7 @@
       <p>Hier blätterst du durch dein Tagebuch, Tag für Tag oder alles am Stück. 🔊 liest dir vor. Mit „Von – bis“ kannst du dein Tagebuch als Buch drucken.</p>
     </details>
     <details><summary>🎯 Üben</summary>
-      <p>Freiwillige Aufgaben: Beim <b>Wort-Diktat</b> hörst du 10 Wörter und schreibst sie. Beim <b>Kurz-Diktat</b> schreibst du einen kleinen Text aus dem Kinderlexikon. Jede Aufgabe bringt dir Extra-Spielzeit.</p>
+      <p>Freiwillige Aufgaben: Wähle, was du üben möchtest, oder nutze deinen bisherigen Schwerpunkt. Beim <b>Wort-Diktat</b> schreibst du bis zu zehn passende Wörter. Beim <b>Kurz-Diktat</b> schreibst du einen kurzen geprüften Text. Jede Aufgabe bringt dir Extra-Spielzeit.</p>
     </details>
     <details><summary>🎮 Spiel</summary>
       <p>Wenn du deinen Eintrag für heute geschrieben hast, sind die Spiele freigeschaltet. Die Zeit läuft nur, solange ein Spiel offen ist.</p>
@@ -506,6 +506,7 @@
 <script src="app/qrcode.js"></script>
 <script src="app/hunspell.js"></script>
 <script src="app/woerterbuch.js"></script>
+<script src="app/dictation.js"></script>
 <script src="app/uebungen.js"></script>
 <script src="app/lernhilfe.js"></script>
 <script src="app/model-catalog.js"></script>

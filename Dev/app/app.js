@@ -2053,13 +2053,17 @@
   $("#addKidTop").onclick = () => { goSection("settings");window.TB_SETTINGS_WIZARD?.goTo("children",{focus:false}); $("#newKidName").focus(); };
 
   // =====================================================================
-  // 🎯 PRACTICE: word dictation + short dictation (texts: MiniKlexikon/Klexikon, CC BY-SA 4.0)
+  // 🎯 PRACTICE: reviewed grade-5 corpus, with explicit focus and content hashes.
   // =====================================================================
-  let PD = null;
-  function practiceData(){ if(!PD){ try{ PD = window.TB_PRACTICE || JSON.parse(document.getElementById("practiceData").textContent); }catch(e){ PD = null; } } return PD; }
+  let PD = null, practiceLoad=null;
+  function practiceData(){return PD;}
+  async function loadPractice(){
+    if(!practiceLoad)practiceLoad=TB_DICTATION.prepare(window.TB_PRACTICE).catch(()=>({version:TB_DICTATION.VERSION,entries:[],rejected:[]}));
+    PD=await practiceLoad;return PD;
+  }
   function P(){
     const p = state.practice || (state.practice = {});
-    p.log = p.log || []; p.usedDict = p.usedDict || []; p.wordSeen = p.wordSeen || {}; p.seenTopics = p.seenTopics || []; p.badDict = p.badDict || [];
+    p.log = p.log || []; p.usedDict = p.usedDict || []; p.usedReviewedDict = p.usedReviewedDict || []; p.wordSeen = p.wordSeen || {}; p.seenTopics = p.seenTopics || []; p.badDict = p.badDict || [];
     return p;
   }
   // ---- speech ----
@@ -2085,45 +2089,28 @@
 
   function todaysTasks(){ return P().log.filter(l => l.date === todayKey() && l.done).length; }
   function weakCats(){
-    const tot = catCounts(29, 0);
-    const list = Object.entries(tot).filter(([k]) => k !== "other").sort((a, b) => b[1] - a[1]).map(([k]) => k);
-    return list.length ? list : ["ss","dopp","ie","dehnung","gross","hartweich"];
+    return TB_DICTATION.priorities(catCounts(29,0),P().log,{since:addDays(todayKey(),-29),today:todayKey(),bank:PD}).map(p=>p.focus);
   }
+  function practiceFocus(){return P().chosenFocus && P().chosenFocus!=="auto"?P().chosenFocus:weakCats()[0] || "";}
+  function focusLabel(focus){return TB_DICTATION.CATEGORIES[focus] || "Bisheriger Schwerpunkt";}
   // ---------- word dictation ----------
   const LEITNER = [0, 1, 3, 7, 14, 30];
   function pickWords(n){
-    const d = practiceData(), p = P(), today = todayKey(), out = [], seen = new Set();
-    // 1) due words from his own practice list (spaced repetition)
-    const own = Object.entries(state.words).filter(([, w]) => { const lv = w.lv || 0; return !w.due || w.due <= today; }).sort(() => Math.random() - .5).slice(0, Math.ceil(n / 2));
-    own.forEach(([k, w]) => { if(!seen.has(w.richtig)){ seen.add(w.richtig); out.push({ word: w.richtig, ctx: ctxFor(w.richtig), own: k, cat: wordFine(w) }); } });
-    // 2) bank words from his weak categories, not seen in the last 21 days
-    const cats = weakCats().filter(c => d && d.b[c] && d.b[c].length);
-    let guard = 0;
-    while(out.length < n && guard++ < 400){
-      const c = cats[Math.floor(Math.random() * Math.min(cats.length, 3))] || "ss";
-      const pool = d.b[c]; const idx = pool[Math.floor(Math.random() * pool.length)];
-      const [w, si] = d.w[idx];
-      const last = p.wordSeen[w];
-      if(seen.has(w) || (last && addDays(last, 21) > today)) continue;
-      seen.add(w); out.push({ word: w, ctx: si >= 0 ? d.s[si] : "", cat: c });
-    }
-    return out;
-  }
-  function ctxFor(word){
-    const d = practiceData(); if(!d) return "";
-    const hit = d.w.find(x => x[0] === word); if(hit && hit[1] >= 0) return d.s[hit[1]];
-    const s = d.s.find(x => new RegExp("(^|[^\\p{L}])" + word + "([^\\p{L}]|$)", "u").test(x) && x.length < 90);
-    return s || "";
+    const focus=practiceFocus(),p=P(),pool=TB_DICTATION.wordPool(PD,focus,dictLevel()),today=todayKey();
+    return pool.map(item=>{const own=Object.entries(state.words).find(([,w])=>w.richtig===item.word && wordFine(w)===focus);return {...item,ctx:item.context,own:own?.[0],due:!!own,blocked:!!own?.[1].due && own[1].due>today};}).filter(item=>!item.blocked)
+      .map(item=>({...item,tie:Math.random()})).sort((a,b)=>Number(b.due)-Number(a.due) || Number(!!p.wordSeen[a.word])-Number(!!p.wordSeen[b.word]) || a.tie-b.tie).slice(0,n);
   }
   let WD = null;
   function startWordDictation(){
-    WD = { items: pickWords(10), i: 0, right: 0, phase: "ask", cats: {} };
+    const items=pickWords(10);if(!items.length){renderPractice();return;}
+    WD = { items, i: 0, right: 0, phase: "ask", cats: {},focus:practiceFocus(),owner:state };
     renderWordDictation(); sayWord();
   }
   async function sayWord(slow){
-    const it = WD && WD.items[WD.i]; if(!it) return;
+    const active=WD,position=WD?.i,it = WD && WD.items[WD.i]; if(!it || active.owner!==state) return;
     await speak(it.word, slow); await sleep(350);
-    if(it.ctx){ await speak(it.ctx, slow); await sleep(350); await speak(it.word, slow); }
+    if(WD!==active || active.owner!==state || WD.i!==position)return;
+    if(it.ctx){ await speak(it.ctx, slow); await sleep(350); if(WD===active && active.owner===state && WD.i===position)await speak(it.word, slow); }
   }
   function renderWordDictation(){
     const box = $("#practiceBox"), it = WD.items[WD.i];
@@ -2137,13 +2124,14 @@
     $("#wdSay").onclick = () => sayWord(false); $("#wdSlow").onclick = () => sayWord(true);
     const inp = $("#wdIn"); setTimeout(() => inp.focus(), 30);
     const go = () => {
+      if(!WD || WD.owner!==state)return;
       const v = inp.value.trim(); if(!v) return;
       const p = P();
       if(WD.phase === "ask"){
         const ok = v === it.word;
         p.wordSeen[it.word] = todayKey();
-        if(it.own){ const w = state.words[it.own]; if(w){ w.lv = ok ? Math.min((w.lv || 0) + 1, LEITNER.length - 1) : 0; w.due = addDays(todayKey(), LEITNER[w.lv]); if(ok && w.lv >= LEITNER.length - 1) delete state.words[it.own]; } }
-        else if(!ok){ const k = lower(it.word); state.words[k] = state.words[k] || { richtig: it.word, kategorie: (TRICK[it.cat] || [""])[0], fine: it.cat, count: 0, last: todayKey() }; state.words[k].count++; }
+        if(it.own){ const w = state.words[it.own]; if(w){ w.lv = ok ? Math.min((w.lv || 0) + 1, LEITNER.length - 1) : 0; w.due = addDays(todayKey(),ok?LEITNER[w.lv]:1); if(ok && w.lv >= LEITNER.length - 1) delete state.words[it.own]; } }
+        else if(!ok){ const k = lower(it.word); state.words[k] = state.words[k] || { richtig: it.word, kategorie: (TRICK[it.cat] || [""])[0], fine: it.cat, count: 0, last: todayKey() }; state.words[k].count++;state.words[k].lv=0;state.words[k].due=addDays(todayKey(),1); }
         if(ok){ WD.right++; WD.i++; flash(true); save(); renderWordDictation(); if(WD && WD.i < WD.items.length) setTimeout(sayWord, 500); }
         else { WD.cats[it.cat] = (WD.cats[it.cat] || 0) + 1; WD.phase = "copy"; save(); renderWordDictation(); }
       } else {
@@ -2156,7 +2144,8 @@
   function flash(ok){ const b = $("#practiceBox"); b.classList.add(ok ? "okflash" : "noflash"); setTimeout(() => b.classList.remove("okflash", "noflash"), 500); }
   function finishWordDictation(){
     const p = P(), n = WD.items.length;
-    p.log.push({ date: todayKey(), type: "words", n, right: WD.right, cats: WD.cats, done: true });
+    const materials=[...new Set(WD.items.map(i=>i.entryId))].map(id=>({id,hash:PD.entries.find(e=>e.id===id).review.hash}));
+    p.log.push({ date: todayKey(), type: "words", n, right: WD.right, cats: WD.cats, done: true,curriculum:TB_DICTATION.VERSION,focus:WD.focus,focusErrors:n-WD.right,focusOpportunities:n,materials });
     if(p.log.length > 400) p.log.splice(0, p.log.length - 400);
     save();
     $("#practiceBox").innerHTML = '<div class="pcardx done"><div class="bigok">' + (WD.right === n ? "🏆" : "✅") + '</div><h3>' + WD.right + ' von ' + n + ' Wörtern richtig!</h3>' +
@@ -2166,17 +2155,9 @@
   }
   // ---------- short dictation ----------
   let DT = null;
-  function dictLevel(){ const c = R().cfg.dictLevel || "auto"; if(c !== "auto") return c === "mittel" ? 2 : 1; const done = P().log.filter(l => l.type === "dict" && l.done); const recent = done.slice(-5); const avg = recent.length ? recent.reduce((s, l) => s + l.errors / Math.max(1, l.words), 0) / recent.length : 1; return recent.length >= 3 && avg < 0.05 ? 2 : 1; }
+  function dictLevel(){return TB_DICTATION.levelFor(R().cfg.dictLevel||"auto",P().log,practiceFocus(),{since:addDays(todayKey(),-29),today:todayKey(),bank:PD});}
   function pickDictation(exclude){
-    const d = practiceData(); if(!d) return null;
-    const p = P(), lvl = dictLevel(), used = new Set([...p.usedDict, ...p.badDict, ...(exclude || [])]);
-    const weak = weakCats().slice(0, 3), w = {}; weak.forEach((c, i) => { w[c] = 3 - i; });
-    let cand = d.d.map((x, i) => ({ i, x })).filter(o => o.x[1] === lvl && !used.has(o.i));
-    if(cand.length < 20){ p.usedDict = []; cand = d.d.map((x, i) => ({ i, x })).filter(o => o.x[1] === lvl && !p.badDict.includes(o.i)); }
-    const lastTopics = new Set(p.log.filter(l => l.type === "dict").slice(-30).map(l => l.topic));
-    cand.forEach(o => { o.score = d.cats.reduce((s, c, k) => s + (w[c] || 0) * Math.min(o.x[3][k], 4), 0) + Math.random() * 4 - (lastTopics.has(o.x[0]) ? 10 : 0); });
-    cand.sort((a, b) => b.score - a.score);
-    const top = cand.slice(0, 25); return top[Math.floor(Math.random() * top.length)];
+    return TB_DICTATION.choose(PD,{focus:practiceFocus(),level:dictLevel(),used:P().usedReviewedDict,recent:P().log.filter(l=>l.curriculum===TB_DICTATION.VERSION).slice(-3).map(l=>l.id)});
   }
   function chunksOf(text){
     // split into dictation parts of max ~5 words, keeping punctuation
@@ -2192,91 +2173,81 @@
   }
   const PUNCT_WORD = { ",": " Komma.", ".": " Punkt.", "!": " Ausrufezeichen.", "?": " Fragezeichen." };
   async function startDictation(){
-    const d = practiceData(); if(!d) return;
-    $("#practiceBox").innerHTML = '<div class="pcardx"><p>Ich suche einen passenden Text …</p></div>';
-    let pick = null; const tried = [];
-    for(let k = 0; k < 4; k++){
-      pick = pickDictation(tried); if(!pick) break;
-      const text = pick.x[2].map(i => d.s[i]).join(" ");
-      if(state.parent.grammar && navigator.onLine){            // double-check the source text with LanguageTool when online
-        const m = await ltCheck(text);
-        if(m && m.length){ P().badDict.push(pick.i); tried.push(pick.i); save(); pick = null; continue; }
-      }
-      break;
-    }
-    if(!pick){ $("#practiceBox").innerHTML = '<div class="pcardx"><p>Gerade ist kein Text verfügbar.</p></div>'; return; }
-    const text = pick.x[2].map(i => d.s[i]).join(" ");
-    DT = { id: pick.i, topic: d.t[pick.x[0]], text, chunks: chunksOf(text), k: -1 };
+    const owner=state;await loadPractice();if(owner!==state)return;
+    const pick=pickDictation();
+    if(!pick.entry){$("#practiceBox").innerHTML='<div class="pcardx"><p role="status">'+(pick.reason==="choose-focus"?'Wähle zuerst einen Übungsschwerpunkt.':'Für den gewählten Schwerpunkt gibt es in dieser Stufe gerade keinen geprüften Text.')+'</p><button type="button" class="btn-ghost" id="practiceChoose">Schwerpunkt wählen</button></div>';$("#practiceChoose").onclick=renderPractice;return;}
+    const entry=pick.entry;
+    DT = { id:entry.id,entry,topic:entry.topic,text:entry.text,chunks:chunksOf(entry.text),k:-1,repeat:pick.repeat,owner };
     renderDictation();
   }
-  async function sayChunk(k, slow){ if(!DT) return; const c = DT.chunks[k]; if(!c) return; const end = c.slice(-1); const body = c.replace(/[,.!?]$/, ""); await speak(body + (PUNCT_WORD[end] || ""), slow); }
+  async function sayChunk(k, slow){ if(!DT || DT.owner!==state) return; const c = DT.chunks[k]; if(!c) return; const end = c.slice(-1); const body = c.replace(/[,.!?]$/, ""); await speak(body + (PUNCT_WORD[end] || ""), slow); }
   function renderDictation(){
     const box = $("#practiceBox");
     box.innerHTML = '<div class="pcardx"><div class="prog">Diktat zum Thema „' + esc(DT.topic) + '“ · ' + DT.chunks.length + ' Teile</div>' +
+      '<p class="dict-focus">Dein Schwerpunkt: <b>'+esc(focusLabel(DT.entry.focus))+'</b></p><p>'+esc(DT.entry.goal)+'</p>'+(DT.repeat?'<p class="note">Diesen geprüften Text übst du noch einmal zu deinem Schwerpunkt.</p>':'')+
       '<p class="note">So geht es: Hör dir zuerst den ganzen Text an. Dann sage ich ihn Stück für Stück. Satzzeichen sage ich mit an („Komma“, „Punkt“).</p>' +
       '<div class="speakrow"><button type="button" class="btn-ghost" id="dtAll">🔊 Ganzer Text</button><button type="button" class="btn" id="dtNext">▶ ' + (DT.k < 0 ? 'Los geht’s' : 'Nächster Teil') + '</button><button type="button" class="btn-ghost" id="dtAgain" ' + (DT.k < 0 ? 'disabled' : '') + '>🔁 Teil wiederholen</button><button type="button" class="btn-ghost" id="dtSlow" ' + (DT.k < 0 ? 'disabled' : '') + '>🐢 Langsam</button></div>' +
       '<div class="prog">' + (DT.k < 0 ? '' : 'Teil ' + (DT.k + 1) + ' von ' + DT.chunks.length) + '</div>' +
       '<textarea class="lined dictarea" id="dtIn" spellcheck="false" autocorrect="off" autocomplete="off" autocapitalize="off" placeholder="Hier schreibst du das Diktat …"></textarea>' +
       '<div class="below"><button type="button" class="btn" id="dtDone" ' + (DT.k < DT.chunks.length - 1 ? 'disabled' : '') + '>Fertig, vergleichen</button></div>' +
-      '<p class="credit2">Text aus dem ' + (practiceData().d[DT.id][1] === 1 ? 'MiniKlexikon' : 'Klexikon') + ' (klexikon.zum.de), Lizenz CC BY-SA 4.0</p></div>';
+      '<p class="credit2">Eigener, redaktionell geprüfter Übungstext ab Klasse 5.</p></div>';
     const inp = $("#dtIn"); if(DT.typed) inp.value = DT.typed; inp.oninput = () => { DT.typed = inp.value; };
-    $("#dtAll").onclick = () => speak(DT.text);
-    $("#dtNext").onclick = async () => { DT.typed = inp.value; if(DT.k < DT.chunks.length - 1){ DT.k++; const k = DT.k; renderDictation(); await sayChunk(k); await sleep(1200); if(DT && DT.k === k) await sayChunk(k); } };
+    $("#dtAll").onclick = () => {if(DT?.owner===state)return speak(DT.text);};
+    $("#dtNext").onclick = async () => { const active=DT;if(!active || active.owner!==state)return;DT.typed = inp.value; if(DT.k < DT.chunks.length - 1){ DT.k++; const k = DT.k; renderDictation(); await sayChunk(k); await sleep(1200); if(DT===active && active.owner===state && DT.k===k) await sayChunk(k); } };
     $("#dtAgain").onclick = () => sayChunk(DT.k); $("#dtSlow").onclick = () => sayChunk(DT.k, true);
     $("#dtDone").onclick = () => { DT.typed = inp.value; compareDictation(); };
     setTimeout(() => { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }, 30);
   }
-  function tokenize(s){ return (s.match(/[\p{L}]+(?:-[\p{L}]+)*|[.,!?]/gu) || []); }
-  function align(a, b){ // LCS on tokens -> pairs
-    const n = a.length, m = b.length, L = Array.from({ length:n+1 }, () => new Array(m+1).fill(0));
-    for(let i=n-1;i>=0;i--) for(let j=m-1;j>=0;j--) L[i][j] = a[i] === b[j] ? L[i+1][j+1] + 1 : Math.max(L[i+1][j], L[i][j+1]);
-    const out = []; let i = 0, j = 0;
-    while(i < n || j < m){
-      if(i < n && j < m && a[i] === b[j]){ out.push([a[i], b[j]]); i++; j++; }
-      else if(i < n && j < m && L[i+1][j+1] >= Math.max(L[i+1][j], L[i][j+1])){ out.push([a[i], b[j]]); i++; j++; }  // substitution
-      else if(j < m && (i >= n || L[i][j+1] >= L[i+1][j])){ out.push([null, b[j]]); j++; }  // missing in typed
-      else { out.push([a[i], null]); i++; }                                                    // extra typed
-    }
-    return out;
-  }
   function compareDictation(){
-    const typed = tokenize(DT.typed || ""), orig = tokenize(DT.text), pairs = align(typed, orig);
-    let errors = 0, words = orig.filter(t => /\p{L}/u.test(t)).length; const cats = {};
+    if(!DT || DT.owner!==state)return;
+    const evaluation=TB_DICTATION.evaluate(DT.entry,DT.typed||""),{errors,words}=evaluation,pairs=evaluation.pairs.map(p=>[p.typed,p.expected]);const cats={};
     const origHtml = [], typedHtml = [];
     pairs.forEach(([t, o]) => {
       const sp = x => (x && /^[.,!?]$/.test(x) ? "" : " ");
       if(t === o){ origHtml.push(sp(o) + esc(o)); typedHtml.push(sp(t) + esc(t)); return; }
-      errors++;
       const c = !o || !t ? (/^[.,!?]$/.test(o || t) ? ((o || t) === "," ? "komma" : "satzende") : "auslassung") : (/^[.,!?]$/.test(o) ? (o === "," ? "komma" : "satzende") : fineCats(t, o)[0]);
       cats[c] = (cats[c] || 0) + 1;
       if(o){ origHtml.push(sp(o) + '<mark class="ok">' + esc(o) + '</mark>'); }
       if(t){ typedHtml.push(sp(t) + '<mark class="bad">' + esc(t) + '</mark>'); } else typedHtml.push(' <mark class="bad gap">_</mark>');
-      if(o && t && /\p{L}/u.test(o)){ const k = lower(o); state.words[k] = state.words[k] || { richtig: o, kategorie: (TRICK[c] || [""])[0], fine: c, count: 0, last: todayKey() }; state.words[k].count++; }
+      if(o && /\p{L}/u.test(o) && TB_DICTATION.wordPool(PD,DT.entry.focus).some(w=>w.word===o)){
+        const k=lower(o);state.words[k]=state.words[k]||{};Object.assign(state.words[k],{richtig:o,kategorie:focusLabel(DT.entry.focus),fine:DT.entry.focus,count:(state.words[k].count||0)+1,last:todayKey(),curriculum:TB_DICTATION.VERSION});
+      }
     });
-    const p = P(); p.usedDict.push(DT.id);
-    p.log.push({ date: todayKey(), type: "dict", id: DT.id, topic: DT.topic, words, errors, cats, done: true });
+    const p = P();if(!p.usedReviewedDict.includes(DT.id))p.usedReviewedDict.push(DT.id);
+    p.log.push({ date: todayKey(), type: "dict", id: DT.id, topic: DT.topic, words, errors, cats, done: true,curriculum:TB_DICTATION.VERSION,focus:DT.entry.focus,focusErrors:evaluation.focusErrors,focusOpportunities:evaluation.focusOpportunities,materialHash:DT.entry.review.hash });
+    if(p.log.length>400)p.log.splice(0,p.log.length-400);
     save();
     const grade = errors === 0 ? "🏆 Fehlerfrei!" : errors <= 2 ? "⭐ Sehr gut!" : errors <= 5 ? "👍 Gut gemacht!" : "💪 Weiter üben, du schaffst das!";
     $("#practiceBox").innerHTML = '<div class="pcardx"><h3>' + grade + ' ' + errors + (errors === 1 ? ' Fehler' : ' Fehler') + ' bei ' + words + ' Wörtern</h3>' +
       '<div class="cmpgrid"><div><b>Dein Diktat</b><p class="cmp">' + typedHtml.join("").trim() + '</p></div><div><b>So ist es richtig</b><p class="cmp">' + origHtml.join("").trim() + '</p></div></div>' +
-      (errors ? '<p class="note">Grün markiert ist, wie es richtig heißt. Die falsch geschriebenen Wörter kommen in dein Wort-Training.</p>' : '') +
+      '<p class="dict-focus">Schwerpunkt '+esc(focusLabel(DT.entry.focus))+': '+(evaluation.focusOpportunities-evaluation.focusErrors)+' von '+evaluation.focusOpportunities+' Übungsstellen richtig geschrieben.</p>'+
+      (errors ? '<p class="note">Grün markiert ist die geprüfte Vorlage. Passende Übungswörter kannst du im Wort-Diktat wiederholen.</p>' : '') +
       '<p>Das war eine Zusatzaufgabe' + gameBonusText() + '.</p><div class="below"><button type="button" class="btn-ghost" id="pBack">Zurück zur Übersicht</button></div>' +
-      '<p class="credit2">Text aus dem Klexikon-Projekt (klexikon.zum.de), Lizenz CC BY-SA 4.0</p></div>';
+      '<p class="credit2">Eigener, redaktionell geprüfter Übungstext ab Klasse 5.</p></div>';
     $("#pBack").onclick = renderPractice; DT = null;
   }
   function gameBonusText(){ const c = R().cfg; return c.gamePerTask ? ' (+' + c.gamePerTask + ' Minuten Spielzeit 🎮)' : ''; }
-  function renderPractice(){
-    const box = $("#practiceBox"), p = P(), n = todaysTasks();
-    if(!practiceData()){ box.innerHTML = '<p class="empty">Die Übungsdaten fehlen in dieser Datei.</p>'; return; }
+  async function renderPractice(){
+    const owner=state,box = $("#practiceBox");await loadPractice();if(owner!==state)return;
+    if(WD?.owner!==state)WD=null;if(DT?.owner!==state)DT=null;
+    const p=P(),n=todaysTasks();
+    if(!PD.entries.length){box.innerHTML='<p class="empty" role="status">Gerade sind keine geprüften Übungstexte verfügbar.</p>';return;}
     const speech = canSpeak();
-    const due = Object.values(state.words).filter(w => !w.due || w.due <= todayKey()).length;
+    const focus=practiceFocus(),pool=TB_DICTATION.wordPool(PD,focus,dictLevel()),wordCount=pickWords(10).length,hasText=PD.entries.some(e=>e.focus===focus && e.level===dictLevel());
+    const due=pool.filter(item=>Object.values(state.words).some(w=>w.richtig===item.word && wordFine(w)===focus && (!w.due||w.due<=todayKey()))).length;
+    const choice=p.chosenFocus||"auto",hasHistory=weakCats().length>0;
     box.innerHTML = (speech ? '' : '<div class="warn">Dein Browser hat keine deutsche Vorlesestimme. Unter Windows: Einstellungen → Zeit und Sprache → Sprache → Deutsch → Sprachausgabe installieren. Oder Chrome bzw. Edge verwenden.</div>') +
       '<p class="note">Freiwillige Zusatzaufgaben. Heute erledigt: <b>' + n + '</b>.' + (R().cfg.gamePerTask ? ' Jede bringt +' + R().cfg.gamePerTask + ' Minuten Spielzeit 🎮.' : '') + '</p>' +
+      '<label class="field">Dein Übungsschwerpunkt<select id="practiceFocus"><option value="auto"'+(choice==="auto"?' selected':'')+'>'+(hasHistory?'Passend zu meinen bisherigen Übungen':'Zuerst einen Schwerpunkt wählen')+'</option>'+Object.entries(TB_DICTATION.CATEGORIES).map(([key,label])=>'<option value="'+key+'"'+(choice===key?' selected':'')+'>'+esc(label)+'</option>').join('')+'</select></label>'+
+      (focus?'<p class="dict-focus">Schwerpunkt: <b>'+esc(focusLabel(focus))+'</b></p>':'<p class="note" role="status">Es ist noch kein Fehlerschwerpunkt bekannt. Wähle aus, was du üben möchtest.</p>')+
+      (focus && !hasText?'<p class="note" role="status">Zu diesem Schwerpunkt gibt es in dieser Stufe gerade keinen geprüften Text. Du kannst die Stufe im Elternbereich ändern oder einen anderen Schwerpunkt wählen.</p>':'')+
+      (focus && !wordCount?'<p class="note">Diesen Schwerpunkt übst du mit einem Kurz-Diktat im Satzzusammenhang.</p>':'')+
       '<div class="tasks">' +
-      '<button type="button" class="task" id="tWords" ' + (speech ? '' : 'disabled') + '><span class="ti">🔤</span><b>Wort-Diktat</b><span>10 Wörter, passend zu den Wörtern, die du übst' + (due ? ' (' + due + ' Wiederholungen fällig)' : '') + '. Ca. 5 Minuten.</span></button>' +
-      '<button type="button" class="task" id="tDict" ' + (speech ? '' : 'disabled') + '><span class="ti">📝</span><b>Kurz-Diktat</b><span>Ein kurzer Text aus dem Kinderlexikon, immer ein anderes Thema. Ca. 10 Minuten.</span></button>' +
+      '<button type="button" class="task" id="tWords" ' + (speech && wordCount ? '' : 'disabled') + '><span class="ti">🔤</span><b>Wort-Diktat</b><span>'+wordCount+' geprüfte Übungswörter zum Schwerpunkt' + (due ? ' (' + due + ' Wiederholungen fällig)' : '') + '.</span></button>' +
+      '<button type="button" class="task" id="tDict" ' + (speech && focus ? '' : 'disabled') + '><span class="ti">📝</span><b>Kurz-Diktat</b><span>Ein geprüfter Text ab Klasse 5 zu deinem Schwerpunkt. Ca. 5 Minuten.</span></button>' +
       '</div>' +
       (p.log.length ? '<h3>Zuletzt geübt</h3><ul class="orders">' + p.log.slice(-6).reverse().map(l => '<li><span>' + (l.type === "words" ? "🔤" : "📝") + '</span><b>' + (l.type === "words" ? l.right + "/" + l.n + " Wörter richtig" : l.errors + " Fehler bei " + l.words + " Wörtern") + '</b>' + (l.topic ? '<span>' + esc(l.topic) + '</span>' : '') + '<span class="when">' + fmtShort(l.date) + '</span></li>').join("") + '</ul>' : '');
+    $("#practiceFocus").onchange=()=>{P().chosenFocus=$("#practiceFocus").value;save();void renderPractice();};
     if(speech){ $("#tWords").onclick = startWordDictation; $("#tDict").onclick = startDictation; }
   }
 

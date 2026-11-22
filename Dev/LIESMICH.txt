@@ -24,4 +24,4 @@ Umzug auf einen neuen PC: einfach den ganzen Ordner kopieren und
 dort Schritt 2 und 3 wiederholen.
 
 Quellen: Rechtschreibwörterbuch igerman98 (GPL), Hunspell (LGPL/MPL),
-Übungstexte aus Klexikon/MiniKlexikon (klexikon.zum.de, CC BY-SA 4.0).
+Eigene redaktionell geprüfte Übungstexte ab Klasse 5 (Projektlizenz).

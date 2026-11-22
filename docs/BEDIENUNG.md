@@ -40,6 +40,16 @@ Mit **Noch etwas ins Tagebuch schreiben** beginnt ein neuer Abschnitt. Darüber 
 
 An markierten Stellen öffnet **Erklärung und Merkhilfe** eine zusätzliche Erklärung oder Übungsstrategie, auch etwa für vertauschte, fehlende oder zusätzliche Buchstaben. Wo keine sichere Regel bekannt ist, wird keine erfunden. Bei OpenAI wird hier die zusammen mit der Prüfung gelieferte ausführlichere Erklärung gezeigt. Dafür ist kein zusätzlicher KI-Aufruf erforderlich. Unter **Üben** gibt es Aufgaben zu Fehlermustern sowie Diktate. Für die Sprachausgabe muss im Browser beziehungsweise Betriebssystem eine geeignete deutsche Stimme verfügbar sein.
 
+## Diktate ab Klasse 5
+
+Unter **Üben** stehen 54 eigene, redaktionell gesichtete und lokal sprachlich geprüfte Texte für 27 Fehlerschwerpunkte in zwei Stufen zur Verfügung. Die Texte sind eigenständig verständlich und haben ausdrücklich festgelegte Übungswörter oder Satzstrukturen. Der frühere Lexikonbestand wird auch für die Kontextsätze der Wort-Diktate nicht mehr verwendet. Die redaktionelle Prüfung ist keine externe lerntherapeutische Validierung.
+
+Der vorgeschlagene Schwerpunkt berücksichtigt bisherige Fehler und die Ergebnisse der neuen Übungen. Ohne ausreichende Vorgeschichte wählt das Kind ausdrücklich aus, was es üben möchte. Ein anderer Schwerpunkt kann jederzeit gewählt werden. Die Auswahl bleibt bei diesem Schwerpunkt und der eingestellten Stufe. Fehlt ein geprüfter Text, wird das angezeigt. Bereits geübte Texte können als kenntlich gemachte Wiederholung erneut vorkommen.
+
+Das **Wort-Diktat** nutzt bis zu zehn geprüfte Zielwörter derselben Stufe. Persönliche Übungswörter werden nur verwendet, wenn sie mit diesem geprüften Vorrat übereinstimmen und fällig sind. Satzbau, Wortgrenzen und Zeichensetzung werden im **Kurz-Diktat** geübt; dafür gibt es kein Wort-Diktat mit Ersatzwörtern. **Stufe 1** hat kürzere und einfachere Texte, **Stufe 2** ist etwas umfangreicher. Unter **Eltern → Rechtschreibung** lässt sich die Stufe fest einstellen oder automatisch nach den Übungen desselben Schwerpunkts wählen.
+
+Die neue Sammlung funktioniert nach dem Laden ohne Internet. Beim Üben werden keine Texte an KI-Anbieter oder LanguageTool geschickt. Die Auswertung zeigt die geprüfte Vorlage und die richtig geschriebenen Übungsstellen. Alte Protokolle bleiben erhalten. Weitere Hinweise stehen in [Material und Prüfung](diktatmaterial-klasse-5.md).
+
 ## Freiwilliger Tagesrückblick im Dev-Stand
 
 Rechts stehen **Was war heute schön?**, **Wie fühlst du dich gerade?** und **Was wünschst du dir für morgen?** Zur Frage **Was war heute schwierig?** und zur bisherigen Lernfrage kann man weitere Felder aufklappen. Alle Antworten sind freiwillig: Ein Wort oder Emoji reicht, und auch ein schöner Moment muss nicht genannt werden. Ein reiner Tagesrückblick lässt sich über **Antworten ansehen → Eintrag speichern** ohne Mindestumfang des Tagesauftrags speichern. Wenn zusätzlich ein freier Text geschrieben wird, gelten dafür weiterhin die eingestellten Schreibziele; Antworten können zum Umfang beitragen. Bei eingeschalteter Gefühlsübersicht ist vor dem Speichern zusätzlich die Auswahl von ein bis drei Gefühlen nötig, auch bei einem reinen Rückblick. Die Rückblickfragen selbst bleiben freiwillig.
