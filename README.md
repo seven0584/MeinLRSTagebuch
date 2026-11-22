@@ -66,6 +66,7 @@ PINs dienen als Sichtschutz innerhalb der App. Die Ordnerdateien sind verschlüs
 ## Dokumentation
 
 - [GUI-, Backend- und Fachtests für Version 2.0](docs/testplan-version-2.md): Befehle, Testumfang und Grenzen. Ausgeführte Tests und tatsächliche Modellantworten werden im [Prüfbericht](docs/pruefbericht-version-2-tests.md) dokumentiert. Der Fachlauf startet ausschließlich mit ausdrücklichem `--execute`.
+- [Diktatprüfung für Kinder mit LRS ab Klasse 5](docs/pruefbericht-diktate-klasse-5.md): vollständige lokale Sprachprüfung der 2.600 Vorlagen, redaktionelle Stichprobe und Untersuchung der Auswahl nach Fehlerschwerpunkten. Der Bestand benötigt eine Überarbeitung von Texten und Zuordnung.
 
 - [Bedienung und Problemlösung](docs/BEDIENUNG.md)
 - [Daten, Speicherung und Sicherungen](docs/DATEN-UND-SPEICHERUNG.md)
