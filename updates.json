@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "release": 10,
-  "version": "1.3.4",
+  "release": 11,
+  "version": "1.3.5",
   "files": [
     {
       "path": "Tagebuch.html",
@@ -20,8 +20,8 @@
     },
     {
       "path": "app/changelog-data.js",
-      "size": 23840,
-      "sha256": "c80d22a7e828ba89a401986a739733e229d2331e6993818bc28d25ca7aa51a8d"
+      "size": 37665,
+      "sha256": "42655534c362827e764f5a78aa0279e9baf85aeb6f0c136f2f7e3889f37da2d7"
     },
     {
       "path": "app/compatibility.js",
@@ -106,7 +106,7 @@
     {
       "path": "app/version.js",
       "size": 152,
-      "sha256": "3c3830f2591a87e303e0c8b445d313add3e1f5ed9f6ec7b7bb405b274538dad1"
+      "sha256": "5661e0dbc2f3756f7ef7b96721f3780769ba60de483f72dbbb63b29110f1b835"
     },
     {
       "path": "app/woerterbuch.js",

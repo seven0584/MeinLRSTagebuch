@@ -1,0 +1,36 @@
+{
+  "name": "lrs-tagebuch-dev",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Entwicklungsprüfungen für das im Browser ausführbare Tagebuch",
+  "scripts": {
+    "predev": "node scripts/build-practice.cjs && node scripts/build-help.cjs",
+    "dev": "node scripts/dev-server.cjs",
+    "test": "node --test tests/lernhilfe.test.cjs",
+    "test:browser": "node --test tests/browser.test.cjs",
+    "test:storage": "node --test tests/storage.test.cjs",
+    "test:ai": "node --test tests/ai-runtime.test.cjs",
+    "test:mood": "node --test tests/mood.test.cjs tests/mood-ollama.test.cjs",
+    "test:selection": "node --test tests/ai-selection.test.cjs",
+    "test:gptoss": "node --test tests/gpt-oss.test.cjs",
+    "test:gui:v2": "node --test tests/gui-v2.test.cjs",
+    "test:backend:v2": "node --test tests/backend-v2.test.cjs",
+    "test:v2:technical": "node --test tests/gui-v2.test.cjs tests/backend-v2.test.cjs",
+    "test:fach:scoring": "node --test tests/correction-scoring.test.cjs tests/correction-proposals.test.cjs",
+    "test:fach:plan": "node scripts/run-correction-quality.cjs --list",
+    "test:fach": "node scripts/run-correction-quality.cjs",
+    "test:review": "node --test tests/spell-review.test.cjs tests/spell-review-ollama.test.cjs",
+    "test:help": "node --test tests/ui-help.test.cjs",
+    "test:openai": "node --test tests/openai.test.cjs tests/openai-runtime.test.cjs tests/openai-browser.test.cjs",
+    "build:help": "node scripts/build-help.cjs",
+    "build:practice": "node scripts/build-practice.cjs",
+    "test:dictation": "node --test tests/dictation.test.cjs tests/dictation-browser.test.cjs tests/dictation-audit.test.cjs",
+    "test:all": "node --test tests/ai-runtime.test.cjs tests/ai-selection.test.cjs tests/backend-v2.test.cjs tests/browser.test.cjs tests/correction-proposals.test.cjs tests/correction-scoring.test.cjs tests/dictation-audit.test.cjs tests/dictation.test.cjs tests/dictation-browser.test.cjs tests/gpt-oss.test.cjs tests/gui-v2.test.cjs tests/lernhilfe.test.cjs tests/mood.test.cjs tests/mood-ollama.test.cjs tests/openai-browser.test.cjs tests/openai-runtime.test.cjs tests/openai.test.cjs tests/spell-review.test.cjs tests/spell-review-ollama.test.cjs tests/storage.test.cjs tests/ui-help.test.cjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "playwright": "1.64.1"
+  }
+}

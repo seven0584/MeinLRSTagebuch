@@ -1,0 +1,10 @@
+.questions.reflection{margin-top:0;min-width:0}
+.reflection .reflection-heading{font-size:1.05rem;margin:0 0 .3rem}
+.reflection .reflection-intro{margin:0 0 .65rem;line-height:1.45}
+.reflection .reflection-question{margin-top:.6rem}
+.reflection .reflection-question > span{font-size:.94rem;line-height:1.35}
+.reflection .reflection-question textarea.lined{display:block;width:100%;box-sizing:border-box;height:4.2rem;min-height:3.3rem;max-height:12rem;resize:vertical;font-size:1rem;line-height:1.45;background-image:none;padding:.45rem .55rem}
+.reflection .reflection-question textarea::placeholder{font-size:.9rem}
+.reflection .reflection-extra{margin-top:.65rem;font-size:.92rem}
+.reflection .reflection-extra > summary{cursor:pointer;line-height:1.45}
+.reflection .reflection-extra[open] > summary{margin-bottom:.3rem}

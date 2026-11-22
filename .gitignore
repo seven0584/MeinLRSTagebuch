@@ -1,15 +1,42 @@
-# Persönliche Laufzeitdaten; die mitgelieferten Hinweise bleiben versioniert.
-/config/*
-!/config/LIESMICH.txt
-/kinder/*
-!/kinder/LIESMICH.txt
+# Persönliche Laufzeitdaten; nur die mitgelieferten Hinweise versionieren.
+Dev/config/*
+!Dev/config/LIESMICH.txt
+Dev/kinder/*
+!Dev/kinder/LIESMICH.txt
 
-# Lokale Zugangsdaten und Betriebssystemdateien
+# Entpackte Anwendung und deren persönliche Daten.
+Release/Tagebuch/
+Release/Tagebuch-*-Windows-x64-*.zip
+Release/Tagebuch-*-Windows-x64-*.zip.sha256
+Tagebuch/
+
+# Aus der Anwendung exportierte Sicherungen und Bilder.
+*.tagebuch
+*.bild
+tagebuch-sicherung*.json
+tagebuch-sicherung*.zip
+
+# Lokale Werkzeuge und Betriebssystemdateien.
+node_modules/
 .env
 .env.*
 !.env.example
 Thumbs.db
+Desktop.ini
 .DS_Store
 
-# Sicherung der Programmdateien vor einem In-App-Update
+# Lokale Artefakte des verworfenen Mobil-Vorversuchs, keine Projektquelle.
+Mobile/
+test-results/
+data/
+lernhilfe-testbericht*.json
+tests/benchmark-artifacts/
+__pycache__/
+*.py[cod]
+
+# Bisherige Datei-Version: persönliche Ordner und Update-Sicherungen.
+/config/*
+!/config/LIESMICH.txt
+/kinder/*
+!/kinder/LIESMICH.txt
 /.tagebuch-update-backup/

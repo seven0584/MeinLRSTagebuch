@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minensucher</title>
+<style>
+  :root{--bg:#101522;--panel:#1b2233;--cell:#2c3650;--open:#e9edf5;--text:#e6e9ef;--accent:#fcc419}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:12px;user-select:none}
+  h1{margin:4px 0 8px;font-size:1.5rem;letter-spacing:.05em}
+  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;margin-bottom:10px}
+  .box{background:var(--panel);border-radius:8px;padding:6px 12px;font-weight:700;min-width:84px;text-align:center}
+  button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:7px 14px;background:#4263eb;color:#fff;cursor:pointer}
+  button.ghost{background:transparent;border:2px solid #4263eb;color:#9db6ff}
+  button.on{background:var(--accent);color:#222}
+  #grid{display:grid;gap:2px;background:var(--panel);padding:6px;border-radius:10px}
+  .c{width:var(--s);height:var(--s);border-radius:4px;background:var(--cell);display:grid;place-items:center;font-weight:800;font-size:calc(var(--s)*.55);cursor:pointer}
+  .c:hover{filter:brightness(1.2)}
+  .c.o{background:var(--open);cursor:default}
+  .c.b{background:#fa5252}
+  .n1{color:#1971c2}.n2{color:#2b8a3e}.n3{color:#e03131}.n4{color:#5f3dc4}.n5{color:#a61e4d}.n6{color:#0c8599}.n7{color:#222}.n8{color:#666}
+  #msg{min-height:1.6em;margin:8px 0;font-weight:700;text-align:center}
+  .hint{opacity:.7;font-size:.9rem;text-align:center}
+</style>
+</head>
+<body>
+<h1>💣 Minensucher</h1>
+<div class="bar">
+  <button class="ghost" data-lvl="0">Leicht</button><button class="ghost" data-lvl="1">Mittel</button><button class="ghost" data-lvl="2">Schwer</button>
+</div>
+<div class="bar">
+  <div class="box">💣 <span id="left">0</span></div><div class="box">⏱️ <span id="time">0</span></div><div class="box">🏆 <span id="best">–</span></div>
+  <button class="ghost" id="flagMode" title="Für Touch: Flaggen setzen statt aufdecken">🚩 Flaggen-Modus</button>
+</div>
+<div id="grid"></div>
+<div id="msg"></div>
+<p class="hint">Linksklick: aufdecken · Rechtsklick: Flagge setzen · Die Zahl zeigt, wie viele Minen um ein Feld liegen.</p>
+<script>
+(() => {
+  const LV = [[9, 9, 10, 34], [16, 16, 40, 28], [16, 24, 75, 26]];
+  let W, H, M, cells, opened, flags, over, started, t0, timer, lvl = 0, flagMode = false;
+  const $ = s => document.querySelector(s), grid = $("#grid");
+  const best = k => { try{ return localStorage.getItem("mine-best-" + k); }catch(e){ return null; } };
+  function start(l){
+    lvl = l; [H, W, M] = LV[l]; const size = Math.min(LV[l][3], Math.floor((innerWidth - 40) / W), Math.floor((innerHeight - 230) / H));
+    grid.style.setProperty("--s", Math.max(18, size) + "px");
+    grid.style.gridTemplateColumns = "repeat(" + W + ", var(--s))";
+    cells = Array.from({ length: W * H }, () => ({ m: 0, n: 0 })); opened = 0; flags = 0; over = false; started = false; clearInterval(timer);
+    $("#time").textContent = 0; $("#msg").textContent = "";
+    document.querySelectorAll("[data-lvl]").forEach(b => b.classList.toggle("on", +b.dataset.lvl === l));
+    $("#best").textContent = best(l) ? best(l) + " s" : "–";
+    grid.innerHTML = ""; cells.forEach((c, i) => { const d = document.createElement("div"); d.className = "c"; d.dataset.i = i; grid.appendChild(d); c.el = d; });
+    $("#left").textContent = M;
+  }
+  const nb = i => { const x = i % W, y = (i / W) | 0, r = []; for(let dy = -1; dy <= 1; dy++) for(let dx = -1; dx <= 1; dx++){ if(!dx && !dy) continue; const X = x + dx, Y = y + dy; if(X >= 0 && X < W && Y >= 0 && Y < H) r.push(Y * W + X); } return r; };
+  function place(safe){
+    const forbidden = new Set([safe, ...nb(safe)]); let k = 0;
+    while(k < M){ const i = Math.floor(Math.random() * W * H); if(!cells[i].m && !forbidden.has(i)){ cells[i].m = 1; k++; } }
+    cells.forEach((c, i) => { c.n = nb(i).filter(j => cells[j].m).length; });
+    started = true; t0 = Date.now(); timer = setInterval(() => { $("#time").textContent = Math.floor((Date.now() - t0) / 1000); }, 250);
+  }
+  function open(i){
+    const stack = [i];
+    while(stack.length){
+      const j = stack.pop(), c = cells[j]; if(c.o || c.f) continue;
+      c.o = 1; opened++; c.el.className = "c o" + (c.n ? " n" + c.n : ""); c.el.textContent = c.n || "";
+      if(!c.n) nb(j).forEach(k => { if(!cells[k].o) stack.push(k); });
+    }
+  }
+  function click(i, flag){
+    if(over) return; const c = cells[i];
+    if(flag){ if(c.o) return; c.f = !c.f; flags += c.f ? 1 : -1; c.el.textContent = c.f ? "🚩" : ""; $("#left").textContent = M - flags; return; }
+    if(c.f) return;
+    if(!started) place(i);
+    if(c.o){ // chord: open neighbours if enough flags
+      const n = nb(i); if(n.filter(k => cells[k].f).length === c.n) n.forEach(k => { if(!cells[k].o && !cells[k].f) click(k); });
+      return;
+    }
+    if(c.m){ lose(i); return; }
+    open(i);
+    if(opened === W * H - M) win();
+  }
+  function lose(i){
+    over = true; clearInterval(timer);
+    cells.forEach((c, j) => { if(c.m){ c.el.className = "c o" + (j === i ? " b" : ""); c.el.textContent = "💣"; } });
+    $("#msg").textContent = "💥 Boom! Klick auf eine Stufe für ein neues Spiel.";
+  }
+  function win(){
+    over = true; clearInterval(timer); const s = Math.floor((Date.now() - t0) / 1000);
+    cells.forEach(c => { if(c.m) c.el.textContent = "🚩"; });
+    const b = best(lvl); if(!b || s < +b){ try{ localStorage.setItem("mine-best-" + lvl, s); }catch(e){} $("#best").textContent = s + " s"; }
+    $("#msg").textContent = "🎉 Geschafft in " + s + " Sekunden!";
+  }
+  grid.addEventListener("click", e => { const d = e.target.closest(".c"); if(d) click(+d.dataset.i, flagMode); });
+  grid.addEventListener("contextmenu", e => { e.preventDefault(); const d = e.target.closest(".c"); if(d) click(+d.dataset.i, true); });
+  document.querySelectorAll("[data-lvl]").forEach(b => b.onclick = () => start(+b.dataset.lvl));
+  $("#flagMode").onclick = () => { flagMode = !flagMode; $("#flagMode").classList.toggle("on", flagMode); };
+  start(0);
+})();
+</script>
+</body>
+</html>

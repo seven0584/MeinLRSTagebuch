@@ -1,0 +1,24 @@
+.settings-wizard-intro{margin:.2rem 0 1rem}
+.settings-stepnav ol{display:flex;flex-direction:column;gap:.15rem;list-style:none;margin:.1rem 0 .3rem 1.3rem;padding:0 0 0 .5rem;border-left:1px solid var(--border)}
+.settings-stepnav li{min-width:0}
+.settings-stepnav button{display:flex;align-items:center;gap:.5rem;width:100%;text-align:left;font:inherit;font-size:.88rem;padding:.45rem .5rem;border:0;border-radius:6px;background:transparent;color:var(--text);cursor:pointer}
+.settings-stepnav button:hover{background:var(--bg)}
+.settings-stepnav button[aria-current="step"],.settings-stepnav button[aria-current="page"]{background:var(--bg);color:var(--ink);font-weight:bold}
+.settings-step-number{flex:0 0 1rem;font-size:.8rem;color:var(--muted)}
+.settings-expand-icon{margin-left:auto;transition:transform .15s}.pm[aria-expanded="true"]>.settings-expand-icon{transform:rotate(90deg)}
+.pmenu{max-height:calc(100dvh - 2rem);overflow-y:auto}
+.settings-stepnav button:focus-visible,.settings-wizard-actions button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.settings-step-position{font-size:.85rem;color:var(--muted);margin:1.25rem 0 .2rem}
+.settings-step-title{font-size:1.3rem;margin:.2rem 0 .6rem}
+.settings-step-title:focus{outline:none}
+.settings-step-panel{min-width:0}
+.settings-step-panel > h3{font-size:1.1rem;margin:1.3rem 0 .5rem}
+.settings-step-panel > .settings-step-intro + h3{margin-top:.9rem}
+.settings-step-intro{padding:.75rem .9rem;background:var(--bg);border-radius:10px;margin:.5rem 0 1rem}
+.settings-step-panel .field{margin:.7rem 0}
+.settings-step-panel select{max-width:100%}
+.settings-step-panel .below{row-gap:.6rem}
+.settings-step-panel details{margin:1rem 0}
+.settings-wizard-actions{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;border-top:1px solid var(--border);margin-top:1.5rem;padding-top:1rem}
+.settings-wizard-actions button:disabled{opacity:.45;cursor:default}
+@media(max-width:820px){.pwrap{grid-template-columns:minmax(0,1fr)}.pmain{min-width:0}.pmenu{min-width:0;flex-direction:column;overflow-x:visible;max-height:none}.pm{white-space:normal}.settings-stepnav button{font-size:.88rem}.settings-wizard-actions .btn{flex:1}.settings-step-panel select{min-width:0;width:100%}.settings-step-panel .below>button{max-width:100%;white-space:normal}}
