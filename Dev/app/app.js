@@ -586,7 +586,7 @@
     $("#moodSave").disabled=!moodReady();
   }
   function moodReady(){return !moodEnabled() || moodPicker.get().length>0;}
-  function cancelMoodFinish(){pendingFinish=null;if(moodDialog.open)moodDialog.close();if(session.current.length)renderResult();}
+  function cancelMoodFinish(){pendingFinish=null;if(moodDialog.open)moodDialog.close();if(session.checks)renderResult();}
   $("#moodCancel").onclick=cancelMoodFinish;
   moodDialog.addEventListener("cancel",cancelMoodFinish);
   $("#moodSave").onclick=()=>{
@@ -621,6 +621,26 @@
     }
   }
   const editorSurface=document.createElement("div");editorSurface.className="editor-surface";ta.before(editorSurface);
+  const dayHistory=document.createElement("section");dayHistory.id="todayHistory";dayHistory.hidden=true;
+  $("#writeArea").prepend(dayHistory);
+  let historyKey="";
+  function savedToday(){return state.entries.filter(entry=>entry.date===todayKey());}
+  function entryContent(entry){return [entry.text,...Object.values(entry.answers || {})].filter(Boolean).join("\n");}
+  function dayCounts(){
+    const current=contentText();
+    return savedToday().reduce((total,entry)=>{
+      const text=entryContent(entry);total.words+=tokens(text).length;total.sentences+=countSentences(text);return total;
+    },{words:tokens(current).length,sentences:countSentences(current)});
+  }
+  function renderDayHistory(){
+    const entries=savedToday().slice().reverse(),key=state.id+"|"+todayKey()+"|"+JSON.stringify(entries);
+    if(key===historyKey)return;historyKey=key;dayHistory.hidden=!entries.length;
+    $("#writeArea .mainlabel span").textContent=entries.length?"✏️ Dein neuer Abschnitt:":"✏️ Mein Tagebuch:";
+    ta.placeholder=entries.length?"Was möchtest du heute noch erzählen?":"Liebes Tagebuch, heute …";
+    const previous=SEG;
+    try{dayHistory.innerHTML=entries.length?'<h3>Heute schon geschrieben · nur lesen</h3><p class="note">Diese Texte sind gespeichert. Schreibe deinen neuen Abschnitt darunter. Alles zählt zu deinem Tagesziel.</p>'+entries.map(entry=>'<div class="sheet checked"><div class="lined">'+entryHtml(entry)+'</div></div>').join(""):"";}
+    finally{SEG=previous;}
+  }
   const editorBackdrop=document.createElement("div");editorBackdrop.className="lined editor-backdrop";editorBackdrop.setAttribute("aria-hidden","true");
   editorSurface.append(editorBackdrop,ta);
   const cloudNotice=document.createElement("p");cloudNotice.className="note";cloudNotice.id="openaiChildNotice";cloudNotice.hidden=true;
@@ -664,17 +684,18 @@
   function countSentences(t){ const min = (state && state.reward && state.reward.cfg && state.reward.cfg.sentenceWords) || R().cfg.sentenceWords || 1; return t.split(/[.!?]+/).filter(s => /\p{L}/u.test(s) && tokens(s).length >= min).length; }
   const minWords = () => R().cfg.entryWords, minSent = () => R().cfg.entrySentences;
   let spellReady = false;
-  function goalMet(){ const c = contentText(); return !!reflectionOnly() || (countSentences(c) >= minSent() && tokens(c).length >= minWords()); }
+  function goalMet(){const total=dayCounts();return !!reflectionOnly() || (total.sentences>=minSent() && total.words>=minWords());}
   function updateCount(){
     cloudNotice.hidden=state.parent.learningHelp?.provider!=="openai";
-    const c = contentText(), n = countSentences(c), w = tokens(c).length;
+    renderDayHistory();
+    const c = contentText(), total=dayCounts(), n=total.sentences, w=total.words;
     const sc = $("#sentenceCount");
     const MIN_WORDS = minWords(), MIN_SENTENCES = minSent();
     sc.innerHTML = '<span class="goal'+(w>=MIN_WORDS?' met':'')+'">'+w+' von '+MIN_WORDS+' Wörtern</span>, <span class="goal'+(n>=MIN_SENTENCES?' met':'')+'">'+n+' von '+MIN_SENTENCES+(MIN_SENTENCES===1?' Satz':' Sätzen')+'</span>';
     if(reflectionOnly()) sc.textContent="Freiwilliger Tagesrückblick · Ein Wort oder Emoji reicht";
     if(spellReady){
-      checkBtn.disabled = !goalMet();
-      checkBtn.textContent=reflectionOnly()?"Antworten speichern":session.checks?"Nochmal prüfen":"Prüfen";
+      checkBtn.disabled = !c.trim() || !goalMet();
+      checkBtn.textContent=reflectionOnly()?"Antworten ansehen":session.checks?"Nochmal prüfen":"Prüfen";
       if(goalMet()) statusEl.textContent = "";
       else {
         const parts = [];
@@ -732,6 +753,18 @@
     const requestText=compose(),mark=currentMark(e,requestText);
     if(!mark){e.helpError="Die Stelle hat sich stark verändert. Wähle „Nochmal prüfen“, damit ich die passende Stelle finde.";renderResult();return;}
     if(!e.cloudReview && !TB_TUTOR.relatedSpelling(mark.w,e.w)){e.helpReply=null;e.helpHistory={attempts:[],replies:[]};e.helpError="Das ist inzwischen ein anderes Wort. Wähle „Nochmal prüfen“, damit du einen passenden Hinweis bekommst.";renderResult();return;}
+    // Free local explanations failed the required 90% pedagogical quality gate.
+    // Display only the already checked correction; never infer approval from a
+    // mechanical test score or generate another explanation in the child flow.
+    if(tutorConfig().provider==="ollama"){
+      e.helpReply=null;e.helpError="";
+      const safeCase=["Großschreibung","Kleinschreibung"].includes(e.cat) && typeof e.fix==="string" && lower(mark.w)===lower(e.fix);
+      if(mark.w!==e.w)e.helpError="Die Stelle wurde verändert. Wähle „Nochmal prüfen“, bevor du einen Korrekturvorschlag ansiehst.";
+      else if((e.reviewVerified || safeCase) && typeof e.fix==="string" && e.fix && e.fix!==mark.w){
+        e.helpReply={suggestion:e.fix};e.helpReplyTarget=mark.w;session.helped=true;
+      }else e.helpError="Für diese Stelle gibt es noch keinen sicher geprüften Korrekturvorschlag. Du darfst sie offenlassen oder gemeinsam nachschlagen.";
+      renderResult();return;
+    }
     warnEl.hidden=true;
     const history = e.helpHistory || (e.helpHistory = { attempts:[], replies:[] });
     if(requestText!==session.checkedText){const previous=TB_TUTOR.contextForMark(session.checkedText,e);if(history.attempts.at(-1)!==previous)history.attempts.push(previous);history.attempts=history.attempts.slice(-3);}
@@ -753,13 +786,14 @@
   }
   function learningHelpHtml(e){
     if(!tutorEnabled()) return "";
-    const r = e.helpReplyTarget===currentMark(e)?.w?e.helpReply:null;
-    return '<div class="tutor-box"><h3>'+(tutorConfig().provider==="openai"?'Lernhilfe mit OpenAI':'Lokale Lernhilfe')+'</h3>' +
-      (r ? '<div class="tutor-reply" aria-live="polite"><p>'+esc(r.explanation)+'</p>'+(r.question?'<p>'+esc(r.question)+'</p>':'')+(r.suggestion?'<p>Möglicher Vorschlag: <b>'+esc(r.suggestion)+'</b>. Passt das zu deinem Satz?</p>':'')+'</div>' : '') +
-      '<div class="row">'+[["hint","Erkläre mir die Stelle"],["simpler","Das verstehe ich noch nicht"],["solution","Zeig mir einen Vorschlag"]].map(([mode,label]) => '<button type="button" class="btn-ghost" data-help="'+mode+'"'+(e.helpBusy?' disabled':'')+'>'+label+'</button>').join("")+'</div>' +
+    const r = e.helpReplyTarget===currentMark(e)?.w?e.helpReply:null,local=tutorConfig().provider==="ollama";
+    const actions=local?[["solution","Korrekturvorschlag ansehen"]]:[["hint","Erkläre mir die Stelle"],["simpler","Das verstehe ich noch nicht"],["solution","Zeig mir einen Vorschlag"]];
+    return '<div class="tutor-box"><h3>'+(local?'Korrekturvorschlag':'Lernhilfe mit OpenAI')+'</h3>' +
+      (r ? '<div class="tutor-reply" aria-live="polite">'+(r.explanation?'<p>'+esc(r.explanation)+'</p>':'')+(r.question?'<p>'+esc(r.question)+'</p>':'')+(r.suggestion?'<p>Möglicher Vorschlag: <b>'+esc(r.suggestion)+'</b>. Passt das zu deinem Satz?</p>':'')+'</div>' : '') +
+      '<div class="row">'+actions.map(([mode,label]) => '<button type="button" class="btn-ghost" data-help="'+mode+'"'+(e.helpBusy?' disabled':'')+'>'+label+'</button>').join("")+'</div>' +
       (e.helpBusy ? '<p role="status">Die Lernhilfe antwortet …</p><button type="button" class="btn-ghost" id="helpCancel">Warten beenden</button>' : '') +
       (e.helpError ? '<p role="status">'+esc(e.helpError)+'</p>' : '') +
-      '<p class="note">Auch die Lernhilfe kann sich irren. Du entscheidest über deinen Text und darfst die Stelle offenlassen.</p></div>';
+      '<p class="note">'+(local?'Auch ein Korrekturvorschlag kann sich irren.':'Auch die Lernhilfe kann sich irren.')+' Du entscheidest über deinen Text und darfst die Stelle offenlassen.</p></div>';
   }
   allFields().forEach(field => field.addEventListener("input", () => {cancelLearningHelp();if(!resultEl.hidden)renderResult();}));
 
@@ -866,9 +900,10 @@
     cancelLearningHelp();
     warnEl.hidden = true;
     const text = compose(), labels = SEG.labels, spellingText=ta.value.trim();
-    if(!goalMet()){ updateCount(); return; }
+    if(!contentText().trim() || !goalMet()){ updateCount(); return; }
     if(!hun || checking) return;
     checking = true; checkBtn.disabled = true; allFields().forEach(f => { f.readOnly = true; });
+    const pendingSave=$("#finishToday");if(pendingSave)pendingSave.disabled=true;
     const checkOwner=state;
     statusEl.textContent = state.parent.grammar ? "Ich prüfe deinen Text …" : "";
     const cloud=tutorConfig().provider==="openai";
@@ -910,21 +945,31 @@
     TB_TUTOR.carryHistory(session.current, session.checkedText, errs, text);
     session.improved = session.checks > 1 && errs.length < session.current.length;
     session.current = errs; session.checkedText = text; session.labels = labels; session.active = -1; session.more = false;
-    if(errs.length || session.reviewUncertain){ renderResult(); if(innerWidth < 1000) resultEl.scrollIntoView({ behavior:"smooth", block:"start" }); }
-    else finish(text);
+    renderResult(); if(innerWidth < 1000) resultEl.scrollIntoView({ behavior:"smooth", block:"start" });
   }
 
+  function spellingExplanation(e){
+    if(e.cloudReview)return e.tip2;
+    const strategies={
+      umstellung:'Bei vertauschten Buchstaben kommt es auf die richtige Reihenfolge an. Fahre mit dem Finger unter der geprüften Schreibweise entlang. Decke sie dann ab, schreibe das Wort und vergleiche es.',
+      auslassung:'Nicht jeden Buchstaben kann man beim Sprechen gleich gut hören. Vergleiche dein Wort Buchstabe für Buchstabe mit der geprüften Schreibweise. Suche ein verwandtes Wort oder schlage nach, wenn du unsicher bist.',
+      zusatz:'Auch ein zusätzlicher Buchstabe kann die Schreibweise verändern. Vergleiche die Stelle mit der geprüften Schreibweise und merke dir die Buchstabenfolge.'
+    };
+    if(strategies[e.fine])return strategies[e.fine];
+    return TRICK[e.fine]?.[1] || (e.fix?'Nicht für jedes Wort gibt es eine einfache Rechtschreibregel. Vergleiche die Buchstaben mit der vorgeschlagenen Schreibweise. Schreibe das Wort danach noch einmal aus dem Gedächtnis und vergleiche es. Wenn die Bedeutung unklar ist, frage nach.':'Für diese Schreibweise habe ich keine sichere Erklärung. Sie kann trotzdem richtig sein. Frage nach der Bedeutung oder schlage das Wort gemeinsam mit einem Erwachsenen nach.');
+  }
   function renderResult(){
     const errs = session.current, text = session.checkedText;
     const html = errs.map((e,idx)=>{const mark=currentMark(e);return mark?'<button type="button" class="err'+(idx===session.active?' active':'')+'" data-i="'+idx+'" aria-pressed="'+(idx===session.active)+'">'+esc(mark.w)+'</button>':'';}).join(" ");
     const n = errs.length;
-    const msg = compose()!==text?"Dein Text wurde verändert. „Nochmal prüfen“ aktualisiert alle Hinweise.":!n?"Die Prüfung konnte nicht alle Stellen sicher beurteilen. Du darfst deinen Text für heute speichern.":(session.improved ? "Es sind weniger Hinweise geworden. " : "") + (n === 1 ? "Eine Stelle schauen wir uns noch an." : n + " Stellen schauen wir uns noch an.");
+    const msg = compose()!==text?"Dein Text wurde verändert. „Nochmal prüfen“ aktualisiert alle Hinweise.":!n?(reflectionOnly()?"Dein Tagesrückblick ist bereit. Du kannst ihn ansehen und selbst speichern.":session.reviewUncertain?"Die Prüfung konnte nicht alle Stellen sicher beurteilen. Du entscheidest, wann du speicherst.":"Die Prüfung hat keine weiteren Hinweise gefunden. Du kannst weiterschreiben oder deinen Eintrag selbst speichern."):(session.improved ? "Es sind weniger Hinweise geworden. " : "") + (n === 1 ? "Eine Stelle schauen wir uns noch an." : n + " Stellen schauen wir uns noch an.");
     let hint = "";
     if(session.active >= 0){
       const e = errs[session.active];
       const mark=currentMark(e),changes=e.reviewVerified && mark?.w===e.w ? TB_SPELL_REVIEW.editSummary?.(e.w,e.fix) : null;
       const multiple=changes && changes.count>=2 && changes.count<=3 ? '<p class="word-change-count">In diesem Wort sind <b>'+changes.count+' Stellen</b> zu ändern. Wir schauen sie uns nacheinander an.</p>' : '';
       hint = '<div class="hint"><p class="note">'+(e.cloudReview?'Prüfhinweis · OpenAI':e.reviewed?'Im Zusammenhang geprüft · Wörterbuch / lokale KI':'Prüfhinweis · Wörterbuch / Regeln'+(state.parent.grammar?' / LanguageTool':''))+'</p><p class="cat">'+esc(e.cat)+'</p>'+(multiple?multiple:'')+'<p>'+esc(e.tip)+'</p>' +
+        '<details class="spelling-explanation"><summary>Erklärung und Merkhilfe</summary><p>'+esc(spellingExplanation(e))+'</p></details>'+
         (session.more ? '<p>'+esc(e.tip2)+'</p>' + (e.trick && e.trick !== e.tip ? '<p class="trick">💡 '+esc(e.trick)+'</p>' : '') : '') +
         (e.often ? '<p class="often">🎯 Das übst du gerade. Du darfst dir dabei helfen lassen.</p>' : '') +
         '<details class="correction-options"><summary>Weitere Tipps und Entscheidungen</summary><div class="row">' + (session.more ? '' : '<button type="button" class="btn-ghost" id="moreBtn">Noch ein Tipp</button>') +
@@ -933,7 +978,7 @@
       if(!mark)hint='<p class="note">Diese Stelle hat sich verändert. Wähle „Nochmal prüfen“, um einen passenden Hinweis zu bekommen.</p>';
     }
     resultEl.innerHTML = '<p class="result-msg">'+msg+'</p>' +
-      '<div class="finish-open" data-help-topic="spelling" data-help-text="Du darfst den Tag mit offenen Hinweisen abschließen. Dein aktueller Text wird gespeichert; falls eingeschaltet, wählst du vorher deine Gefühle. Deine Belohnung bleibt erhalten."><p class="note">Ich kann nicht jede Stelle sicher prüfen. Meine Hinweise können sich irren. Du darfst deinen Text auch mit offenen Stellen speichern.</p><button type="button" class="btn" id="finishToday" title="Speichert deinen aktuellen Text. Offene Hinweise dürfen bleiben." data-tooltip="Speichert deinen aktuellen Text. Offene Hinweise dürfen bleiben.">Für heute abschließen</button></div>'+
+      '<div class="finish-open" data-help-topic="spelling" data-help-text="Du darfst den Tag mit offenen Hinweisen abschließen. Dein aktueller Text wird gespeichert; falls eingeschaltet, wählst du vorher deine Gefühle. Deine Belohnung bleibt erhalten."><p class="note">Ich kann nicht jede Stelle sicher prüfen. Meine Hinweise können sich irren. Du darfst deinen Text auch mit offenen Stellen speichern.</p><button type="button" class="btn" id="finishToday" title="Speichert deinen aktuellen Text. Offene Hinweise dürfen bleiben." data-tooltip="Speichert deinen aktuellen Text. Offene Hinweise dürfen bleiben.">Eintrag speichern</button></div>'+
       (session.reviewState==="failed"?'<p class="note">'+(tutorConfig().provider==="openai"?'OpenAI konnte die Prüfung nicht abschließen. '+esc(session.reviewError || '')+' ':'Die lokale KI-Prüfung konnte nicht abgeschlossen werden. '+esc(session.reviewError || '')+' ')+'Die Hinweise stammen deshalb aus Wörterbuch und Regeln.</p>':'')+
       (tutorConfig().provider==="openai" && session.reviewState==="skipped"?'<p class="note">Die OpenAI-Prüfung wurde beendet. Du darfst deinen Eintrag mit offenen Stellen abschließen.</p>':'')+
       (tutorConfig().provider==="openai" && session.reviewState==="ready" && session.reviewUncertain?'<p class="note">Einige Stellen konnte OpenAI nicht sicher beurteilen. Weitere Fehler können unentdeckt bleiben.</p>':'')+
@@ -970,7 +1015,7 @@
       else { session.overrides = (session.overrides || 0) + 1; for(const c of errCats(e)) if(session.cats[c]) session.cats[c] = Math.max(0, session.cats[c] - 1); }
       delete session.found[lower(e.w)];
       session.current = session.current.filter(x => x !== e); session.active = -1; session.more = false;
-      if(session.current.length) renderResult(); else finish(session.checkedText);
+      renderResult();
     };
     const okBtn = $("#okBtn"); if(okBtn) okBtn.onclick = () => dismiss(false);
     const defer = $("#deferBtn"); if(defer) defer.onclick = () => dismiss(true);
@@ -995,6 +1040,7 @@
       return;
     }
     const date = todayKey();
+    clearTimeout(draftTimer);
     const changedSinceCheck=text!==session.checkedText;
     const openHints=session.deferred+(leaveOpen?session.current.length:0);
     const finalWords = new Set(tokens(text).map(t => lower(t.w)));
@@ -1006,8 +1052,7 @@
     let picUrl = null;
     if(hasPic){ picUrl = pad.toDataURL("image/jpeg", 0.85); idb.set(id, picUrl); idb.del("draft:" + state.id); blankPad(); padDirty = false; undoStack = []; }
     const earned = coinsFor(v);
-    const already = R().cfg.firstOnly && state.entries.some(e => e.date === date);   // only the first entry of the day earns coins
-    const coins = already ? 0 : earned.coins;
+    const coins = earned.coins; // Only the new section is rewarded; saved text is never re-counted.
     const mood=moodEnabled()?{self:TB_MOOD.validateSelf(moodPicker.get()),ai:{status:moodConfig().ai && tutorConfig().provider==="ollama" && v.free ? "pending":"off",moods:[],unclear:true}}:undefined;
     const entry={ id, date, text: v.free, answers, answerLabels:TB_REFLECTION.labels, firstErrors: Math.max(0, session.firstCount - (session.overrides || 0)), words: wc, sentences: scount, pic: hasPic, errCats: session.cats, coins, coinDetail: earned, overrides: session.overrides || 0, helped:session.helped, deferred:openHints,checkCompletion:{openHints,changedSinceCheck,reviewState:session.reviewState || "off"},...(mood?{mood}:{}) };
     state.entries.unshift(entry);
@@ -1038,7 +1083,7 @@
     const wp = weekPending(), cfgD = R().cfg.days;
     const coinMsg = '<div class="coinwin">' + (coins
       ? '🪙 <b>+' + fmtC(coins) + ' Coins</b> für diesen Eintrag (' + earned.sentences + ' ganze Sätze' + (earned.commas ? ', ' + earned.commas + '× Komma-Bonus' : '') + '). Diese Woche gesammelt: ' + fmtC(wp.sum) + '. ' + (wp.days.size >= cfgD ? 'Am Sonntag kommen sie auf dein Konto!' : 'Schreib an ' + cfgD + ' Tagen, dann gibt es sie am Sonntag.')
-      : already ? '🪙 Für heute hast du deine Coins schon gesammelt. Toll, dass du noch mehr schreibst!' : 'Dein Eintrag zählt. Satz-Coins sammelst du mit ganzen Sätzen.') + (R().cfg.gameBase ? '<br>🎮 Das Spiel ist für heute freigeschaltet!' : '') + '</div>';
+      : 'Dein Abschnitt zählt zum Tagesziel. Satz-Coins sammelst du mit ganzen Sätzen.') + (R().cfg.gameBase ? '<br>🎮 Das Spiel ist für heute freigeschaltet!' : '') + '</div>';
     doneEl.innerHTML = '<div class="done-box"><strong>'+headline+'</strong><p>'+sub+'</p><div class="sheet checked"><div class="lined">'+entryHtml(state.entries[0])+'</div></div>'+(picUrl ? '<img class="pic" alt="Dein Bild" src="'+picUrl+'">' : '')+coinMsg+'<div class="below"><button type="button" class="btn" id="readFinished">Deinen Text nochmal lesen</button><button type="button" class="btn" id="playFinished">Spielen</button><a href="#schreiben" id="againBtn">Noch etwas ins Tagebuch schreiben</a></div></div>';
     doneEl.hidden = false;
     $("#againBtn").onclick = event=>{event.preventDefault();reset();};
@@ -1048,9 +1093,11 @@
     $("#readFinished").focus({preventScroll:true});
   }
   function reset(){
+    clearTimeout(draftTimer);
     cancelMoodFinish();
     cancelLearningHelp();
     session = newSession(); allFields().forEach(f => { f.value = ""; }); doneEl.hidden = true; doneEl.innerHTML = "";
+    resultEl.hidden=true;resultEl.replaceChildren();spellingReviewCache=null;
     $("#writeArea").hidden = false;writingSidebar.hidden=false;reflectionDetails.open=true;renderMoodPicker(); checkBtn.textContent = "Prüfen"; updateCount(); ta.focus();
     $("#drawPanel").hidden = true; $("#drawBtn").setAttribute("aria-expanded", "false"); updateDrawBtn();
   }
@@ -1281,7 +1328,7 @@
   function R(){
     if(!state.reward) state.reward = {};
     const r = state.reward;
-    r.cfg = Object.assign({ minWords:5, perSentence:10, perWord:2, comma:5, days:7, firstOnly:true, gameBase:10, gamePerTask:5, gameMax:30, jokers:1, jokerMax:5, dictLevel:"auto", entryWords:35, entrySentences:2 }, r.cfg || {});
+    r.cfg = Object.assign({ minWords:5, perSentence:10, perWord:2, comma:5, days:7, firstOnly:false, gameBase:10, gamePerTask:5, gameMax:30, jokers:1, jokerMax:5, dictLevel:"auto", entryWords:35, entrySentences:2 }, r.cfg || {});
     if(r.cfg.sentenceWords == null) r.cfg.sentenceWords = r.cfg.minWords != null && r.cfg.minWords !== 5 ? r.cfg.minWords + 1 : 5;   // older setting "mehr als N"
     r.items = r.items || [ { id:"i1", icon:"🐷", name:"1 Cent ins Sparschwein", price:10 }, { id:"i2", icon:"🎮", name:"1 Minute mehr Zockzeit (diese Woche)", price:20 } ];
     r.ledger = r.ledger || []; r.orders = r.orders || []; r.settled = r.settled || {};
@@ -1361,7 +1408,7 @@
       renderShop();
     });
     $("#kidOrders").innerHTML = orderList(r.orders.slice().reverse().slice(0, 15), false) || '<li class="empty">Noch keine Wünsche.</li>';
-    $("#coinRules").innerHTML = '<p>Jeder ganze Satz ab ' + r.cfg.sentenceWords + ' Wörtern bringt ' + r.cfg.perSentence + ' Coins, jedes weitere Wort noch ' + r.cfg.perWord + ' Coins dazu. Ein Satz mit richtigem Komma bringt ' + r.cfg.comma + ' Extra-Coins.</p><p>Die Coins sammelst du die Woche über. Schreibst du an ' + r.cfg.days + ' Tagen, kommen sie am Sonntag auf dein Konto.' + (r.cfg.firstOnly ? ' Coins gibt es für den ersten Eintrag des Tages.' : '') + '</p>';
+    $("#coinRules").innerHTML = '<p>Jeder ganze Satz ab ' + r.cfg.sentenceWords + ' Wörtern bringt ' + r.cfg.perSentence + ' Coins, jedes weitere Wort noch ' + r.cfg.perWord + ' Coins dazu. Ein Satz mit richtigem Komma bringt ' + r.cfg.comma + ' Extra-Coins.</p><p>Die Coins sammelst du die Woche über. Schreibst du an ' + r.cfg.days + ' Tagen, kommen sie am Sonntag auf dein Konto.' + ' Auch weitere gespeicherte Abschnitte des Tages bringen nach diesen Regeln Coins.' + '</p>';
     renderCoinBadge();
   }
   const ST = { open:"wartet", done:"bestätigt", rejected:"abgelehnt" };
@@ -1383,7 +1430,7 @@
       save(); $("#itemMsg").textContent = "Gespeichert.";
     };
     const c = r.cfg;
-    $("#cfgSent").value = c.perSentence; $("#cfgWord").value = c.perWord; $("#cfgComma").value = c.comma; $("#cfgDays").value = c.days; $("#cfgFirst").checked = !!c.firstOnly;
+    $("#cfgSent").value = c.perSentence; $("#cfgWord").value = c.perWord; $("#cfgComma").value = c.comma; $("#cfgDays").value = c.days;
     $("#ledgerList").innerHTML = r.ledger.slice().reverse().slice(0, 40).map(l => '<li><span class="st ' + l.type + '">' + ({ credit:"Gutschrift", spend:"Einkauf", forfeit:"verfallen", adjust:"Korrektur" }[l.type] || l.type) + '</span><b>' + (l.amount > 0 ? "+" : "") + fmtC(l.amount) + '</b><span>' + esc(l.note || "") + '</span><span class="when">' + new Date(l.at).toLocaleDateString("de-DE") + '</span></li>').join("") || '<li class="empty">Noch keine Buchungen.</li>';
   }
   function decide(id, ok){
@@ -1395,7 +1442,7 @@
   $("#addItem").onclick = () => { R().items.push({ id:"i" + Date.now(), icon:"🎁", name:"Neuer Artikel", price:50 }); save(); renderRewardParent(); };
   $("#saveCfg").onclick = () => {
     const c = R().cfg, num = (id, min, max) => Math.min(max, Math.max(min, Math.floor(Number($(id).value) || 0)));
-    c.perSentence = num("#cfgSent", 0, 1000); c.perWord = num("#cfgWord", 0, 100); c.comma = num("#cfgComma", 0, 100); c.days = num("#cfgDays", 1, 7); c.firstOnly = $("#cfgFirst").checked;
+    c.perSentence = num("#cfgSent", 0, 1000); c.perWord = num("#cfgWord", 0, 100); c.comma = num("#cfgComma", 0, 100); c.days = num("#cfgDays", 1, 7);
     save(); $("#cfgMsg").textContent = "Gespeichert. Gilt für neue Einträge.";
   };
   $("#adjBtn").onclick = () => {
@@ -1748,7 +1795,7 @@
           const labels={runtime:"Lade KI-Laufzeit herunter …",extract:"Entpacke die KI-Laufzeit …",start:"Starte die lokale KI …",model:"Lade das gewählte Modell herunter …"};
           $("#tutorStatus").textContent=job.busy ? (labels[job.phase] || "Richte die KI ein …") + (job.total ? " " + Math.round(job.completed/job.total*100) + " %" : "") : job.message;
         }
-        if(!job.busy){if(job.phase === "ready") await refreshTutorModels();break;}
+        if(!job.busy){if(job.installed || job.phase === "ready") await refreshTutorModels();break;}
         await new Promise(resolve=>setTimeout(resolve,1000));
       }while(true);
     }catch(e){$("#tutorStatus").textContent=e.message;tutorSetupBusy=false;$("#tutorProgress").hidden=true;tutorModelInfo();}
@@ -1771,7 +1818,17 @@
     const body=document.createElement("tbody");
     for(const result of results){
       const row=document.createElement("tr");
-      for(const text of [result.model,result.execution==="auto"?"Grafik":"Prozessor",result.ok?"2 passende Antworten · Ø "+(result.averageMs/1000).toLocaleString("de-DE",{maximumFractionDigits:1})+" s":result.message || "Test fehlgeschlagen"]){const cell=document.createElement("td");cell.textContent=text;row.append(cell);}body.append(row);
+      for(const text of [result.model,result.execution==="auto"?"Grafik":"Prozessor",result.ok?"2 passende Antworten · Ø "+(result.averageMs/1000).toLocaleString("de-DE",{maximumFractionDigits:1})+" s":result.message || "Test fehlgeschlagen"]){const cell=document.createElement("td");cell.textContent=text;row.append(cell);}
+      if(result.probes?.length){
+        const details=document.createElement("details"),summary=document.createElement("summary");summary.textContent="Testantworten ansehen";details.append(summary);
+        const assessments={needsChange:"Änderung nötig",looksCorrect:"als richtig bewertet",unclear:"unklar"};
+        for(const probe of result.probes){
+          const p=document.createElement("p");
+          p.textContent=probe.sentence+" Erwartet: „"+probe.expected+"“. KI: "+(assessments[probe.reply.assessment] || probe.reply.assessment)+"; Vorschlag: "+(probe.reply.suggestion?"„"+probe.reply.suggestion+"“":"keiner")+". Erklärung: "+probe.reply.explanation+(probe.reply.question?" Rückfrage: "+probe.reply.question:"");details.append(p);
+        }
+        row.lastElementChild.append(details);
+      }
+      body.append(row);
     }table.append(body);out.append(table);
   }
   async function selectLocalModel({models,executions=["auto","cpu"],applyWinner=true}={}){
@@ -1861,9 +1918,13 @@
     const service = TB_TUTOR.createTutor({ provider:TB_OLLAMA.createProvider({ model:$("#tutorModel").value.trim(),execution:$("#tutorExecution").value }) });
     button.disabled = true; box.hidden = true; out.textContent = "Teste mit einem erfundenen Satz …";
     try{
+      if(TB_LOCAL_AI.supportedOrigin){
+        const setup=await TB_LOCAL_AI.request("status",undefined,AbortSignal.timeout(5000));
+        if(!setup.installed)throw new Error((setup.message || "Die lokale KI ist noch nicht vollständig eingerichtet.") + " Bitte „Lokale KI und Modell herunterladen“ erneut wählen.");
+      }
       const reply = await service.explain({ sentence:"Ich spiele mit meinem Hunt.", target:"Hunt", checkerHint:"Harte und weiche Laute", mode:"solution" });
       box.textContent = reply.explanation + (reply.question ? "\n" + reply.question : "") + (reply.suggestion ? "\nMöglicher Vorschlag: " + reply.suggestion : ""); box.hidden = false;
-      out.textContent = "Die Verbindung funktioniert. Bitte prüft, ob die Erklärung richtig und verständlich ist. Anschließend die gewünschte Lernhilfe speichern.";
+      out.textContent = "Die Verbindung funktioniert. Dies ist eine rohe Testantwort für Eltern. Im Kinderbereich ist nur der geprüfte Korrekturvorschlag verfügbar; freie KI-Erklärungen sind ausgeschaltet. Anschließend die gewünschte Lernhilfe speichern.";
     }catch(e){ out.textContent = e.message; }
     finally{ button.disabled = false; }
   };

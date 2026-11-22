@@ -106,6 +106,16 @@ test('explicit inflection starts are checked but end forms and ordinary quotatio
   assert.throws(()=>Tutor.validateReplyForRequest({...reply,explanation:'Verlängere „Rad“ zu „Räder“. Dann hörst du den Laut.'},{sentence:'Ich sehe hasen.',target:'hasen',mode:'hint'}),{code:'invalid_reply'});
   assert.doesNotThrow(()=>Tutor.validateReplyForRequest({...reply,explanation:'Vergleiche die Endung mit „Eis“. Schau dann auf dein Wort.'},input));
 });
+
+test('references to a name or word are not misread as replacement spellings',()=>{
+  const request={sentence:'Mein Drache heißt Funkelwuschel.',target:'Funkelwuschel',mode:'hint'};
+  const response={assessment:'unclear',explanation:'Du meinst den Namen deines Drachen.',question:'Ist das der Name, den du benutzen möchtest?',suggestion:''};
+  assert.deepEqual(Tutor.validateReplyForRequest(response,request),response);
+  assert.deepEqual(Tutor.validateReplyForRequest({...response,explanation:'Du meinst das Wort für den Namen deines Drachen.'},request),{...response,explanation:'Du meinst das Wort für den Namen deines Drachen.'});
+  for(const explanation of ['Du meinst den Namen „Kaninchen“.','Du meinst das Wort „Kaninchen“.','Du meinst dein Rad.']){
+    assert.throws(()=>Tutor.validateReplyForRequest({...response,explanation},request),{code:'invalid_reply'});
+  }
+});
 test('standalone solution is only shown on request', async () => {
   const service = Tutor.createTutor({ provider:local({ explain:async () => ({ ...reply, suggestion:'Hund' }) }) });
   assert.equal((await service.explain(input)).suggestion, '');

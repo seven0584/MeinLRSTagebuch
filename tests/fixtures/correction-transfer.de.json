@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "locale": "de-DE",
+  "description": "Neue Transferbeispiele nach Festlegung des allgemeinen Antwortvertrags. Keine dieser Schreibweisen darf als Sonderfall in den Anwendungscode oder Modellprompt übernommen werden. Anwendung und Prompt bleiben bei diesem Lauf unverändert.",
+  "cases": [
+    {"id":"transfer-ie-fliegen","category":"ie","kind":"error","text":"Die Vögel fligen über das Feld.","issues":[{"target":"fligen","replacements":["fliegen"]}],"rubric":["Das fehlende e beim langen i konkret zeigen; keine ausnahmslose ie-Regel."]},
+    {"id":"transfer-doppel-tasse","category":"doppelkonsonant","kind":"error","text":"Der Tee ist in der Tase.","issues":[{"target":"Tase","replacements":["Tasse"]}],"rubric":["Das zweite s erklären; keine bloße Namensannahme trotz eindeutigem Sachkontext."]},
+    {"id":"transfer-fv-vulkan","category":"f-v","kind":"error","text":"Der Fulkan spuckt Lava.","issues":[{"target":"Fulkan","replacements":["Vulkan"]}],"rubric":["Die Merkstelle V zeigen; nicht alle f-Laute pauschal als v schreiben."]},
+    {"id":"transfer-h-nehmen","category":"dehnungs-h","kind":"error","text":"Wir nemen den Bus.","issues":[{"target":"nemen","replacements":["nehmen"]}],"rubric":["Das stumme h als Schreibmerkstelle behandeln, nicht als deutlich hörbaren Laut."]},
+    {"id":"transfer-umlaut-zaehne","category":"umlaut","kind":"error","text":"Meine Zene sind sauber.","issues":[{"target":"Zene","replacements":["Zähne"]}],"rubric":["Ä und h beachten; Zahn ist eine passende verwandte Form."]},
+    {"id":"transfer-ss-schluessel","category":"s-ss-ß","kind":"error","text":"Der Schlüsel liegt auf dem Tisch.","issues":[{"target":"Schlüsel","replacements":["Schlüssel"]}],"rubric":["Das zweite s und den kurzen Vokal passend erklären."]},
+    {"id":"transfer-gross-kreide","category":"gross-klein","kind":"error","text":"Die kreide liegt neben der Tafel.","issues":[{"target":"kreide","replacements":["Kreide"]}],"rubric":["Kreide als Nomen in diesem Satz groß schreiben."]},
+    {"id":"transfer-klein-laufen","category":"gross-klein","kind":"error","text":"Die Kinder Laufen zum Haus.","issues":[{"target":"Laufen","replacements":["laufen"]}],"rubric":["Das Verb im Satz klein schreiben; nicht jede Form Laufen pauschal klein verlangen."]},
+    {"id":"transfer-auslaut-korb","category":"auslaut","kind":"error","text":"Der Korp ist mit Äpfeln gefüllt.","issues":[{"target":"Korp","replacements":["Korb"]}],"rubric":["Körbe als passende Verlängerung verwenden; den Korb nicht durch einen anderen Gegenstand ersetzen."]},
+    {"id":"transfer-fehlt-geschenk","category":"buchstabe-fehlt","kind":"error","text":"Ich packe das Geschek aus.","issues":[{"target":"Geschek","replacements":["Geschenk"]}],"rubric":["Das fehlende n benennen und richtig verorten."]},
+    {"id":"transfer-reihenfolge-tuer","category":"reihenfolge","kind":"error","text":"Ich öffne die Trü.","issues":[{"target":"Trü","replacements":["Tür"]}],"rubric":["Die vertauschten Buchstaben zeigen; keine neue Lautregel erfinden."]},
+    {"id":"transfer-zusatz-hut","category":"buchstabe-zuviel","kind":"error","text":"Der Huut sitzt auf meinem Kopf.","issues":[{"target":"Huut","replacements":["Hut"]}],"rubric":["Das zusätzliche u entfernen und nicht einen anderen Kopfschmuck vorschlagen."]},
+    {"id":"transfer-kontrolle-vulkan","category":"kontrolle","kind":"correct","text":"Der Vulkan ist ein Berg.","issues":[],"help":[{"target":"Vulkan","expect":{"assessments":["looksCorrect"],"suggestions":["","Vulkan"]}}],"rubric":["Das richtig geschriebene Wort nicht ändern."]},
+    {"id":"transfer-kontrolle-maschine","category":"kontrolle","kind":"correct","text":"Die Maschine läuft.","issues":[],"help":[{"target":"Maschine","checkerHint":"Ein langes i braucht immer ein e.","expect":{"assessments":["looksCorrect"],"suggestions":["","Maschine"]}}],"rubric":["Dem falschen allgemeinen Hinweis widersprechen; Maschine ohne zusätzliches e lassen."]},
+    {"id":"transfer-name-roboter","category":"namen","kind":"ambiguous","text":"Mein Roboter heißt Silberfunke.","issues":[],"allowedMarks":[{"target":"Silberfunke"}],"help":[{"target":"Silberfunke","expect":{"assessments":["looksCorrect","unclear"],"suggestions":["","Silberfunke"]}}],"rubric":["Den ausdrücklich genannten Fantasienamen bewahren oder neutral nachfragen."]},
+    {"id":"transfer-kontrolle-laufen","category":"kontrolle","kind":"correct","text":"Wir freuen uns auf das Laufen.","issues":[],"help":[{"target":"Laufen","expect":{"assessments":["looksCorrect"],"suggestions":["","Laufen"]}}],"rubric":["Das substantivierte Laufen erhalten und vom Verb im anderen Testsatz unterscheiden."]}
+  ]
+}

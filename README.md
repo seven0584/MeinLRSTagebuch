@@ -20,6 +20,10 @@ Zum Ausprobieren des Quellstands stattdessen [Dev/Tagebuch.html](Dev/Tagebuch.ht
 
 Für die Windows-Entwicklung mit installiertem Node.js: `npm run dev` starten und `http://127.0.0.1:8765` öffnen. **Es ist keine Ordnerauswahl nötig:** Der lokale Dev-Server legt die Daten automatisch unter `data/` im Projektordner ab. Der genaue Pfad steht im Elternbereich unter Speicherort. Er bleibt auf diesem PC; `data/` ist von Git ausgeschlossen. Unter **Eltern → Einstellungen → Zusätzliche Lernhilfe** ein Modell auswählen und **Lokale KI und Modell herunterladen** wählen. Die App verwaltet eine eigene Ollama-Laufzeit ohne separaten Installer. Anschließend das Beispiel testen, die Lernhilfe einschalten und speichern. Die bisherige Datei-/ZIP-Version braucht weiterhin weder Node.js noch einen Build und verwendet ihren bisherigen Ordnerdialog. Die neue KI-Einrichtung ist noch nicht im ZIP enthalten.
 
+## Tagesabschnitte in der Vorbereitung auf Version 2.0
+
+Das Kind beendet eine Prüfung selbst mit **Eintrag speichern**. Eine fehlerfreie Prüfung speichert nicht mehr automatisch. Über **Noch etwas ins Tagebuch schreiben** ergänzt es einen weiteren Abschnitt: Bisherige Texte des Tages bleiben darüber unveränderbar lesbar, neue Texte werden geprüft und zählen mit zum Tagesziel. Weitere Abschnitte bringen nach den bisherigen Satz- und Wortregeln zusätzliche Coins; alte Texte werden nicht erneut vergütet. **Erklärung und Merkhilfe** bietet an Markierungen zusätzliche Regeln oder Übungsstrategien.
+
 ## Funktionen
 
 Im Windows-Dev lässt sich unter **Eltern → Einstellungen → Prüfung & Lernhilfe**
@@ -32,7 +36,7 @@ offenen Stellen abschließen. Die Einrichtung steht in der [Bedienungsanleitung]
 - Freies Schreiben, Rechtschreibhinweise und ein persönlicher Wortschatz.
 - Im aktuellen Dev-Stand: direkt im Schreibblock korrigieren, Hinweise rechts daneben und **Prüfen** über dem Text. Bei eingeschalteter lokaler Lernhilfe prüft die KI dabei zusätzlich einen begrenzten Freitextausschnitt im Zusammenhang; weitere Erklärungen lassen sich einzeln anfordern. In den Eltern-Einstellungen vergleicht **Modell automatisch auswählen** heruntergeladene Modelle auf Prozessor und Grafikbeschleunigung.
 - Freiwilliger Tagesrückblick im Dev-Stand: Ein Wort oder Emoji genügt, Antworten werden ohne Sprachprüfung gespeichert. Auch ein reiner Rückblick ist ohne Mindestumfang des Tagesauftrags möglich.
-- Geführte Eltern-Einstellungen in sechs Schritten im Dev-Stand. Für die lokale KI stehen unter anderem Qwen 3 4B Instruct (`qwen3:4b-instruct-2507-q4_K_M`), Qwen 3 8B und Gemma 3 4B zur Auswahl; die Erklärungsqualität bitte selbst mit dem Beispiel testen.
+- Geführte Eltern-Einstellungen in sechs Schritten im Dev-Stand. Für die lokale KI stehen unter anderem Qwen 3 4B Instruct (`qwen3:4b-instruct-2507-q4_K_M`), Qwen 3 8B, Gemma 3 4B und OpenAI gpt-oss 20B zur Auswahl; die Erklärungsqualität bitte selbst mit dem Beispiel testen.
 - Tagebucheinträge mit selbst gemalten Bildern und einer Ansicht zum Nachlesen.
 - Rechtschreibübungen, Diktate mit Browser-Sprachausgabe und Auswertung von Fehlermustern.
 - Mehrere Kinder mit getrennten Einträgen, Übungen, Coins und PINs.
@@ -60,6 +64,8 @@ PINs dienen als Sichtschutz innerhalb der App. Die Ordnerdateien sind verschlüs
 | `docs/` | Bedienung, Speicherung und Entwicklung |
 
 ## Dokumentation
+
+- [GUI-, Backend- und Fachtests für Version 2.0](docs/testplan-version-2.md): Befehle, Testumfang und Grenzen. Ausgeführte Tests und tatsächliche Modellantworten werden im [Prüfbericht](docs/pruefbericht-version-2-tests.md) dokumentiert. Der Fachlauf startet ausschließlich mit ausdrücklichem `--execute`.
 
 - [Bedienung und Problemlösung](docs/BEDIENUNG.md)
 - [Daten, Speicherung und Sicherungen](docs/DATEN-UND-SPEICHERUNG.md)

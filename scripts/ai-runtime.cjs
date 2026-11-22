@@ -1,6 +1,7 @@
 const {mkdir,open,readFile,writeFile,stat,unlink} = require('node:fs/promises');
 const {resolve,join} = require('node:path');
 const {randomBytes,timingSafeEqual,createHash} = require('node:crypto');
+const {createReadStream} = require('node:fs');
 const {spawn} = require('node:child_process');
 const {createServer} = require('node:net');
 const models = require('../Dev/app/model-catalog.js');
@@ -21,19 +22,29 @@ function command(exe,args,options){
 async function downloadRuntime(asset,directory,progress,{fetchImpl=fetch,extract=command,signal}={}){
   await mkdir(directory,{recursive:true});
   const archive = join(directory,'runtime.zip');
-  const timeout=AbortSignal.timeout(30*60*1000);
-  const response = await fetchImpl('https://github.com/ollama/ollama/releases/download/' + RELEASE.version + '/' + asset.name,{signal:signal?AbortSignal.any([signal,timeout]):timeout});
-  if(!response.ok || !response.body) throw new Error('Die KI-Laufzeit konnte nicht heruntergeladen werden. Bitte Internetverbindung prüfen.');
-  const file = await open(archive,'w'), hash = createHash('sha256');let bytes = 0;
+  let verified=false;
   try {
-    for await(const chunk of response.body){
-      bytes += chunk.length;if(bytes > asset.bytes) throw new Error('Der Laufzeit-Download hat eine unerwartete Größe.');
-      hash.update(chunk);await file.writeFile(chunk);progress({phase:'runtime',completed:bytes,total:asset.bytes});
+    if((await stat(archive)).size === asset.bytes){
+      const savedHash=createHash('sha256');
+      for await(const chunk of createReadStream(archive)) savedHash.update(chunk);
+      verified=savedHash.digest('hex') === asset.sha256;
     }
-  } finally {await file.close();}
-  if(bytes !== asset.bytes || hash.digest('hex') !== asset.sha256) throw new Error('Die Sicherheitsprüfung des Downloads ist fehlgeschlagen. Es wird nichts gestartet.');
+  }catch{}
+  if(!verified){
+    const timeout=AbortSignal.timeout(30*60*1000);
+    const response = await fetchImpl('https://github.com/ollama/ollama/releases/download/' + RELEASE.version + '/' + asset.name,{signal:signal?AbortSignal.any([signal,timeout]):timeout});
+    if(!response.ok || !response.body) throw new Error('Die KI-Laufzeit konnte nicht heruntergeladen werden. Bitte Internetverbindung prüfen.');
+    const file = await open(archive,'w'), hash = createHash('sha256');let bytes = 0;
+    try {
+      for await(const chunk of response.body){
+        bytes += chunk.length;if(bytes > asset.bytes) throw new Error('Der Laufzeit-Download hat eine unerwartete Größe.');
+        hash.update(chunk);await file.writeFile(chunk);progress({phase:'runtime',completed:bytes,total:asset.bytes});
+      }
+    } finally {await file.close();}
+    if(bytes !== asset.bytes || hash.digest('hex') !== asset.sha256) throw new Error('Die Sicherheitsprüfung des Downloads ist fehlgeschlagen. Es wird nichts gestartet.');
+  }
   progress({phase:'extract',completed:0,total:0});
-  await extract('powershell.exe',['-NoProfile','-NonInteractive','-Command','Expand-Archive -LiteralPath $env:TAGEBUCH_AI_ARCHIVE -DestinationPath $env:TAGEBUCH_AI_DEST -Force'],{
+  await extract('powershell.exe',['-NoProfile','-NonInteractive','-Command',"$ErrorActionPreference = 'Stop'; Import-Module (Join-Path $PSHOME 'Modules/Microsoft.PowerShell.Archive/Microsoft.PowerShell.Archive.psd1') -ErrorAction Stop; Expand-Archive -LiteralPath $env:TAGEBUCH_AI_ARCHIVE -DestinationPath $env:TAGEBUCH_AI_DEST -Force"],{
     env:{...process.env,TAGEBUCH_AI_ARCHIVE:archive,TAGEBUCH_AI_DEST:join(directory,'bin')},signal
   });
   await stat(join(directory,'bin','ollama.exe'));

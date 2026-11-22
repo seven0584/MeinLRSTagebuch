@@ -70,7 +70,13 @@
     const explanation=reply.explanation;
     const claimed=/\bdu\s+meinst\s+(?:(?:wohl|wahrscheinlich|vermutlich|vielleicht|also|hier|damit|gerade)\s+)*(?:(?:das\s+Wort|den\s+Namen|dein(?:e[rmns]?)?|mein(?:e[rmns]?)?|ein(?:e[rmns]?)?|d(?:er|ie|as|en|em))\s+)?[„“"'«»‚‘’]?([\p{L}\p{M}][\p{L}\p{M}'’-]*)/giu;
     const derived=/\bverlängere\s+(?:das\s+Wort\s+)?[„“"'«»‚‘’]?([\p{L}\p{M}][\p{L}\p{M}'’-]*)[„“"'«»‚‘’]?\s*(?:\s+zu\b|:|→)/giu;
-    for(const pattern of [claimed,derived])for(const match of explanation.matchAll(pattern))anchors.push(match[1]);
+    for(const match of explanation.matchAll(claimed)){
+      const prefix=match[0].slice(0,match[0].length-match[1].length);
+      // "den Namen deines Drachen" describes a referent, not a replacement spelling.
+      const reference=/\b(?:den\s+Namen|das\s+Wort)\s+$/iu.test(prefix) && /^(?:dein(?:e[rmns]?)?|mein(?:e[rmns]?)?|ein(?:e[rmns]?)?|für|von)$/iu.test(match[1]);
+      if(!reference)anchors.push(match[1]);
+    }
+    for(const match of explanation.matchAll(derived))anchors.push(match[1]);
     if(anchors.some(word=>!withinSpellingDistance(request.target,word,limit)))
       throw new TutorError("invalid_reply","Die Erklärung passt nicht sicher zur markierten Stelle. Bitte lass die Stelle offen oder frage erneut.");
     return reply;
@@ -142,7 +148,14 @@ Modus hint: erster passender Tipp. Modus simpler: gehe auf previousAttempts und 
 Modus meaning: kläre die Bedeutung und berücksichtige die Rückfrage question. Modus solution: zeige eine mögliche Schreibweise, wenn die Bedeutung klar ist.
 suggestion bleibt außer im Modus solution leer. Bewahre die gemeinte Bedeutung. Kein Druck, alles fehlerfrei lösen zu müssen.
 Beziehe jeden Wortbezug auf die aktuelle markierte Stelle und den aktuellen Satz. Übernimm keine fremden Beispielwörter oder früheren Lösungen.
-Ist die Bedeutung bereits geklärt, nutze sie direkt für diese Stelle und stelle keine erneute Bestätigungsfrage. Frühere Antworten sind nur Verlauf, keine Vorlage für eine andere Stelle.`;
+Ist die Bedeutung bereits geklärt, nutze sie direkt für diese Stelle und stelle keine erneute Bestätigungsfrage. Frühere Antworten sind nur Verlauf, keine Vorlage für eine andere Stelle.
+Antwortvertrag für assessment:
+needsChange bedeutet: Die markierte Stelle braucht in diesem Satz eine Änderung. Auch falsche Groß-/Kleinschreibung ist eine Änderung.
+looksCorrect bedeutet: Die markierte Stelle ist in diesem Satz bereits richtig. Stelle dann keine vorsorgliche Bedeutungsfrage.
+unclear bedeutet: Die gemeinte Bedeutung lässt sich aus Satz und Nutzerhinweis tatsächlich nicht entscheiden. Stelle nur dann eine konkrete Bedeutungsfrage. Eine allgemeine Nachfrage, ob das Kind noch Hilfe braucht, ist keine Bedeutungsklärung.
+Im Modus solution muss bei needsChange in suggestion die korrigierte markierte Stelle stehen. Ist ein einzelnes Wort markiert, gib dort nur dieses korrigierte Wort zurück, nicht den ganzen Satz. Bei looksCorrect und unclear bleibt suggestion leer.
+Wähle unclear nicht allein deshalb, weil eine Prüfung sich grundsätzlich irren kann. Verwechsle ein unbekanntes Wort nicht automatisch mit einem Namen. Leite aber die gemeinte Bedeutung auch nicht allein aus einem ähnlichen Wörterbuchwort ab: Wenn ein Name und ein gewöhnliches Wort im Satz beide plausibel sind, frage nach statt dich ohne Beleg festzulegen.
+Begründe nur die Schreibweise. Gib keine Ratschläge zum Tageserlebnis und erfinde keine Laut- oder Buchstabenregel. Wenn keine sichere Regel bekannt ist, beschreibe nur die überprüfbare Änderung.`;
   function contextForMark(text, mark){
     if(!mark || !Number.isInteger(mark.i) || mark.i < 0 || !mark.w || mark.w.length > (mark.cloudReview?240:80) || text.slice(mark.i, mark.i + mark.w.length) !== mark.w)
       throw new TutorError("invalid_input", "Diese Stelle ist für eine kurze Erklärung zu lang oder hat sich verändert. Bitte prüfe den Text erneut.");

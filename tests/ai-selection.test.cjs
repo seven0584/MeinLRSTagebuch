@@ -48,6 +48,24 @@ test('provider failures are isolated and no valid result gives no winner',async(
   assert.deepEqual(result.results.map(result=>result.error),['model_missing','model_missing','online_not_allowed','online_not_allowed']);
 });
 
+test('quality failures preserve both actual replies and never qualify an incorrect variant',async()=>{
+  const calls=[];
+  const report=await Selection.compare({models:['local'],executions:['cpu'],providerFactory:()=>({location:'local',measure:async input=>{
+    calls.push(input.target);
+    return sample(input,{reply:input.target==='oma'?{assessment:'looksCorrect',explanation:'Das ist schon richtig.',question:'',suggestion:''}:replyFor(input)});
+  }})});
+  assert.deepEqual(calls,['oma','geefühl']);
+  assert.equal(report.winner,null);
+  const result=report.results[0];
+  assert.equal(result.error,'quality_failed');assert.equal(result.ok,false);
+  assert.equal(result.probes.length,2);
+  assert.deepEqual(result.probes.map(p=>p.passed),[false,true]);
+  assert.equal(result.probes[0].expected,'Oma');
+  assert.equal(result.probes[0].reply.explanation,'Das ist schon richtig.');
+  assert.equal(result.probes[0].reply.suggestion,'');
+  assert.equal(result.averageMs,undefined);
+});
+
 test('external cancellation interrupts a pending provider and starts no further probes',async()=>{
   let calls=0,transportSignal;
   const controller=new AbortController();

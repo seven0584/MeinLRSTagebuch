@@ -38,7 +38,7 @@ async function setupPage(enabled = false, grammar = false, moods = false, initia
   const hash = pin => createHash('sha256').update('test-salt:' + pin).digest('hex');
   const child = {id:'test',name:'Testkind',entries:[],words:{},names:[],readLog:{},draft:'Ich spiele mit meinem Hunt.',draftQ:{},kidPinHash:hash('1234'),reward:{cfg:{entryWords:1,entrySentences:1,sentenceWords:1},orders:initialOrders}};
   const state = {v:2,salt:'test-salt',children:['test'],active:'test',parent:{pinHash:hash('4321'),grammar,topic:'',storage:{mode:'browser'},moodSharing:{enabled:moods,ai:moods},learningHelp:{provider:enabled?'ollama':'off',model:'test:local'}},data:{test:child}};
-  await page.addInitScript(state => localStorage.setItem('schreibheft-v1',JSON.stringify(state)),state);
+  await page.addInitScript(state => {if(!localStorage.getItem('schreibheft-v1'))localStorage.setItem('schreibheft-v1',JSON.stringify(state));},state);
   await page.route('http://127.0.0.1:11434/**', async route => {
     const request = route.request(), path = new URL(request.url()).pathname;
     let body;
@@ -79,11 +79,90 @@ async function openParents(page, step) {
 async function mark(page, word) {
   await page.locator('#checkBtn').click(); await page.locator('#result .err').filter({hasText:word}).first().click();
 }
+test('a successful check waits for the child to save and permits more writing before saving',async()=>{
+  const {page,errors}=await setupPage(false,false,true);await openChild(page);
+  await page.locator('#ta').fill('Ich spiele mit meinem Hund.');await page.locator('#checkBtn').click();
+  await page.locator('#finishToday').waitFor();
+  assert.equal(await page.locator('#moodDialog').evaluate(d=>d.open),false);
+  assert.equal(await page.locator('#ta').evaluate(t=>t.readOnly),false);
+  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('schreibheft-v1')).data.test.entries.length),0);
+  await page.locator('#ta').fill('Ich spiele mit meinem Hund. Ich lese ein Buch.');
+  await page.locator('#checkBtn').click();await page.locator('#finishToday').click();
+  await page.locator('#moodDialog').waitFor();await page.locator('#moodPicker [data-mood=happy]').click();await page.locator('#moodSave').click();
+  await page.locator('#doneArea').waitFor();
+  const entries=await page.evaluate(()=>JSON.parse(localStorage.getItem('schreibheft-v1')).data.test.entries);
+  assert.equal(entries.length,1);assert.match(entries[0].text,/Ich lese ein Buch/);
+  assert.deepEqual(errors,[]);await page.close();
+});
+
+test('same-day supplements retain immutable history, use the daily goal, are checked separately and earn only new coins after reload',async()=>{
+  const {page,errors,reviewRequests}=await setupPage(true);
+  await page.evaluate(()=>{
+    const family=JSON.parse(localStorage.getItem('schreibheft-v1'));family.data.test.reward.cfg={...family.data.test.reward.cfg,entryWords:8,firstOnly:true};
+    localStorage.setItem('schreibheft-v1',JSON.stringify(family));
+  });
+  await page.reload();await page.waitForFunction(()=>window.__test?.ready());await openChild(page);
+  const original='Heute spiele ich mit meinem lieben kleinen Hund.';
+  await page.locator('#ta').fill(original);await page.locator('#checkBtn').click();await page.locator('#finishToday').click();await page.locator('#doneArea').waitFor();
+  const oldEntry=await page.evaluate(()=>JSON.parse(localStorage.getItem('schreibheft-v1')).data.test.entries[0]);
+  assert.ok(oldEntry.coins>0);
+  await page.locator('#againBtn').click();
+  assert.match(await page.locator('#todayHistory').innerText(),/Heute spiele ich/);
+  assert.equal(await page.locator('#todayHistory textarea, #todayHistory input, #todayHistory [contenteditable=true]').count(),0);
+  assert.equal(await page.locator('#ta').inputValue(),'');
+  await page.locator('#ta').fill('Du schreibstt.');
+  assert.equal(await page.locator('#checkBtn').isDisabled(),false,'daily goal already met, so the shorter supplement can be checked');
+  await page.locator('#checkBtn').click();await page.locator('#result .err').first().waitFor();
+  assert.equal(reviewRequests.at(-1).text,'Du schreibstt.');assert.doesNotMatch(reviewRequests.at(-1).text,/Heute spiele/);
+  await page.locator('#ta').fill('Du schreibst.');await page.locator('#checkBtn').click();await page.locator('#finishToday').click();await page.locator('#doneArea').waitFor();
+  let entries=await page.evaluate(()=>JSON.parse(localStorage.getItem('schreibheft-v1')).data.test.entries);
+  assert.equal(entries.length,2);assert.deepEqual(entries[1],oldEntry);assert.ok(entries[0].coins>0);
+  assert.equal(entries[0].coins,await page.evaluate(()=>window.__coins.coinsFor({free:'Du schreibst.'}).coins));
+  const total=entries.reduce((sum,e)=>sum+e.coins,0);
+  await page.reload();await page.waitForFunction(()=>window.__test?.ready());await openChild(page);
+  assert.match(await page.locator('#todayHistory').innerText(),/Du schreibst/);
+  assert.match(await page.locator('#todayHistory').innerText(),/Heute spiele ich/);
+  entries=await page.evaluate(()=>JSON.parse(localStorage.getItem('schreibheft-v1')).data.test.entries);
+  assert.equal(entries.length,2);assert.equal(entries.reduce((sum,e)=>sum+e.coins,0),total);
+  assert.equal(await page.locator('#checkBtn').isDisabled(),true,'empty supplements cannot be checked or paid');
+  await page.screenshot({path:resolve(__dirname,'../test-results/tagesergaenzung.png'),fullPage:true});
+  assert.deepEqual(errors,[]);await page.close();
+});
+
+test('nonclassic spelling hints also have an explanation without requiring a further AI call',async()=>{
+  const {page,errors,reviewPayloads,requests}=await setupPage(true);await openChild(page);
+  reviewPayloads.push(input=>({decisions:input.candidates.map(c=>({id:c.id,verdict:'error',correction:'Hund'})),additional:[]}));
+  await page.locator('#ta').fill('Ich spiele mit meinem Hnud.');await mark(page,'Hnud');
+  await page.locator('.spelling-explanation summary').click();
+  assert.ok((await page.locator('.spelling-explanation p').innerText()).length>30);
+  assert.match(await page.locator('.spelling-explanation p').innerText(),/Reihenfolge|richtigen Reihenfolge|Finger/);
+  assert.equal(requests.length,0);assert.deepEqual(errors,[]);await page.close();
+});
+
+test('yesterday and another child cannot satisfy the daily goal or appear in the writing history',async()=>{
+  const {page,errors}=await setupPage();
+  await page.evaluate(()=>{
+    const f=JSON.parse(localStorage.getItem('schreibheft-v1')),d=new Date();
+    const key=date=>date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
+    const today=key(d);d.setDate(d.getDate()-1);
+    f.data.test.reward.cfg.entryWords=8;
+    f.data.test.entries=[{id:'old',date:key(d),text:'Gestern hatte ich einen ganz besonders schönen Tag.',answers:{},words:9,sentences:1,coins:20}];
+    f.children.push('other');f.data.other={...f.data.test,id:'other',name:'Anderes Kind',entries:[{id:'foreign',date:today,text:'Dieser Text gehört dem anderen Kind.',answers:{},words:6,sentences:1,coins:10}]};
+    localStorage.setItem('schreibheft-v1',JSON.stringify(f));
+  });
+  await page.reload();await page.waitForFunction(()=>window.__test?.ready());await openChild(page);
+  await page.locator('#ta').fill('Du schreibst.');
+  assert.equal(await page.locator('#todayHistory').isHidden(),true);
+  assert.equal(await page.locator('#checkBtn').isDisabled(),true);
+  assert.match(await page.locator('#sentenceCount').innerText(),/2 von 8/);
+  assert.deepEqual(errors,[]);await page.close();
+});
+
 test('Windows Dev works without a tutor and permits unresolved marks without false success', async () => {
   const {page,errors,requests} = await setupPage(); await openChild(page); await mark(page,'Hunt');
   assert.equal(await page.locator('[data-help]').count(),0);
   await page.locator('.correction-options summary').click();
-  await page.locator('#deferBtn').click(); await page.locator('#doneArea').waitFor();
+  await page.locator('#deferBtn').click(); await page.locator('#finishToday').click(); await page.locator('#doneArea').waitFor();
   assert.match(await page.locator('#doneArea').innerText(),/offen/);
   assert.doesNotMatch(await page.locator('#doneArea').innerText(),/Alles richtig|selbst gefunden/);
   const entry = await page.evaluate(() => JSON.parse(localStorage.getItem('schreibheft-v1')).data.test.entries[0]);
@@ -121,7 +200,7 @@ test('uncertain hints allow finishing the current text with feelings and ordinar
 
 test('no detected hints do not claim that the entry is error free',async()=>{
   const {page,errors}=await setupPage();await openChild(page);
-  await page.locator('#ta').fill('Ich spiele mit meinem Hund.');await page.locator('#checkBtn').click();
+  await page.locator('#ta').fill('Ich spiele mit meinem Hund.');await page.locator('#checkBtn').click();await page.locator('#finishToday').click();
   await page.locator('#doneArea').waitFor();
   assert.doesNotMatch(await page.locator('#doneArea').innerText(),/fehlerfrei|Alles richtig|Fehler selbst/i);
   assert.deepEqual(errors,[]);await page.close();
@@ -161,40 +240,45 @@ test('parents find and test a local model and save the provider independently of
   assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('schreibheft-v1')).parent.learningHelp.execution),'cpu');
   assert.deepEqual(errors,[]); await page.close();
 });
-test('child help uses current context, remembers failed correction and marks supported completion honestly', async () => {
-  const {page,errors,requests} = await setupPage(true); await openChild(page); await mark(page,'Hunt');
-  await page.locator('[data-help=hint]').click(); await page.getByText('Sag einmal Hunde.',{exact:false}).waitFor();
-  assert.equal(requests[0].target,'Hunt');
+test('local child help shows only a checked correction and requires rechecking changed words', async () => {
+  const {page,errors,requests,reviewPayloads} = await setupPage(true);
+  const checked=input=>({decisions:input.candidates.map(c=>({id:c.id,verdict:'error',correction:'Hund'})),additional:[]});
+  reviewPayloads.push(checked);await openChild(page); await mark(page,'Hunt');
+  assert.equal(await page.locator('[data-help=hint], [data-help=simpler]').count(),0);
+  await page.locator('[data-help=solution]').click();await page.locator('#result .tutor-reply').waitFor();
+  assert.match(await page.locator('#result .tutor-reply').innerText(),/Möglicher Vorschlag: Hund/);
+  assert.equal(requests.length,0);
   const reply=await page.locator('#result .tutor-reply').boundingBox();
   const lastHelpButton=await page.locator('[data-help=solution]').boundingBox();
   assert.ok(reply.y+reply.height<=900,'the short learning reply stays within the desktop viewport');
   assert.ok(lastHelpButton.y+lastHelpButton.height<=900,'all learning help actions stay within the desktop viewport');
   await page.locator('#ta').fill('Ich spiele mit meinem Hunn.');
   assert.equal(await page.locator('#helpQuestion').count(),0);
-  await page.locator('[data-help=simpler]').click();
-  await page.getByText('Sag einmal Hunde.',{exact:false}).waitFor();
-  await page.waitForFunction(() => document.querySelector('[data-help=simpler]')?.disabled === false);
-  assert.equal(requests.at(-1).target,'Hunn');
-  assert.equal(requests.at(-1).sentence,'Ich spiele mit meinem Hunn.');
-  assert.ok(requests.at(-1).previousAttempts.includes('Ich spiele mit meinem Hunt.'));
-  assert.equal(requests.at(-1).question,'');
+  await page.locator('[data-help=solution]').click();
+  assert.equal(await page.locator('#result .tutor-reply').count(),0);
+  assert.match(await page.locator('#result .tutor-box [role=status]').innerText(),/Nochmal prüfen/);
+  reviewPayloads.push(checked);await mark(page,'Hunn');await page.locator('[data-help=solution]').click();
+  assert.match(await page.locator('#result .tutor-reply').innerText(),/Möglicher Vorschlag: Hund/);
+  assert.equal(requests.length,0);
   assert.equal(await page.locator('#warn').isVisible(),false);
   await page.screenshot({path:resolve(__dirname,'../test-results/windows-lernhilfe.png'),fullPage:true});
-  await page.locator('#ta').fill('Ich spiele mit meinem Hund.'); await page.locator('#checkBtn').click(); await page.locator('#doneArea').waitFor();
+  await page.locator('#ta').fill('Ich spiele mit meinem Hund.'); await page.locator('#checkBtn').click();await page.locator('#finishToday').click(); await page.locator('#doneArea').waitFor();
   const entry = await page.evaluate(() => JSON.parse(localStorage.getItem('schreibheft-v1')).data.test.entries[0]);
   assert.equal(entry.helped,true); assert.doesNotMatch(await page.locator('#doneArea').innerText(),/selbst gefunden/);
   assert.deepEqual(errors,[]); await page.close();
 });
 
 test('changing the marked word hides its old reply, blocks unrelated help and removes stale marks after broader edits',async()=>{
-  const {page,errors,chatPayloads}=await setupPage(true);await openChild(page);await mark(page,'Hunt');
-  await page.locator('[data-help=hint]').click();await page.locator('#result .tutor-reply').waitFor();
-  assert.match(await page.locator('#result .tutor-reply').innerText(),/Sag einmal Hunde/);
+  const {page,errors,chatPayloads,reviewPayloads}=await setupPage(true);
+  reviewPayloads.push(input=>({decisions:input.candidates.map(c=>({id:c.id,verdict:'error',correction:'Hund'})),additional:[]}));
+  await openChild(page);await mark(page,'Hunt');
+  await page.locator('[data-help=solution]').click();await page.locator('#result .tutor-reply').waitFor();
+  assert.match(await page.locator('#result .tutor-reply').innerText(),/Möglicher Vorschlag: Hund/);
   const before=chatPayloads.length;
   await page.locator('#ta').fill('Ich spiele mit meinem weisste.');
   assert.equal(await page.locator('#result .tutor-reply').count(),0);
   assert.match(await page.locator('#result .result-msg').innerText(),/Text wurde verändert/);
-  await page.locator('[data-help=hint]').click();
+  await page.locator('[data-help=solution]').click();
   assert.match(await page.locator('#result .tutor-box [role=status]').innerText(),/anderes Wort|Nochmal prüfen/);
   assert.equal(chatPayloads.length,before,'an unrelated replacement needs a fresh check before help');
   await page.locator('#ta').fill('Heute war ein schöner Tag. Wir waren im Park.');
@@ -205,6 +289,27 @@ test('changing the marked word hides its old reply, blocks unrelated help and re
   assert.match(await page.locator('#result').innerText(),/Nochmal prüfen/);
   assert.equal(chatPayloads.length,before);
   assert.deepEqual(errors,[]);await page.close();
+});
+
+test('settings rediscover all installed models after a server restart without a previous download job',async()=>{
+  const {page,errors,controls}=await setupPage();
+  controls.models=['qwen3:4b-instruct-2507-q4_K_M','qwen3:8b'];
+  await openParents(page,'tutor');
+  await page.waitForFunction(()=>['qwen3:4b-instruct-2507-q4_K_M','qwen3:8b'].every(name=>document.querySelector('#tutorModel option[value="'+name+'"]').textContent.includes('heruntergeladen')));
+  await page.locator('#tutorModel').selectOption('qwen3:8b');
+  assert.equal(await page.locator('#tutorTest').isDisabled(),false);
+  assert.deepEqual(errors,[]);await page.close();
+});
+
+test('example test explains an incomplete runtime setup without reporting a generic Ollama outage',async()=>{
+  const {page,errors,requests}=await setupPage();
+  await page.route('**/api/ai/status',route=>route.fulfill({contentType:'application/json',body:JSON.stringify({phase:'error',busy:false,installed:false,message:'Entpacken fehlgeschlagen.'})}));
+  await openParents(page,'tutor');
+  await page.locator('#tutorModel').selectOption('qwen3:4b-instruct-2507-q4_K_M');
+  await page.locator('#tutorTest').click();
+  await page.waitForFunction(()=>document.querySelector('#tutorStatus').textContent.includes('erneut wählen'));
+  assert.match(await page.locator('#tutorStatus').innerText(),/Entpacken fehlgeschlagen/);
+  assert.equal(requests.length,0);assert.deepEqual(errors,[]);await page.close();
 });
 
 test('parents select a suggested model, download without an installer and see progress and readiness',async()=>{
@@ -374,25 +479,16 @@ test('correction stays editable in the original writing block with nearby check 
   assert.deepEqual(errors,[]);await page.close();
 });
 
-test('an outdated tutor response is cancelled when the child edits the text',{timeout:30000},async()=>{
-  const {page,errors}=await setupPage(true);await openChild(page);await mark(page,'Hunt');
-  let release,started,finished;
-  const waiting=new Promise(resolve=>{release=resolve;});
-  const requested=new Promise(resolve=>{started=resolve;});
-  const settled=new Promise(resolve=>{finished=resolve;});
-  await page.route('**/api/ai/ollama/api/chat',async route=>{
-    started();await waiting;
-    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({message:{content:JSON.stringify({assessment:'needsChange',explanation:'VERALTETE ANTWORT',question:'',suggestion:''})}})}).catch(()=>{});
-    finished();
-  });
-  await page.locator('[data-help=hint]').click();await requested;
+test('unverified local proposals do not start a free explanation and changed words need another check',{timeout:30000},async()=>{
+  const {page,errors,requests,chatPayloads}=await setupPage(true);await openChild(page);await mark(page,'Hunt');
+  const before=chatPayloads.length;
+  await page.locator('[data-help=solution]').click();
+  assert.match(await page.locator('#result .tutor-box [role=status]').innerText(),/keinen.*geprüften Korrekturvorschlag/s);
   await page.locator('#ta').fill('Ich spiele mit meinem Hunn.');
-  release();
-  await settled;
-  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
-  await page.waitForFunction(()=>!document.querySelector('#helpCancel'));
-  assert.equal(await page.getByText('VERALTETE ANTWORT',{exact:true}).count(),0);
-  assert.equal(await page.locator('[data-help=simpler]').isDisabled(),false);
+  await page.locator('[data-help=solution]').click();
+  assert.match(await page.locator('#result .tutor-box [role=status]').innerText(),/Nochmal prüfen/);
+  assert.equal(requests.length,0);assert.equal(chatPayloads.length,before);
+  assert.equal(await page.locator('#result .tutor-reply, #helpCancel').count(),0);
   assert.deepEqual(errors,[]);await page.close();
 });
 
@@ -402,9 +498,9 @@ for(const answer of ['müde','🙂']) {
     await page.route('https://api.languagetool.org/**',async route=>{grammarRequests++;await route.fulfill({status:200,contentType:'application/json',body:'{"matches":[]}'});});
     await openChild(page);await page.locator('#ta').fill('');
     await page.locator('textarea[data-q=feeling]').fill(answer);
-    assert.equal(await page.locator('#checkBtn').innerText(),'Antworten speichern');
+    assert.equal(await page.locator('#checkBtn').innerText(),'Antworten ansehen');
     assert.equal(await page.locator('#checkBtn').isDisabled(),false);
-    await page.locator('#checkBtn').click();await page.locator('#doneArea').waitFor();
+    await page.locator('#checkBtn').click();await page.locator('#finishToday').click();await page.locator('#doneArea').waitFor();
     const entry=await page.evaluate(()=>JSON.parse(localStorage.getItem('schreibheft-v1')).data.test.entries[0]);
     assert.equal(entry.text,'');assert.equal(entry.answers.feeling,answer);
     assert.equal(entry.answerLabels.feeling,'Wie fühlst du dich gerade?');
@@ -413,14 +509,13 @@ for(const answer of ['müde','🙂']) {
   });
 }
 
-test('private reflection answers stay out of a tutor request for the free text',{timeout:30000},async()=>{
+test('private reflections stay out of local review and requesting a correction sends no extra text',{timeout:30000},async()=>{
   const {page,errors,requests,reviewRequests}=await setupPage(true);await openChild(page);
   await page.locator('textarea[data-q=feeling]').fill('GEHEIMES GEFÜHL');
   await page.getByText('Gab es auch etwas Schwieriges?',{exact:true}).click();
   await page.locator('textarea[data-q=difficult]').fill('PRIVATER MOMENT');
-  await mark(page,'Hunt');await page.locator('[data-help=hint]').click();
-  await page.getByText('Sag einmal Hunde.',{exact:false}).waitFor();
-  assert.equal(requests.at(-1).sentence,'Ich spiele mit meinem Hunt.');
+  await mark(page,'Hunt');await page.locator('[data-help=solution]').click();
+  assert.equal(requests.length,0);
   assert.equal(reviewRequests.length,1);
   assert.deepEqual(Object.keys(reviewRequests[0]).sort(),['candidates','text']);
   assert.equal(reviewRequests[0].text,'Ich spiele mit meinem Hunt.');
@@ -459,6 +554,24 @@ test('parents can cancel a graphics test before another probe starts',async()=>{
   release();assert.deepEqual(errors,[]);await page.close();
 });
 
+test('failed comparisons show both actual replies without changing the saved tutor',async()=>{
+  const {page,errors,controls}=await setupPage();
+  controls.chat=async(payload,input)=>({message:{content:JSON.stringify({assessment:'looksCorrect',explanation:'Die Schreibweise ist richtig.',question:'',suggestion:''})}});
+  await openParents(page,'tutor');
+  const before=await page.evaluate(()=>JSON.parse(localStorage.getItem('schreibheft-v1')).parent.learningHelp);
+  await page.locator('#tutorSelect').click();
+  await page.waitForFunction(()=>document.querySelector('#tutorSelectCancel').hidden);
+  const details=page.locator('#tutorSelectionResults details').first();
+  await details.locator('summary').click();
+  const text=await details.innerText();
+  assert.match(text,/oma/);assert.match(text,/geefühl/);assert.match(text,/Erwartet: „Oma“/);
+  assert.match(text,/als richtig bewertet/);assert.match(text,/Vorschlag: keiner/);
+  assert.match(text,/Die Schreibweise ist richtig/);
+  assert.match(await page.locator('#tutorStatus').innerText(),/Keine Variante/);
+  assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('schreibheft-v1')).parent.learningHelp),before);
+  assert.deepEqual(errors,[]);await page.close();
+});
+
 test('automatic selection compares installed models on both hardware modes and saves only on demand',async()=>{
   const {page,errors,controls,requests}=await setupPage();controls.models=['test:local','fast:local'];
   controls.chat=async payload=>{
@@ -490,9 +603,10 @@ test('context review produces grounded Geefühl help without inventing letter ru
   assert.equal(reviewRequests.length,1);
   assert.equal(chatPayloads.length,1);
   assert.match(await page.locator('#result').innerText(),/ein e zu viel/);
-  await page.locator('[data-help=hint]').click();
+  await page.locator('[data-help=solution]').click();
   await page.locator('#result .tutor-reply').waitFor();
-  assert.match(await page.locator('#result .tutor-reply').innerText(),/ein e zu viel/);
+  assert.match(await page.locator('#result .tutor-reply').innerText(),/Möglicher Vorschlag: Gefühl/);
+  assert.doesNotMatch(await page.locator('#result .tutor-reply').innerText(),/ein e zu viel/);
   assert.equal(chatPayloads.length,1,'a verified simple difference is explained without another model generation');
   assert.doesNotMatch(JSON.stringify(reviewRequests),/PRIVATE ANTWORT/);
   assert.deepEqual(errors,[]);await page.close();
@@ -506,11 +620,11 @@ test('two and three word changes are explained locally while writing stays free 
     await page.locator('#ta').fill('Ich habe ein '+word+'.');await mark(page,word);
     assert.match(await page.locator('.word-change-count').innerText(),new RegExp(count+' Stellen'));
     const before=chatPayloads.length;
-    await page.locator('[data-help=hint]').click();await page.locator('#result .tutor-reply').waitFor();
+    await page.locator('[data-help=solution]').click();await page.locator('#result .tutor-reply').waitFor();
     const help=await page.locator('#result .tutor-reply').innerText();
-    assert.match(help,count===2?/zwei Stellen/:/drei Stellen/);
-    assert.match(help,/Entferne das e/);assert.match(help,/h statt l/);
-    if(count===3)assert.match(help,/großem G/);
+    assert.match(help,/Möglicher Vorschlag: Gefühl/);
+    assert.doesNotMatch(help,/Entferne|h statt l|großem G/);
+    assert.match(await page.locator('#result .hint').innerText(),/Entferne das e/);
     assert.equal(chatPayloads.length,before,'verified word changes do not require another model answer');
   }
   await page.screenshot({path:resolve(__dirname,'../test-results/windows-mehrere-wortfehler.png'),fullPage:true});
@@ -523,8 +637,8 @@ test('a local lowercase noun rule explains hasen without generating an unrelated
   const {page,errors,chatPayloads,requests}=await setupPage(true);await openChild(page);
   await page.locator('#ta').fill('Ich sehe hasen.');await mark(page,'hasen');
   const before=chatPayloads.length;
-  await page.locator('[data-help=hint]').click();await page.locator('#result .tutor-reply').waitFor();
-  assert.match(await page.locator('#result .tutor-reply').innerText(),/großem H/);
+  await page.locator('[data-help=solution]').click();await page.locator('#result .tutor-reply').waitFor();
+  assert.match(await page.locator('#result .tutor-reply').innerText(),/Möglicher Vorschlag: Hasen/);
   assert.equal(chatPayloads.length,before);assert.equal(requests.length,0);
   assert.deepEqual(errors,[]);await page.close();
 });
@@ -534,25 +648,22 @@ test('a reviewed two-word correction explains the missing space locally and offe
   reviewPayloads.push(input=>({decisions:input.candidates.map(candidate=>({id:candidate.id,verdict:candidate.word==='weisste'?'error':'unclear',correction:candidate.word==='weisste'?'weißt du':''})),additional:[]}));
   await openChild(page);await page.locator('#ta').fill('Ich weisste das.');await mark(page,'weisste');
   const before=chatPayloads.length;
-  await page.locator('[data-help=hint]').click();await page.locator('#result .tutor-reply').waitFor();
-  assert.match(await page.locator('#result .tutor-reply').innerText(),/zwei Wörter/);
-  assert.match(await page.locator('#result .tutor-reply').innerText(),/Leerzeichen/);
   await page.locator('[data-help=solution]').click();
+  await page.locator('#result .tutor-reply').waitFor();
   assert.match(await page.locator('#result .tutor-reply').innerText(),/Möglicher Vorschlag: weißt du/);
   assert.equal(chatPayloads.length,before);
   assert.deepEqual(errors,[]);await page.close();
 });
 
-test('a copied explanation about an unrelated word is rejected for weisste',async()=>{
+test('the correction-only child flow never requests or displays a copied free explanation',async()=>{
   const {page,errors,controls,requests}=await setupPage(true);
   controls.chat=async()=>({message:{content:JSON.stringify({assessment:'needsChange',explanation:'Du meinst dein Rad. Verlängere Rad zu Räder: Dann hörst du das d.',question:'',suggestion:''})}});
   await openChild(page);await page.locator('#ta').fill('Ich weisste das.');await mark(page,'weisste');
-  await page.locator('[data-help=hint]').click();
-  await page.waitForFunction(()=>!document.querySelector('[data-help=hint]').disabled);
-  assert.equal(requests.length,1);assert.equal(requests[0].target,'weisste');
+  await page.locator('[data-help=solution]').click();
+  assert.equal(requests.length,0);
   assert.equal(await page.locator('#result .tutor-reply').count(),0);
   assert.doesNotMatch(await page.locator('#result').innerText(),/Du meinst dein Rad|Verlängere Rad zu Räder/);
-  assert.match(await page.locator('#result .tutor-box [role=status]').innerText(),/passt nicht|keine passende Antwort|nicht verständlich/);
+  assert.match(await page.locator('#result .tutor-box [role=status]').innerText(),/keinen.*geprüften Korrekturvorschlag/s);
   assert.deepEqual(errors,[]);await page.close();
 });
 
@@ -613,7 +724,7 @@ test('feelings are required only for saving, allow up to three and keep the sele
   assert.equal(await page.locator('#moodDialog').evaluate(dialog=>dialog.open),false);
   await mark(page,'Hunt');
   assert.equal(await page.locator('#moodDialog').evaluate(dialog=>dialog.open),false,'the feeling question waits until correction is finished');
-  await page.locator('#ta').fill('Ich spiele mit meinem Hund.');await page.locator('#checkBtn').click();
+  await page.locator('#ta').fill('Ich spiele mit meinem Hund.');await page.locator('#checkBtn').click();await page.locator('#finishToday').click();
   await page.locator('#moodDialog').waitFor();
   assert.match(await page.locator('#moodFinishTitle').innerText(),/Klasse gemacht, Testkind/);
   await page.locator('[data-context-help][data-help-for="moodDialog"]').waitFor();
@@ -652,7 +763,7 @@ test('AI mood hints are separate from the required selection and never receive p
   const {page,errors,requests}=await setupPage(true,false,true);await openChild(page);
   await page.locator('#ta').fill('Ich spiele mit meinem Hund.');
   await page.locator('textarea[data-q=feeling]').fill('PRIVATE RÜCKBLICKANTWORT');
-  await page.locator('#checkBtn').click();await page.locator('#moodDialog').waitFor();
+  await page.locator('#checkBtn').click();await page.locator('#finishToday').click();await page.locator('#moodDialog').waitFor();
   await page.locator('#moodPicker [data-mood=angry]').click();await page.locator('#moodSave').click();await page.locator('#doneArea').waitFor();
   await page.waitForFunction(()=>JSON.parse(localStorage.getItem('schreibheft-v1')).data.test.entries[0].mood.ai.status==='ready');
   const entry=await page.evaluate(()=>JSON.parse(localStorage.getItem('schreibheft-v1')).data.test.entries[0]);
@@ -673,7 +784,7 @@ test('AI mood hints are separate from the required selection and never receive p
 test('failed AI mood analysis does not prevent saving or overwrite the self report',async()=>{
   const {page,errors}=await setupPage(true,false,true);await openChild(page);
   await page.route('**/api/ai/ollama/api/chat',async route=>route.fulfill({status:500,contentType:'application/json',body:'{"error":"model unavailable"}'}));
-  await page.locator('#ta').fill('Ich spiele mit meinem Hund.');await page.locator('#checkBtn').click();await page.locator('#moodDialog').waitFor();
+  await page.locator('#ta').fill('Ich spiele mit meinem Hund.');await page.locator('#checkBtn').click();await page.locator('#finishToday').click();await page.locator('#moodDialog').waitFor();
   await page.locator('#moodPicker [data-mood=unsure]').click();await page.locator('#moodSave').click();
   await page.locator('#doneArea').waitFor();await page.waitForFunction(()=>JSON.parse(localStorage.getItem('schreibheft-v1')).data.test.entries[0].mood.ai.status==='error');
   const entry=await page.evaluate(()=>JSON.parse(localStorage.getItem('schreibheft-v1')).data.test.entries[0]);
@@ -685,7 +796,7 @@ for(const cancel of ['button','Escape']){
   test('cancelling the finish-time feeling dialog with '+cancel+' preserves the draft without saving',async()=>{
     const {page,errors}=await setupPage(false,false,true);await openChild(page);
     const text='Ich spiele mit meinem Hund.';
-    await page.locator('#ta').fill(text);await page.locator('#checkBtn').click();await page.locator('#moodDialog').waitFor();
+    await page.locator('#ta').fill(text);await page.locator('#checkBtn').click();await page.locator('#finishToday').click();await page.locator('#moodDialog').waitFor();
     await page.locator('#moodPicker [data-mood=happy]').click();
     if(cancel==='button')await page.locator('#moodCancel').click();else await page.keyboard.press('Escape');
     await page.waitForFunction(()=>!document.querySelector('#moodDialog').open);
@@ -694,7 +805,7 @@ for(const cancel of ['button','Escape']){
     await page.waitForFunction(text=>JSON.parse(localStorage.getItem('schreibheft-v1')).data.test.draft===text,text);
     const child=await page.evaluate(()=>JSON.parse(localStorage.getItem('schreibheft-v1')).data.test);
     assert.equal(child.draft,text);assert.equal(child.entries.length,0);
-    await page.locator('#checkBtn').click();await page.locator('#moodDialog').waitFor();
+    await page.locator('#checkBtn').click();await page.locator('#finishToday').click();await page.locator('#moodDialog').waitFor();
     await page.locator('#moodPicker [data-mood=unsure]').click();await page.locator('#moodSave').click();await page.locator('#doneArea').waitFor();
     assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('schreibheft-v1')).data.test.entries.length),1);
     assert.deepEqual(errors,[]);await page.close();
@@ -703,7 +814,7 @@ for(const cancel of ['button','Escape']){
 
 test('finish actions open reading and games without creating duplicate entries',async()=>{
   const {page,errors}=await setupPage(false,false,true);await openChild(page);
-  await page.locator('#ta').fill('Ich spiele mit meinem Hund.');await page.locator('#checkBtn').click();await page.locator('#moodDialog').waitFor();
+  await page.locator('#ta').fill('Ich spiele mit meinem Hund.');await page.locator('#checkBtn').click();await page.locator('#finishToday').click();await page.locator('#moodDialog').waitFor();
   await page.locator('#moodPicker [data-mood=calm]').click();
   await page.locator('#moodSave').evaluate(button=>{button.click();button.click();});
   await page.locator('#doneArea').waitFor();

@@ -4,10 +4,17 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function(Tutor,Mood,Review){
   "use strict";
   const BASE = "http://127.0.0.1:11434";
-  const thinkingOnly = details => Array.isArray(details.thinking?.values) && details.thinking.values.includes(true) && !details.thinking.values.includes(false);
+  function thinkingOptions(details){
+    const values=details.thinking?.values;
+    if(!Array.isArray(values)) return {};
+    if(values.includes(false)) return {think:false};
+    if(values.includes("low")) return {think:"low"};
+    return null;
+  }
   function createProvider({ model = "", execution = "cpu", allowCpuFallback = true, fetchImpl = globalThis.fetch } = {}){
     const remoteName = /(?:^|[:/.-])cloud(?:$|[:/.-])/i.test(model);
-    let thinkingSupported = false;
+    let thinking = {};
+    const reasoning = () => thinking.think === "low";
     let useCPUForExplanations = execution === "cpu";
     async function api(path, body, signal){
       if(fetchImpl === globalThis.fetch && globalThis.TB_LOCAL_AI?.supportedOrigin){
@@ -36,8 +43,9 @@
         if(details.remote_model || details.remote_host) return { code:"model_remote" };
         if(!details.details || !details.model_info) return { code:"unavailable" };
         if(Array.isArray(details.capabilities) && !details.capabilities.includes("completion")) return { code:"unsupported_model" };
-        if(thinkingOnly(details)) return {code:"thinking_only"};
-        thinkingSupported = Array.isArray(details.thinking?.values) && details.thinking.values.includes(false);
+        const options=thinkingOptions(details);
+        if(!options) return {code:"thinking_only"};
+        thinking=options;
         return { code:"ready" };
       }catch(e){ if(e.name === "AbortError") throw e; return { code:e.code || "unavailable" }; }
     }
@@ -47,14 +55,14 @@
       const usable = [];
       for(const name of names){
         const details = await api("/api/show",{model:name},signal);
-        if(!details.remote_model && !details.remote_host && details.details && details.model_info && details.capabilities?.includes("completion") && !thinkingOnly(details)) usable.push(name);
+        if(!details.remote_model && !details.remote_host && details.details && details.model_info && details.capabilities?.includes("completion") && thinkingOptions(details)) usable.push(name);
       }
       return usable;
     }
     async function generateExplanation(request, cpu, signal){
       const started = performance.now();
-      const result = await api("/api/chat", { model, stream:false, ...(thinkingSupported ? { think:false } : {}), format:Tutor.REPLY_SCHEMA,
-        options:{ temperature:0.6, num_ctx:4096, num_predict:900, ...(cpu ? {num_gpu:0} : {}) }, keep_alive:"2m",
+      const result = await api("/api/chat", { model, stream:false, ...thinking, format:Tutor.REPLY_SCHEMA,
+        options:{ temperature:0.6, num_ctx:reasoning()?8192:4096, num_predict:reasoning()?4096:900, ...(cpu ? {num_gpu:0} : {}) }, keep_alive:"2m",
         messages:[{ role:"system", content:Tutor.INSTRUCTIONS }, { role:"user", content:JSON.stringify(request) }] }, signal);
       const elapsedMs = Math.max(0,performance.now()-started);
       if(result?.done_reason === "length") throw new Tutor.TutorError("invalid_reply","Die Antwort wurde abgeschnitten. Bitte erneut fragen oder ein anderes Modell ausprobieren.");
@@ -100,8 +108,8 @@
       const available=await status({signal});
       if(available.code !== "ready") throw new Tutor.TutorError(available.code);
       return withCPUFallback(async cpu=>{
-        const result=await api("/api/chat",{model,stream:false,...(thinkingSupported?{think:false}:{}),format:Review.REPLY_SCHEMA,
-          options:{temperature:0.2,num_ctx:4096,num_predict:1600,...(cpu?{num_gpu:0}:{})},keep_alive:"2m",
+        const result=await api("/api/chat",{model,stream:false,...thinking,format:Review.REPLY_SCHEMA,
+          options:{temperature:0.2,num_ctx:reasoning()?8192:4096,num_predict:reasoning()?6144:1600,...(cpu?{num_gpu:0}:{})},keep_alive:"2m",
           messages:[{role:"system",content:Review.INSTRUCTIONS},{role:"user",content:JSON.stringify(request)}]},signal);
         if(result?.done_reason === "length") throw new Tutor.TutorError("invalid_reply","Die Textprüfung wurde abgeschnitten. Bitte später erneut versuchen.");
         try{return Review.validateReply(JSON.parse(result.message.content),request);}
@@ -114,8 +122,8 @@
       const request = Mood.buildRequest(text);
       const available = await status({ signal });
       if(available.code !== "ready") throw new Tutor.TutorError(available.code);
-      const result = await api("/api/chat", { model, stream:false, ...(thinkingSupported ? { think:false } : {}), format:Mood.REPLY_SCHEMA,
-        options:{ temperature:0.6, num_ctx:4096, num_predict:200, ...(execution === "cpu" ? {num_gpu:0} : {}) }, keep_alive:"2m",
+      const result = await api("/api/chat", { model, stream:false, ...thinking, format:Mood.REPLY_SCHEMA,
+        options:{ temperature:0.6, num_ctx:reasoning()?8192:4096, num_predict:reasoning()?2048:200, ...(execution === "cpu" ? {num_gpu:0} : {}) }, keep_alive:"2m",
         messages:[{ role:"system", content:Mood.INSTRUCTIONS }, { role:"user", content:JSON.stringify(request) }] }, signal);
       if(result.done_reason === "length") throw new Tutor.TutorError("invalid_reply","Die Gefühlsantwort wurde abgeschnitten. Bitte später erneut versuchen.");
       try{ return Mood.validateAI(JSON.parse(result.message.content)); }

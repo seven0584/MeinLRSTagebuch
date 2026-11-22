@@ -34,11 +34,25 @@ test('streamed model progress handles split UTF-8 and rejects failed or truncate
   await assert.rejects(consumeProgress(new Response('{"status":"pulling"}\n'),()=>{}),/unterbrochen/);
   await assert.rejects(consumeProgress(new Response('{"error":"disk full"}\n'),()=>{}),/disk full/);
 });
+
+test('retry reuses a verified runtime archive after extraction failed, but redownloads corrupt bytes',async()=>temporary(async dir=>{
+  const content=Buffer.from('verified fixture'),asset={name:'fixture.zip',bytes:content.length,sha256:createHash('sha256').update(content).digest('hex')};
+  let downloads=0;
+  const fetchImpl=async()=>{downloads++;return new Response(content);};
+  await assert.rejects(downloadRuntime(asset,dir,()=>{},{fetchImpl,extract:async()=>{throw new Error('extract failed');}}),/extract failed/);
+  const extract=async(exe,args,opts)=>{
+    assert.match(args.at(-1),/Join-Path \$PSHOME 'Modules\/Microsoft.PowerShell.Archive/);
+    await fs.mkdir(opts.env.TAGEBUCH_AI_DEST,{recursive:true});await fs.writeFile(join(opts.env.TAGEBUCH_AI_DEST,'ollama.exe'),'fixture');
+  };
+  await downloadRuntime(asset,dir,()=>{},{fetchImpl,extract});assert.equal(downloads,1);
+  await fs.writeFile(join(dir,'runtime.zip'),Buffer.alloc(content.length));
+  await downloadRuntime(asset,dir,()=>{},{fetchImpl,extract});assert.equal(downloads,2);
+}));
 test('Windows extracts a verified portable archive into a path with spaces and umlauts', {skip:process.platform!=='win32'},async()=>temporary(async dir=>{
   const source=join(dir,'Quelle ä'),target=join(dir,'Laufzeit ö'),archive=join(dir,'fixture.zip');
   await fs.mkdir(source);await fs.writeFile(join(source,'ollama.exe'),'fake executable, never run');
   await new Promise((done,reject)=>{
-    const child=spawn('powershell.exe',['-NoProfile','-NonInteractive','-Command','Compress-Archive -LiteralPath $env:TAGEBUCH_TEST_FILE -DestinationPath $env:TAGEBUCH_TEST_ZIP'],{
+    const child=spawn('powershell.exe',['-NoProfile','-NonInteractive','-Command',"$ErrorActionPreference = 'Stop'; Import-Module (Join-Path $PSHOME 'Modules/Microsoft.PowerShell.Archive/Microsoft.PowerShell.Archive.psd1'); Compress-Archive -LiteralPath $env:TAGEBUCH_TEST_FILE -DestinationPath $env:TAGEBUCH_TEST_ZIP"],{
       windowsHide:true,stdio:'ignore',env:{...process.env,TAGEBUCH_TEST_FILE:join(source,'ollama.exe'),TAGEBUCH_TEST_ZIP:archive}});
     child.once('error',reject);child.once('exit',code=>code===0?done():reject(new Error('Fixture ZIP failed')));
   });

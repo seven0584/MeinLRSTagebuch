@@ -447,7 +447,14 @@ code{background:var(--bg);border-radius:4px;padding:0 .3rem;font-size:.9em}
 details.parents{margin-top:2.2rem;border-top:1px solid var(--border);padding-top:1rem}
 details.parents summary{cursor:pointer;color:var(--muted);font-weight:700}
 .word.name button{color:var(--red)}
+#todayHistory{margin:0 0 1rem;padding:1rem;background:var(--paper,#fffef8);border:1px solid var(--border,#d5deec);border-radius:.6rem;max-height:20rem;overflow:auto}
+#todayHistory h3{margin:0 0 .4rem;font-size:1rem}
+#todayHistory .sheet{margin:.6rem 0 0}
+#todayHistory .note{margin:.3rem 0}
+.spelling-explanation{margin:.7rem 0}
+.spelling-explanation summary{cursor:pointer;font-weight:600}
 @media (max-width:520px){
+  #kidView > .tabs{flex-wrap:wrap}
   h1{font-size:1.6rem}
   .lined{font-size:1.1rem;padding-left:2.6rem;background-image:
     linear-gradient(90deg,transparent 1.8rem,var(--margin) 1.8rem,var(--margin) calc(1.8rem + 2px),transparent calc(1.8rem + 2px)),

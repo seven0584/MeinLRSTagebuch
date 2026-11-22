@@ -41,16 +41,19 @@
           const started=now(),sample=await measured(provider,input,signal);
           check(signal);
           const reply=Tutor.validateReply(sample.reply);
-          if(reply.assessment !== "needsChange" || reply.suggestion !== expected)
-            throw new Tutor.TutorError("quality_failed","Die zwei Testwörter wurden nicht beide richtig verbessert.");
-          if(execution === "auto" && !(Number.isFinite(sample.vramBytes) && sample.vramBytes>0))
-            throw new Tutor.TutorError("no_gpu","Für diesen Versuch wurde keine Nutzung des Grafikspeichers bestätigt.");
+          const passed=reply.assessment === "needsChange" && reply.suggestion === expected;
           const elapsedMs=Number.isFinite(sample.elapsedMs) ? Math.max(0,sample.elapsedMs) : Math.max(0,now()-started);
           const loadMs=Number.isFinite(sample.loadMs) ? Math.min(elapsedMs,Math.max(0,sample.loadMs)) : 0;
-          result.probes.push({elapsedMs,loadMs,durationMs:elapsedMs-loadMs,...(execution === "auto"?{vramBytes:sample.vramBytes}:{})});
+          result.probes.push({sentence:input.sentence,target:input.target,expected,reply,passed,elapsedMs,loadMs,durationMs:elapsedMs-loadMs,...(execution === "auto"?{vramBytes:sample.vramBytes}:{})});
+          if(!passed){
+            result.error="quality_failed";
+            result.message="Die zwei Testwörter wurden nicht beide richtig verbessert. Unter „Testantworten ansehen“ stehen die tatsächlichen Antworten.";
+          }
+          if(execution === "auto" && !(Number.isFinite(sample.vramBytes) && sample.vramBytes>0))
+            throw new Tutor.TutorError("no_gpu","Für diesen Versuch wurde keine Nutzung des Grafikspeichers bestätigt.");
         }
-        result.ok=true;
-        result.averageMs=result.probes.reduce((sum,probe)=>sum+probe.durationMs,0)/PROBES.length;
+        result.ok=result.probes.every(probe=>probe.passed);
+        if(result.ok)result.averageMs=result.probes.reduce((sum,probe)=>sum+probe.durationMs,0)/PROBES.length;
       }catch(error){
         check(signal);
         if(error.name === "AbortError") throw error;

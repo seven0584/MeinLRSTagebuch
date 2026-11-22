@@ -77,7 +77,7 @@ test('Windows Dev skips the picker, saves encrypted entries, and reloads them in
     assert.equal(await page.locator('#dangerDlg').isVisible(),false);
     await page.locator('[data-kid=test]').click();await page.locator('#kidPinBox .p1').fill('1234');await page.locator('#kidPinBox .go').click();
     const sentence = 'Heute habe ich ein schönes Buch gelesen.';
-    await page.locator('#ta').fill(sentence);await page.locator('#checkBtn').click();await page.locator('#doneArea').waitFor();
+    await page.locator('#ta').fill(sentence);await page.locator('#checkBtn').click();await page.locator('#finishToday').click();await page.locator('#doneArea').waitFor();
     await waitUntil(async () => {try {return (await readChild(dataDir)).entries[0]?.text === sentence;}catch {return false;}});
     assert.deepEqual(errors,[]);await page.close();
     const fresh = await browser.newPage();await fresh.goto(origin);
