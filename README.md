@@ -53,11 +53,18 @@ Im Ordnerbetrieb speichert die App Familien-Einstellungen unter `config/` und di
 
 PINs dienen als Sichtschutz innerhalb der App. Die Ordnerdateien sind verschlüsselt, der zugehörige Schlüssel liegt aber in der Familien-Konfiguration. Das schützt nicht vor Personen mit Zugriff auf den gesamten Ordner oder das Browserprofil.
 
+## Bisherige Datei-Version
+
+Die Dateien `Tagebuch.html`, `app/` und `updates.json` im Repository-Hauptordner gehören zur bisherigen Datei-Version. Version 1.3.5 aktualisiert dort ausschließlich Versionshinweis und Änderungsübersicht; ihre Funktionen entsprechen 1.3.4. Die [bisherige Anleitung](docs/dateiversion-1.3.4.md) bleibt erhalten. Die neuen geprüften Diktate und die lokale KI gehören zur Windows-App unter `Dev/` und zum Windows-Release 2.0.0. Deren Start erfolgt mit `Start.cmd`; die Update-Suche der Datei-Version installiert diesen Server nicht.
+
+Die [Update-Veröffentlichung für die Datei-Version](docs/dateiversion-1.3.4.md#ein-update-veröffentlichen) wird getrennt vom [Windows-Build](docs/ENTWICKLUNG.md) vorbereitet. Vor dem Wechsel den bisherigen Datenordner und das Browserprofil sichern.
+
 ## Repository
 
 | Pfad | Inhalt |
 | --- | --- |
-| `Dev/` | Bearbeitbarer Anwendungsstand, direkt im Browser ausführbar |
+| `Dev/` | Windows-App 2.0, über den lokalen Server ausführbar |
+| `Tagebuch.html`, `app/`, `updates.json` | Bisherige Datei-Version mit eigenem Update-Manifest |
 | `Dev/app/` | JavaScript, CSS, Wörterbuch, Übungen und Spiele |
 | `Dev/config/`, `Dev/kinder/` | Hinweise und Speicherorte für Laufzeitdaten; persönliche Daten werden von Git ausgeschlossen |
 | `Release/Tagebuch.zip` | Mitgeliefertes, entpackbares Anwendungspaket |

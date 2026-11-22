@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "release": 11,
+  "version": "1.3.5",
+  "files": [
+    {
+      "path": "Tagebuch.html",
+      "size": 62112,
+      "sha256": "679a112c2f7706ef077fc95114f4b64dd4919124c1560aa4242258062cf4076b"
+    },
+    {
+      "path": "app/app.css",
+      "size": 37209,
+      "sha256": "cc8cc85097abb0bb609a3215f796f659d09ab1a9bff4e3bbeb3aa7fbbef464cb"
+    },
+    {
+      "path": "app/app.js",
+      "size": 213924,
+      "sha256": "c4c5d82532135bb566064ff2c506441ae1e8074715b404163dd4baf7b7c1db8a"
+    },
+    {
+      "path": "app/changelog-data.js",
+      "size": 37665,
+      "sha256": "42655534c362827e764f5a78aa0279e9baf85aeb6f0c136f2f7e3889f37da2d7"
+    },
+    {
+      "path": "app/compatibility.js",
+      "size": 1758,
+      "sha256": "ecefa277f6a88719443ccb86b80b110c0a75cb60ff953b0971c580c04fb563e7"
+    },
+    {
+      "path": "app/hunspell.js",
+      "size": 747722,
+      "sha256": "6be6af4e85b15fef355f2fbc631887a0b20bad49e3024db5d9271219384422ba"
+    },
+    {
+      "path": "app/learning-core.js",
+      "size": 25844,
+      "sha256": "ddba68b0d6af3212ee90e67937f9de6cc0ab64104714a95d2b0cf3dedaecd381"
+    },
+    {
+      "path": "app/learning-ui.js",
+      "size": 23120,
+      "sha256": "33b1c181df0bfa6f1a8629c935ed0ef08976c0c17fb0c7a47b0f8d2b8e08cbfa"
+    },
+    {
+      "path": "app/news.js",
+      "size": 3303,
+      "sha256": "9e0f1789f81d8f0f9ce45a0fe985f0f9551de3df47975c3d4d63489293952874"
+    },
+    {
+      "path": "app/qrcode.js",
+      "size": 56694,
+      "sha256": "18ae399f81182bc9de916e9c77b195df20cc58d6f2d55a62b085a299f1bf1780"
+    },
+    {
+      "path": "app/sounds/sfx.js",
+      "size": 6240,
+      "sha256": "a2c71fd2f8f19fe680166dff20f77ffe8628d0c6a89a60bdd73c2c9997730818"
+    },
+    {
+      "path": "app/spiele/LIZENZEN.txt",
+      "size": 1076,
+      "sha256": "4d011198fffa0085d2fbb5a8b6f23aca9966dc6d772d95469861272c109cb659"
+    },
+    {
+      "path": "app/spiele/asteroiden.html",
+      "size": 6376,
+      "sha256": "5a4289fc25ef277e78678dbd36f7a0d8a3fe5cb119164b46e1bc938c21c10509"
+    },
+    {
+      "path": "app/spiele/bienchen.html",
+      "size": 11091,
+      "sha256": "53b3649e7e44c4f4d8836380cd678c014296d67ebe255408f1731924e955bf2c"
+    },
+    {
+      "path": "app/spiele/minensucher.html",
+      "size": 6266,
+      "sha256": "2609965745886def30deb6c15e02654bebae7ff33cc1de0745eab01c65bc9921"
+    },
+    {
+      "path": "app/spiele/schlange.html",
+      "size": 8634,
+      "sha256": "e7c8527be1cec278bc088edb72094d1f9ea55c116b743eb28f1c7255fafc1693"
+    },
+    {
+      "path": "app/spiele/weltraum-angriff.html",
+      "size": 13961,
+      "sha256": "ad03f2e2033f805d3eea47c51096358063365c4cd57044f2a06e2cec7afa6f2d"
+    },
+    {
+      "path": "app/uebungen.js",
+      "size": 720706,
+      "sha256": "4627da52d82985f873226a9aa4654bc6d67ba2c632c434f71eb8c79b754aab43"
+    },
+    {
+      "path": "app/update-core.js",
+      "size": 6781,
+      "sha256": "c55fea36a32f7541fc8e53398d127f904578080313b1f8455b0d231798e1e3e1"
+    },
+    {
+      "path": "app/updater.js",
+      "size": 3740,
+      "sha256": "f121f486781930ec67db9567471adc83359358666a327f4cda6eb0ac91caf0ae"
+    },
+    {
+      "path": "app/version.js",
+      "size": 152,
+      "sha256": "5661e0dbc2f3756f7ef7b96721f3780769ba60de483f72dbbb63b29110f1b835"
+    },
+    {
+      "path": "app/woerterbuch.js",
+      "size": 1513977,
+      "sha256": "7dc2e967e427f88f52aada35e5431e76e82921ec27b9fc90775c8abd98b4116e"
+    }
+  ]
+}

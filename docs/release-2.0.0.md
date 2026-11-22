@@ -22,6 +22,8 @@ Ollama-Laufzeit und Modellgewichte sind **nicht** im ZIP enthalten. Sie lassen s
 
 **230 technische Tests bestanden.** Alle 54 neuen Diktattexte wurden redaktionell gelesen; die lokale LanguageTool-Prüfung ergab keine Hinweise. Zusätzlich wurden 10.800 Auswahlfälle für alle Schwerpunkte und beide Stufen sowie gesperrte und erschöpfte Vorräte geprüft. Das ist keine externe lerntherapeutische Validierung.
 
+Nach der Zusammenführung mit `main` bestanden zusätzlich alle 38 Kernprüfungen der bisherigen Datei-Version. Sie bleibt im Repository erhalten und erhält als Version 1.3.5 die aktuelle Änderungsübersicht. Das Windows-Paket 2.0.0 wird mit `Start.cmd` gestartet; der alte In-App-Updater installiert diesen lokalen Server nicht.
+
 Die lokale KI kann weiterhin Fehler übersehen oder falsche Korrekturen vorschlagen. Freie lokale KI-Erklärungen bleiben für Kinder ausgeschaltet, da der Nachweis von mindestens 90 % fachlich richtigen Erklärungen nicht erbracht wurde. Wörterbuch-/Regelhinweise und geprüfte Korrekturvorschläge bleiben verfügbar. Die optional getrennte OpenAI-Anbindung benötigt einen eigenen API-Zugang und ausdrückliche Elternfreigaben.
 
 Zum Download gehört eine SHA-256-Datei für das Windows-ZIP. Die beigefügten Quellcode-Archive von GitHub ersetzen das portable Windows-Paket nicht.

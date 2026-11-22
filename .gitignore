@@ -33,3 +33,10 @@ lernhilfe-testbericht*.json
 tests/benchmark-artifacts/
 __pycache__/
 *.py[cod]
+
+# Bisherige Datei-Version: persönliche Ordner und Update-Sicherungen.
+/config/*
+!/config/LIESMICH.txt
+/kinder/*
+!/kinder/LIESMICH.txt
+/.tagebuch-update-backup/

@@ -1,0 +1,5 @@
+Hier legt das Tagebuch für jedes Kind einen Ordner an:
+  kinder/<Name>/files/tagebuch.json    das Tagebuch
+  kinder/<Name>/files/bilder/           die gemalten Bilder
+  kinder/<Name>/files/sicherungen/      Tagesstände der letzten 14 Tage
+Die Dateien sind verschlüsselt, damit man sie nicht einfach im Editor lesen kann.
